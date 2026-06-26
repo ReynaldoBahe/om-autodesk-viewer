@@ -65,7 +65,8 @@ else:
 
 # 4. CONFIGURAÇÃO DO ESTADO DA SESSÃO (SESSION STATE)
 if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada not in lista_os:
-    st.session_state.os_selecionada = lista_os[0]
+    if lista_os:
+        st.session_state.os_selecionada = lista_os[0]
 
 # 5. CRIAÇÃO DAS ABAS (OS 3 MÓDULOS)
 aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
@@ -83,7 +84,6 @@ with aba_modelo:
     # Procura o ID BIM correspondente à OS selecionada na planilha real
     id_bim_alvo = ""
     if not df.empty and 'OS' in df.columns:
-        # Tenta achar a coluna de ID independente se estiver maiúscula ou minúscula
         col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
         if col_id:
             linha_ativo = df[df['OS'] == st.session_state.os_selecionada]
@@ -136,7 +136,7 @@ with aba_produtividade:
         
         # Gráfico Altair de Produtividade por Técnico
         st.subheader("Controle de Ordens de Serviço por Técnico")
-        col_tecnico = next((c for c in df_filtrado.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel', 'técnico responsável']), df_filtrado.columns[0])
+        col_tecnico = next((c for c in df_filtrado.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel', 'técnico responsável']), df_filtrado.columns)
         df_produtividade = df_filtrado.groupby(col_tecnico).size().reset_index(name='Ordens')
         df_produtividade.columns = ['Técnico', 'Ordens']
         
@@ -167,7 +167,7 @@ with aba_diagnostico:
         st.session_state.os_selecionada = st.selectbox(
             "Selecione a OS para análise da IA:", 
             lista_os, 
-            index=lista_os.index(st.session_state.os_selecionada)
+            index=lista_os.index(st.session_state.os_selecionada) if st.session_state.os_selecionada in lista_os else 0
         )
         
         # Coleta de metadados dinâmicos da planilha com valores de reserva
@@ -199,3 +199,4 @@ with aba_diagnostico:
     with col_dir:
         st.markdown("⚡ **Análise de Engenharia Operacional da IA**")
         st.success(f"""
+        **ANÁLISE COMPLEMENTAR:** Ordem identificada como {st.session_state.os_selecionada}. O ativo associado ao ID BIM foi analisado pela malha preditiva e classificado sob o status atual de '{status}'.
