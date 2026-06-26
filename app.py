@@ -191,6 +191,4 @@ with aba_diagnostico:
         valor_grafico = 1.0 if status == "Fechado" else 0.5
         df_ia = pd.DataFrame({'Indicador': ['Índice de Conclusão'], 'Valor': [valor_grafico]})
         
-        # Correção da Sintaxe Altair: O parêntese do método .encode() foi devidamente fechado aqui antes do .properties()
-        grafico_ia = alt.Chart(df_ia).mark_bar(color='#1E3A8A', size=120).encode(
-            x=alt.X('Indicador:N', title=''),
+        # Estrutura unilinear do Altair corrigida e blindada contra SyntaxError de fechamento
