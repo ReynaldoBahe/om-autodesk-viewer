@@ -29,19 +29,19 @@ st.markdown("""
 
 st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de Projetos</div>', unsafe_allow_html=True)
 
-# 3. BASE DE DADOS SIMULADA (Substitua pelo carregamento da sua planilha se necessário)
+# 3. BASE DE DADOS SIMULADA (Corrigida para evitar o erro de sintaxe)
 @st.cache_data
 def carregar_dados():
     dados = {
-        'Técnico': ['Pedro', 'Pedro', 'Marcos', 'Tiago', 'Marcos', 'Pedro', 'Tiago', 'Lucas'],
+        'Técnico': ['Pedro', 'Marcos', 'Tiago', 'Francisco', 'Joaquim', 'Roberto'],
         'Ordens':,
-        'Status': ['Concluído', 'Em Andamento', 'Concluído', 'Pendente', 'Concluído', 'Concluído', 'Em Andamento', 'Concluído']
+        'Status': ['Concluído', 'Concluído', 'Em Andamento', 'Concluído', 'Concluído', 'Em Andamento']
     }
     return pd.DataFrame(dados)
 
 df = carregar_dados()
 
-# 4. CRIAÇÃO DAS ABAS (Autodesk APS removida com sucesso)
+# 4. CRIAÇÃO DAS ABAS
 aba_modelo, aba_produtividade = st.tabs(["📦 Modelo 3D (Speckle)", "📊 Produtividade da Equipe"])
 
 # ==========================================
