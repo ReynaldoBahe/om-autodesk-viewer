@@ -31,7 +31,7 @@ st.markdown("""
 st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de Projetos</div>', unsafe_allow_html=True)
 
 # ==========================================
-# 3. BARRA LATERAL (FIXA COMO ANTES - SEM CARTÃO VERDE)
+# 3. BARRA LATERAL BASE
 # ==========================================
 st.sidebar.header("Painel de Dados")
 
@@ -40,7 +40,7 @@ arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM",
 # URL base original do Speckle aprovada e funcional
 speckle_base_url = "https://speckle.systems"
 
-# Lógica de carregamento silenciosa (Sem st.sidebar.success)
+# Lógica de carregamento silenciosa
 df = pd.DataFrame()
 if arquivo_upload is not None:
     try:
@@ -74,9 +74,21 @@ aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
 ])
 
 # ==========================================
-# ABA 1: MODELO 3D (RASTREABILIDADE BIM)
+# ABA 1: MODELO 3D (ESCONDE A BARRA LATERAL CINZA)
 # ==========================================
 with aba_modelo:
+    # Injeção de CSS para ocultar a barra lateral cinza APENAS nesta aba
+    st.markdown("""
+        <style>
+        [data-testid="stSidebar"] {
+            display: none !important;
+        }
+        [data-testid="stSidebarCollapsedControl"] {
+            display: none !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
     st.subheader("Visualizador Operacional de Ativos 3D")
     
     id_bim_alvo = ""
@@ -84,7 +96,7 @@ with aba_modelo:
         col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
         if col_id:
             linha_ativo = df[df['OS'] == st.session_state.os_selecionada]
-            if not linha_ativo.empty:
+            if not grandfather_ativo.empty if 'grandfather_ativo' in locals() else not linha_ativo.empty:
                 id_bim_alvo = str(linha_ativo[col_id].values[0]).strip()
 
     if not id_bim_alvo or id_bim_alvo == "nan":
@@ -95,9 +107,18 @@ with aba_modelo:
     st.components.v1.iframe(speckle_base_url, height=600, scrolling=False)
 
 # ==========================================
-# ABA 2: PRODUTIVIDADE E RELATÓRIO
+# ABA 2: PRODUTIVIDADE E RELATÓRIO (MOSTRA A BARRA LATERAL)
 # ==========================================
 with aba_produtividade:
+    # Força a exibição da barra lateral cinza nesta aba
+    st.markdown("""
+        <style>
+        [data-testid="stSidebar"] {
+            display: block !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
     if not df.empty:
         df_filtrado = df.copy()
         
@@ -152,9 +173,18 @@ with aba_produtividade:
         st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
 
 # ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO
+# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO (MOSTRA A BARRA LATERAL)
 # ==========================================
 with aba_diagnostico:
+    # Força a exibição da barra lateral cinza nesta aba
+    st.markdown("""
+        <style>
+        [data-testid="stSidebar"] {
+            display: block !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
     st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
     col_esq, col_dir = st.columns(2)
     
@@ -182,17 +212,3 @@ with aba_diagnostico:
         html_ficha += f'<li><b>Responsável Técnico:</b> {resp}</li>'
         html_ficha += f'<li><b>Setor:</b> {setor}</li>'
         html_ficha += f'<li><b>Status Atual:</b> {status}</li>'
-        html_ficha += f'<li><b>Data de Abertura:</b> {data_ab}</li>'
-        html_ficha += '<li><b>Histórico de Quebras:</b> 3 recorrências registradas nos últimos 180 dias.</li></ul>'
-        html_ficha += '<a href="#" style="color:#2563EB; font-weight:bold; text-decoration:none;">📄 Acessar Manual Técnico do Ativo</a></div>'
-        st.markdown(html_ficha, unsafe_allow_html=True)
-        
-    with col_dir:
-        st.markdown("⚡ **Análise de Engenharia Operacional da IA**")
-        
-        mensagem_ia = f"**ANÁLISE COMPLEMENTAR:** Ordem {st.session_state.os_selecionada}. Ativo BIM analisado sob status '{status}'. Plano recomendado para {setor}."
-        st.success(mensagem_ia)
-        
-        df_ia = pd.DataFrame({'Métrica': ['Ordens Analisadas'], 'Valor': [1.0]})
-        grafico_ia = alt.Chart(df_ia).mark_bar(color='#1f77b4', size=150).encode(
-            x=alt.X('Métrica:N', title=''),
