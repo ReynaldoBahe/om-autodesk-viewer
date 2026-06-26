@@ -74,14 +74,14 @@ aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
 with aba_modelo:
     st.subheader("Visualizador Operacional de Ativos 3D")
     
-    # 1. Recupera o ID do Ativo correspondente à OS selecionada
+    # 1. Recupera o ID do Ativo correspondente à OS selecionada de forma segura
     id_bim_alvo = ""
     if not df.empty and 'OS' in df.columns:
         col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
-        if col_id:
+        if col_id and col_id in df.columns:
             linha_ativo = df[df['OS'] == st.session_state.os_selecionada]
             if not linha_ativo.empty:
-                id_bim_alvo = str(linha_ativo[col_id].values[0]).strip()
+                id_bim_alvo = str(linha_ativo[col_id].iloc[0]).strip()
 
     if not id_bim_alvo or id_bim_alvo == "nan":
         id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
@@ -89,22 +89,21 @@ with aba_modelo:
     # Exibição elegante da inteligência de cruzamento de dados
     st.info(f"🔗 Módulo BIM Sincronizado | Rastreando Ativo ID: `{id_bim_alvo}` (Selecionado no Centro de Diagnóstico)")
     
-    # 2. CONSTRUÇÃO DA URL DINÂMICA COM REGRAS DE FILTRAGEM
+    # 2. CONSTRUÇÃO DA URL DINÂMICA COM REGRAS DE FILTRAGEM CORRIGIDAS
     speckle_url_interativa = speckle_base_url
     
-    # Regra 1: Filtragem por Status da Barra Lateral (Isola os objetos no canvas)
+    # Injeção de parâmetros de filtro baseados na árvore de propriedades do Revit
     if filtro_status != "Todos":
-        speckle_url_interativa += f'&filter=[{{"property":"status","operator":"=","value":"{filtro_status}"}}]'
+        speckle_url_interativa += f'&filter=[{{"property":"parameters.Status","operator":"=","value":"{filtro_status}"}}]'
     
-    # Regra 2: Realce por Criticidade da Barra Lateral (Aplica mapeamento de cores)
     if filtro_criticidade != "Todos":
-        speckle_url_interativa += f'&cby=criticidade'
+        speckle_url_interativa += f'&cby=parameters.Criticidade'
     
-    # Regra 3: Foca e destaca a câmera do visualizador diretamente no ativo em auditoria
+    # Força o realce visual (overlay) e o foco de seleção nativa (selection) no ID alvo
     if id_bim_alvo:
-        speckle_url_interativa += f'&overlayObjIds={id_bim_alvo}'
+        speckle_url_interativa += f'&overlayObjIds={id_bim_alvo}&selection={id_bim_alvo}'
     
-    # 3. Renderiza o visualizador com a URL interativa criada
+    # 3. Renderiza o visualizador com as propriedades corrigidas
     st.components.v1.iframe(speckle_url_interativa, height=600, scrolling=False)
 
 # ==========================================
@@ -157,37 +156,48 @@ with aba_produtividade:
 # ==========================================
 # ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO
 # ==========================================
-    st.subheader("Visualizador Operacional de Ativos 3D")
+with aba_diagnostico:
+    st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
+    col_esq, col_dir = st.columns(2)
     
-    # 1. Recupera o ID do Ativo correspondente à OS selecionada
-    id_bim_alvo = ""
-    if not df.empty and 'OS' in df.columns:
-        col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
-        if col_id:
-            linha_ativo = df[df['OS'] == st.session_state.os_selecionada]
-            if not linha_ativo.empty:
-                id_bim_alvo = str(linha_ativo[col_id].values[0]).strip()
+    with col_esq:
+        st.markdown("🔎 **Seleção de Ativo para Auditoria**")
+        
+        st.session_state.os_selecionada = st.selectbox(
+            "Selecione a OS para análise da IA:", 
+            lista_os, 
+            index=lista_os.index(st.session_state.os_selecionada) if st.session_state.os_selecionada in lista_os else 0
+        )
+        
+        resp, setor, status, data_ab = "Pedro", "Climatização", "Fechado", "20/06/2026"
+        if not df.empty and 'OS' in df.columns:
+            dados_os = df[df['OS'] == st.session_state.os_selecionada]
+            if not dados_os.empty:
+                col_t = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel']), None)
+                resp = str(dados_os[col_t].values[0]) if col_t else "Pedro"
+                setor = str(dados_os['Setor'].values[0]) if 'Setor' in df.columns else "Climatização"
+                status = str(dados_os['Status'].values[0]) if 'Status' in df.columns else "Fechado"
+                data_ab = str(dados_os['Data_Abertura'].values[0]) if 'Data_Abertura' in df.columns else "20/06/2026"
 
-    if not id_bim_alvo or id_bim_alvo == "nan":
-        id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
-
-    # Exibição elegante da inteligência de cruzamento de dados
-    st.info(f"🔗 Módulo BIM Sincronizado | Rastreando Ativo ID: `{id_bim_alvo}` (Selecionado no Centro de Diagnóstico)")
-    
-    # 2. CONSTRUÇÃO DA URL DINÂMICA COM REGRAS DE FILTRAGEM CORRIGIDAS
-    speckle_url_interativa = speckle_base_url
-    
-    # IMPORTANTE: Se o filtro "status" em minúsculo falhou, o Speckle exige 
-    # a propriedade aninhada como exportada pelo Revit ("parameters.Status")
-    if filtro_status != "Todos":
-        speckle_url_interativa += f'&filter=[{{"property":"parameters.Status","operator":"=","value":"{filtro_status}"}}]'
-    
-    if filtro_criticidade != "Todos":
-        speckle_url_interativa += f'&cby=parameters.Criticidade'
-    
-    # Adiciona a seleção direta via query parameter para abrir o painel nativo do ativo alvo
-    if id_bim_alvo:
-        speckle_url_interativa += f'&overlayObjIds={id_bim_alvo}&selection={id_bim_alvo}'
-    
-    # 3. Renderiza o visualizador com as propriedades corrigidas
-    st.components.v1.iframe(speckle_url_interativa, height=600, scrolling=False)
+        html_ficha = '<div class="ficha-tecnica"><h4 style="margin-top:0; color:#1E3A8A;">📋 Ficha Técnica do Ativo</h4><ul>'
+        html_ficha += f'<li><b>ID BIM:</b> {id_bim_alvo}</li>'
+        html_ficha += f'<li><b>Responsável Técnico:</b> {resp}</li>'
+        html_ficha += f'<li><b>Setor:</b> {setor}</li>'
+        html_ficha += f'<li><b>Status Atual:</b> {status}</li>'
+        html_ficha += f'<li><b>Data de Abertura:</b> {data_ab}</li>'
+        html_ficha += '<li><b>Histórico de Quebras:</b> 3 recorrências registradas nos últimos 180 dias.</li></ul>'
+        html_ficha += '<a href="#" style="color:#2563EB; font-weight:bold; text-decoration:none;">📄 Acessar Manual Técnico do Ativo</a></div>'
+        st.markdown(html_ficha, unsafe_allow_html=True)
+        
+    with col_dir:
+        st.markdown("⚡ **Análise de Engenharia Operacional da IA**")
+        
+        mensagem_ia = f"**ANÁLISE COMPLEMENTAR:** Ordem {st.session_state.os_selecionada}. Ativo BIM analisado sob status '{status}'. Plano recomendado para {setor}."
+        st.success(mensagem_ia)
+        
+        df_ia = pd.DataFrame({'Métrica': ['Ordens Analisadas'], 'Valor': [1.0]})
+        grafico_ia = alt.Chart(df_ia).mark_bar(color='#1f77b4', size=150).encode(
+            x=alt.X('Métrica:N', title=''),
+            y=alt.Y('Valor:Q', title='Status de Execução', scale=alt.Scale(domain=[0, 1.2])),
+        ).properties(height=250)
+        st.altair_chart(grafico_ia, use_container_width=True)
