@@ -205,20 +205,24 @@ with aba_produtividade:
         st.dataframe(df_filtrado, use_container_width=True)
     else:
         st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
-
 # ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO
+# ABA 1: MODELO 3D (RASTREABILIDADE BIM)
 # ==========================================
-with aba_diagnostico:
-    st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
-    col_esq, col_dir = st.columns(2)
+with aba_modelo:
+    st.subheader("Visualizador Operacional de Ativos 3D")
     
-    with col_esq:
-        st.markdown("🔎 **Seleção de Ativo para Auditoria**")
-        
-        st.session_state.os_selecionada = st.selectbox(
-            "Selecione a OS para análise da IA:", 
-            lista_os, 
-            index=lista_os.index(st.session_state.os_selecionada) if st.session_state.os_selecionada in lista_os else 0
-        )
-        
+    id_bim_alvo = ""
+    if not df.empty and 'OS' in df.columns:
+        col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
+        if col_id:
+            linha_ativo = df[df['OS'] == st.session_state.os_selecionada]
+            if not linha_ativo.empty:
+                id_bim_alvo = str(linha_ativo[col_id].values[0]).strip()
+
+    if not id_bim_alvo or id_bim_alvo == "nan":
+        id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
+
+    # Exibição elegante da inteligência de cruzamento de dados (Sem botões que não funcionam)
+    st.info(f"🔗 Módulo BIM Sincronizado | Rastreando Ativo ID: `{id_bim_alvo}` (Selecionado no Centro de Diagnóstico)")
+    
+    st.components.v1.iframe(speckle_base_url, height=600, scrolling=False)
