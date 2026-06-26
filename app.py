@@ -72,6 +72,35 @@ if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada n
     if lista_os:
         st.session_state.os_selecionada = lista_os[0]
 
+# -------------------------------------------------------------------------
+# EXTRAÇÃO DE VARIÁVEIS COM ÍNDICE [0] (CAPTURA APENAS TEXTO PURO)
+# -------------------------------------------------------------------------
+id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
+resp = "Pedro"
+setor = "Climatização"
+status = "Fechado"
+data_ab = "20/06/2026"
+descricao_falha = "Análise complementar de engenharia preditiva."
+criticidade_ativo = "Média"
+
+if not df.empty and 'OS' in df.columns:
+    dados_os = df[df['OS'].astype(str) == str(st.session_state.os_selecionada)]
+    if not dados_os.empty:
+        col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
+        if col_id and col_id in dados_os.columns:
+            id_bim_alvo = str(dados_os[col_id].values[0]).strip()
+        
+        col_t = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel']), None)
+        resp = str(dados_os[col_t].values[0]) if col_t else "Pedro"
+        setor = str(dados_os['Setor'].values[0]) if 'Setor' in df.columns else "Climatização"
+        status = str(dados_os['Status'].values[0]) if 'Status' in df.columns else "Fechado"
+        data_ab = str(dados_os['Data_Abertura'].values[0]) if 'Data_Abertura' in df.columns else "20/06/2026"
+        descricao_falha = str(dados_os['Descrição'].values[0]) if 'Descrição' in df.columns else "Sem descrição cadastrada."
+        criticidade_ativo = str(dados_os['Criticidade'].values[0]) if 'Criticidade' in df.columns else "Média"
+
+if not id_bim_alvo or id_bim_alvo == "nan":
+    id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
+
 # ==========================================
 # 4. CRIAÇÃO DAS ABAS ORIGINAIS (ST.TABS)
 # ==========================================
@@ -82,23 +111,11 @@ aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
 ])
 
 # ==========================================
-# ABA 1: MODELO 3D (RASTREABILIDADE BIM)
+# ABA 1: MODELO 3D
 # ==========================================
 with aba_modelo:
     st.subheader("Visualizador Operacional de Ativos 3D")
-    
-    id_bim_alvo = ""
-    if not df.empty and 'OS' in df.columns:
-        col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
-        if col_id:
-            linha_ativo = df[df['OS'].astype(str) == str(st.session_state.os_selecionada)]
-            if not linha_ativo.empty:
-                id_bim_alvo = str(linha_ativo[col_id].values[0]).strip()
-
-    if not id_bim_alvo or id_bim_alvo == "nan":
-        id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
-
-    st.info(f"🔗 Módulo BIM Sincronizado | Rastreando Ativo ID: `{id_bim_alvo}` (Selecionado no Centro de Diagnóstico)")
+    st.info(f"🔗 Módulo BIM Sincronizado | Rastreando Ativo ID: `{id_bim_alvo}` (Selecione outra OS na aba Centro de Diagnóstico para focar)")
     st.components.v1.iframe(speckle_base_url, height=600, scrolling=False)
 
 # ==========================================
@@ -107,6 +124,7 @@ with aba_modelo:
 with aba_produtividade:
     if not df.empty:
         df_filtrado = df.copy()
+        
         if filtro_status != "Todos" and 'Status' in df_filtrado.columns:
             df_filtrado = df_filtrado[df_filtrado['Status'] == filtro_status]
         if filtro_criticidade != "Todos" and 'Criticidade' in df_filtrado.columns:
@@ -131,9 +149,9 @@ with aba_produtividade:
             st.markdown(f'<div class="vol-number">{int(status_counts.get("Fechado", 0))}</div>', unsafe_allow_html=True)
             
         st.markdown("---")
-        
         st.subheader("Controle de Ordens de Serviço por Técnico")
         col_tecnico = next((c for c in df_filtrado.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel', 'técnico responsável']), df_filtrado.columns)
+        
         df_produtividade = df_filtrado.groupby(col_tecnico).size().reset_index(name='Ordens')
         df_produtividade.columns = ['Técnico', 'Ordens']
         
@@ -160,27 +178,13 @@ with aba_diagnostico:
     with col_esq:
         st.markdown("🔎 **Seleção de Ativo para Auditoria**")
         
+        idx_selecionado = lista_os.index(st.session_state.os_selecionada) if st.session_state.os_selecionada in lista_os else 0
         st.session_state.os_selecionada = st.selectbox(
             "Selecione a OS para análise da IA:", 
             lista_os, 
-            index=lista_os.index(st.session_state.os_selecionada) if st.session_state.os_selecionada in lista_os else 0
+            index=idx_selecionado
         )
         
-        resp, setor, status, data_ab = "Pedro", "Climatização", "Fechado", "20/06/2026"
-        criticidade_ativo = "Média"
-        descricao_falha = "Análise complementar de engenharia preditiva."
-        
-        if not df.empty and 'OS' in df.columns:
-            dados_os = df[df['OS'].astype(str) == str(st.session_state.os_selecionada)]
-            if not dados_os.empty:
-                col_t = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel']), None)
-                resp = str(dados_os[col_t].values[0]) if col_t else "Pedro"
-                setor = str(dados_os['Setor'].values[0]) if 'Setor' in df.columns else "Climatização"
-                status = str(dados_os['Status'].values[0]) if 'Status' in df.columns else "Fechado"
-                data_ab = str(dados_os['Data_Abertura'].values[0]) if 'Data_Abertura' in df.columns else "20/06/2026"
-                descricao_falha = str(dados_os['Descrição'].values[0]) if 'Descrição' in df.columns else "Sem descrição cadastrada."
-                criticidade_ativo = str(dados_os['Criticidade'].values[0]) if 'Criticidade' in df.columns else "Média"
-
         html_ficha = '<div class="ficha-tecnica"><h4 style="margin-top:0; color:#1E3A8A;">📋 Ficha Técnica do Ativo</h4><ul>'
         html_ficha += f'<li><b>Ordem de Serviço:</b> {st.session_state.os_selecionada}</li>'
         html_ficha += f'<li><b>ID BIM:</b> {id_bim_alvo}</li>'
