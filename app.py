@@ -33,7 +33,6 @@ st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de P
 # ==========================================
 # 3. BARRA LATERAL CONTROLE GLOBAL
 # ==========================================
-# Os elementos são declarados no sidebar para manter a faixa cinza nativa e fixa na tela
 st.sidebar.header("Filtros de Visão")
 
 filtro_status = st.sidebar.selectbox("Filtrar por Status:", ["Todos", "Aberta", "Em Andamento", "Pausada", "Fechado"])
@@ -66,7 +65,7 @@ else:
 # Configuração estável do estado da sessão
 if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada not in lista_os:
     if lista_os:
-        st.session_state.os_selecionada = lista_os[0]
+        st.session_state.os_selecionada = lista_os
 
 # ==========================================
 # 5. CRIAÇÃO DAS ABAS (MÓDULOS DO PORTAL)
@@ -79,10 +78,10 @@ aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
 
 # Cálculo seguro do ID BIM Alvo para todas as abas
 id_bim_alvo = ""
-if not df.empty and 'OS' in df.columns:
+if not df.empty and 'ID' in df.columns:
     col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
     if col_id:
-        linha_ativo = df[df['OS'] == st.session_state.os_selecionada]
+        linha_ativo = df[df['OS'].astype(str) == str(st.session_state.os_selecionada)]
         if not linha_ativo.empty:
             id_bim_alvo = str(linha_ativo[col_id].values[0]).strip()
 
@@ -93,8 +92,7 @@ if not id_bim_alvo or id_bim_alvo == "nan":
 # ABA 1: MODELO 3D (FAIXA CINZA PRESENTE MAS TOTALMENTE LIMPA)
 # ==========================================
 with aba_modelo:
-    # O CSS abaixo esconde apenas o conteúdo interno (textos e inputs) da barra lateral.
-    # A faixa cinza continua na tela de forma intacta, cumprindo exatamente a regra de limpeza visual.
+    # Hack CSS seguro: Oculta o conteúdo dos widgets mantendo a área cinza lateral intacta na tela apenas na Aba 1
     st.markdown("""
         <style>
         div[data-baseweb="tab-panel"]:nth-of-type(1) ~ div[data-testid="stSidebar"] [data-testid="stWidgetFormModifier"],
@@ -194,3 +192,6 @@ with aba_diagnostico:
             <ul>
                 <li><b>Ordem de Serviço:</b> {st.session_state.os_selecionada}</li>
                 <li><b>ID BIM:</b> {id_bim_alvo}</li>
+                <li><b>Responsável Técnico:</b> {resp}</li>
+                <li><b>Setor / Subsistema:</b> {setor}</li>
+                <li><b>Status Atual:</b> {status}</li>
