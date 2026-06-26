@@ -30,14 +30,50 @@ criticidade_selecionada = st.sidebar.selectbox("Filtrar por Criticidade:", ["Tod
 st.title("🏗️ Visualizador Operacional de Ativos 3D (Speckle)")
 st.markdown("---")
 
-# 4. Renderização do Visualizador 3D do Speckle
-if link_cliente:
-    try:
-        components.iframe(link_cliente, height=550, scrolling=False)
-    except Exception as e:
-        st.error(f"Erro ao carregar o visualizador Speckle: {e}")
-else:
-    st.info("💡 Insira o link do Speckle do cliente na barra lateral para ativar o modelo 3D.")
+# ✨ 4. CRIAÇÃO DAS ABAS DE COMPARATIVO
+aba_speckle, aba_autodesk = st.tabs(["🌐 Visualizador Speckle", "📐 Visualizador Autodesk Viewer (APS)"])
+
+with aba_speckle:
+    st.markdown("### Modelo Renderizado via Speckle")
+    if link_cliente:
+        try:
+            components.iframe(link_cliente, height=550, scrolling=False)
+        except Exception as e:
+            st.error(f"Erro ao carregar o visualizador Speckle: {e}")
+    else:
+        st.info("💡 Insira o link do Speckle do cliente na barra lateral para ativar o modelo 3D.")
+
+with aba_autodesk:
+    st.markdown("### Modelo Renderizado via Autodesk APS (Nativo)")
+    access_token = obter_token_autodesk(CLIENT_ID, CLIENT_SECRET)
+    
+    if access_token and URN_MODELO:
+        autodesk_html = f"""
+        <div id="forgeViewer" style="width: 100%; height: 500px; background-color: #f8f9fa; border-radius: 10px; border: 1px solid #dee2e6;"></div>
+        <link rel="stylesheet" href="https://autodesk.com" type="text/css">
+        <script src="https://autodesk.com"></script>
+        <script>
+            var viewer;
+            var options = {{
+                env: 'AutodeskProduction2', api: 'streamingV2',
+                getAccessToken: function(onTokenReady) {{ onTokenReady("{access_token}", 3600); }}
+            }};
+            Autodesk.Viewing.Initializer(options, function() {{
+                var htmlDiv = document.getElementById('forgeViewer');
+                viewer = new Autodesk.Viewing.GuiViewer3D(htmlDiv);
+                viewer.start();
+                var documentId = 'urn:{URN_MODELO}';
+                Autodesk.Viewing.Document.load(documentId, function(doc) {{
+                    var viewables = doc.getRoot().getDefaultGeometry();
+                    viewer.loadDocumentNode(doc, viewables);
+                }}, null);
+            }});
+        </script>
+        """
+        components.html(autodesk_html, height=520)
+    else:
+        st.error("❌ Falha na geração do token. Verifique os limites de API na sua conta Autodesk.")
+
 
 # 5. Indicadores de Manutenção Relacionados
 st.markdown("---")
