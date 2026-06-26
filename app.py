@@ -35,8 +35,9 @@ st.sidebar.header("Configurações do Painel")
 # Campo para o link do Speckle
 speckle_url_input = st.sidebar.text_input(
     "🔗 Link do Speckle (Cliente):",
-    value="<iframe title="Speckle" src="https://app.speckle.systems/projects/a649da7292/models/815af390c7?embedToken=51d1f00b232cab3e185f80eedd9e8485ae379f774c#embed=%7B%22isEnabled%22%3Atrue%7D" width="600" height="400" frameborder="0"></iframe>"
+    value="https://app.speckle.systems/projects/a649da7292/models/815af390c7?embedToken=fd704d8c9c65c33217812bb9e35c7feb7c8d20314f"
 )
+
 
 st.sidebar.write("---")
 st.sidebar.header("Filtros Operacionais")
