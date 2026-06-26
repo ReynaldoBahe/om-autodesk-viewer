@@ -31,7 +31,7 @@ st.markdown("""
 st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de Projetos</div>', unsafe_allow_html=True)
 
 # ==========================================
-# 3. BARRA LATERAL (FILTROS OPERACIONAIS E PAINEL DE CONTROL)
+# 3. BARRA LATERAL (FILTROS OPERACIONAIS E PAINEL DE CONTROLE)
 # ==========================================
 st.sidebar.header("Filtros de Visão")
 
@@ -40,7 +40,7 @@ filtro_criticidade = st.sidebar.selectbox("Filtrar por Criticidade:", ["Todos", 
 filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Menos de 24h", "Entre 2 e 7 dias", "Mais de 7 dias"])
 
 st.sidebar.write("---")
-# Apenas um único file uploader declarado em todo o código
+# Apenas um único file uploader em todo o projeto para evitar o erro de duplicidade
 arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
 
 # URL base do Speckle em modo embed limpo original aprovado
@@ -57,7 +57,7 @@ if arquivo_upload is not None:
     except Exception as e:
         st.error(f"Erro ao ler o arquivo: {e}")
 
-# INJEÇÃO ISOLADA DO PAINEL OPERACIONAL DE SLA (ABAIXO DO UPLOADER ÚNICO)
+# INJEÇÃO DO PAINEL DE SLA (RODAPÉ DA BARRA CINZA LATERAL)
 st.sidebar.write("---")
 st.sidebar.subheader("📈 Metas Operacionais (SLA)")
 
@@ -98,7 +98,7 @@ aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
 ])
 
 # ==========================================
-# ABA 1: MODELO 3D (RASTREABILIDADE BIM) - RIGOROSAMENTE INTOCADA
+# ABA 1: MODELO 3D (RASTREABILIDADE BIM)
 # ==========================================
 with aba_modelo:
     st.subheader("Visualizador Operacional de Ativos 3D")
@@ -118,7 +118,7 @@ with aba_modelo:
     st.components.v1.iframe(speckle_base_url, height=600, scrolling=False)
 
 # ==========================================
-# ABA 2: PRODUTIVIDADE E RELATÓRIO - RIGOROSAMENTE INTOCADA
+# ABA 2: PRODUTIVIDADE E RELATÓRIO
 # ==========================================
 with aba_produtividade:
     if not df.empty:
@@ -165,7 +165,7 @@ with aba_produtividade:
         st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
 
 # ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO - RIGOROSAMENTE INTOCADA
+# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO
 # ==========================================
 with aba_diagnostico:
     st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
@@ -201,3 +201,5 @@ with aba_diagnostico:
         st.markdown(html_ficha, unsafe_allow_html=True)
         
     with col_dir:
+        st.markdown("⚡ **Análise de Engenharia Operacional da IA**")
+        
