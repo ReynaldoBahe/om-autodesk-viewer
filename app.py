@@ -30,23 +30,55 @@ st.markdown("""
 
 st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de Projetos</div>', unsafe_allow_html=True)
 
-# ==========================================
-# 3. CONTEXTO DE BARRA LATERAL DINÂMICA
-# ==========================================
-# Cria os containers que permitem esvaziar a barra lateral na Aba 1 e preencher nas outras
-st.sidebar.header("Filtros de Visão")
-container_filtros = st.sidebar.empty()
-container_divisor = st.sidebar.empty()
-container_upload = st.sidebar.empty()
-
 # URL base do Speckle em modo embed limpo original aprovado
 speckle_base_url = "https://speckle.systems"
 
-# Inicializa o Estado Global para reter a planilha carregada entre a troca de abas
-if 'df_global' not in st.session_state:
-    st.session_state.df_global = pd.DataFrame()
+# ==========================================
+# 3. CRIAÇÃO DAS ABAS COMPATÍVEIS
+# ==========================================
+# Criamos a navegação usando um rádio invisível ou o session_state para gerenciar a barra lateral de forma nativa
+if 'aba_atual' not in st.session_state:
+    st.session_state.aba_atual = "📦 Modelo 3D (Speckle)"
 
-df = st.session_state.df_global
+# Renderiza os botões das abas mantendo o layout idêntico
+abas = ["📦 Modelo 3D (Speckle)", "📊 Produtividade da Equipe", "🧠 Centro de Diagnóstico (IA)"]
+aba_selecionada = st.radio("", abas, index=abas.index(st.session_state.aba_atual), horizontal=True, label_visibility="collapsed")
+st.session_state.aba_atual = aba_selecionada
+
+# ==========================================
+# 4. CONTROLE DA BARRA LATERAL DINÂMICA
+# ==========================================
+st.sidebar.header("Filtros de Visão")
+
+# Se estiver na Aba 1, a barra lateral fica totalmente vazia e limpa
+if st.session_state.aba_atual == "📦 Modelo 3D (Speckle)":
+    st.sidebar.caption("Visualização de Engenharia Ativa")
+    filtro_status = "Todos"
+    filtro_criticidade = "Todos"
+    filtro_tempo = "Todos"
+    arquivo_upload = None
+else:
+    # Se estiver nas Abas 2 ou 3, reaparecem os botões aprovados na esquerda
+    filtro_status = st.sidebar.selectbox("Filtrar por Status:", ["Todos", "Aberta", "Em Andamento", "Pausada", "Fechado"])
+    filtro_criticidade = st.sidebar.selectbox("Filtrar por Criticidade:", ["Todos", "Alta", "Média", "Baixa"])
+    filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Menos de 24h", "Entre 2 e 7 dias", "Mais de 7 dias"])
+    st.sidebar.write("---")
+    arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
+
+# Lógica de processamento de dados em segundo plano
+if 'df_persistido' not in st.session_state:
+    st.session_state.df_persistido = pd.DataFrame()
+
+if arquivo_upload is not None:
+    try:
+        if arquivo_upload.name.endswith('.csv'):
+            st.session_state.df_persistido = pd.read_csv(arquivo_upload)
+        else:
+            st.session_state.df_persistido = pd.read_excel(arquivo_upload)
+    except Exception as e:
+        st.error(f"Erro ao ler o arquivo: {e}")
+
+df = st.session_state.df_persistido
 
 # Mapeia dinamicamente a lista de OS disponíveis
 if not df.empty and 'OS' in df.columns:
@@ -54,31 +86,19 @@ if not df.empty and 'OS' in df.columns:
 else:
     lista_os = ["OS-2026-001", "OS-2026-002", "OS-2026-003"]
 
-# ==========================================
-# 4. CONFIGURAÇÃO DO ESTADO DA SESSÃO (SESSION STATE)
-# ==========================================
 if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada not in lista_os:
     if lista_os:
         st.session_state.os_selecionada = lista_os[0]
 
 # ==========================================
-# 5. CRIAÇÃO DAS ABAS (OS 3 MÓDULOS)
+# RENDERS DAS PÁGINAS ISOLADAS
 # ==========================================
-aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
-    "📦 Modelo 3D (Speckle)", 
-    "📊 Produtividade da Equipe", 
-    "🧠 Centro de Diagnóstico (IA)"
-])
+st.write("---")
 
 # ==========================================
-# ABA 1: MODELO 3D (FAIXA LATERAL CINZA LIMPA)
+# EXECUÇÃO DA ABA 1: MODELO 3D
 # ==========================================
-with aba_modelo:
-    # Esvazia os elementos de controle da faixa lateral esquerda deixando-a limpa nesta aba
-    container_filtros.empty()
-    container_divisor.empty()
-    container_upload.empty()
-
+if st.session_state.aba_atual == "📦 Modelo 3D (Speckle)":
     st.subheader("Visualizador Operacional de Ativos 3D")
     
     id_bim_alvo = ""
@@ -93,33 +113,12 @@ with aba_modelo:
         id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
     st.info(f"🔗 Módulo BIM Sincronizado | Rastreando Ativo ID: `{id_bim_alvo}` (Selecione outra OS na aba Centro de Diagnóstico para focar)")
-    
     st.components.v1.iframe(speckle_base_url, height=600, scrolling=False)
 
 # ==========================================
-# ABA 2: PRODUTIVIDADE E RELATÓRIO (CÓDIGO ORIGINAL E APROVADO COM SIDEBAR)
+# EXECUÇÃO DA ABA 2: PRODUTIVIDADE DA EQUIPE (CÓDIGO INTEGRAL APROVADO)
 # ==========================================
-with aba_produtividade:
-    # Preenche a barra lateral com os seletores clássicos idênticos ao código aprovado
-    with container_filtros.container():
-        filtro_status = st.selectbox("Filtrar por Status:", ["Todos", "Aberta", "Em Andamento", "Pausada", "Fechado"], key="sb_status_2")
-        filtro_criticidade = st.selectbox("Filtrar por Criticidade:", ["Todos", "Alta", "Média", "Baixa"], key="sb_crit_2")
-        filtro_tempo = st.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Menos de 24h", "Entre 2 e 7 dias", "Mais de 7 dias"], key="sb_tempo_2")
-    
-    container_divisor.write("---")
-    
-    with container_upload.container():
-        arquivo_upload = st.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"], key="up_aba2")
-        if arquivo_upload is not None:
-            try:
-                if arquivo_upload.name.endswith('.csv'):
-                    st.session_state.df_global = pd.read_csv(arquivo_upload)
-                else:
-                    st.session_state.df_global = pd.read_excel(arquivo_upload)
-                st.rerun()
-            except Exception as e:
-                st.error(f"Erro ao ler o arquivo: {e}")
-
+elif st.session_state.aba_atual == "📊 Produtividade da Equipe":
     if not df.empty:
         df_filtrado = df.copy()
         if filtro_status != "Todos" and 'Status' in df_filtrado.columns:
@@ -164,29 +163,9 @@ with aba_produtividade:
         st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
 
 # ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO (CÓDIGO ORIGINAL E APROVADO COM SIDEBAR)
+# EXECUÇÃO DA ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO (CÓDIGO INTEGRAL APROVADO)
 # ==========================================
-with aba_diagnostico:
-    # Preenche a barra lateral com as mesmas regras aprovadas ao entrar na Aba 3
-    with container_filtros.container():
-        filtro_status_3 = st.selectbox("Filtrar por Status:", ["Todos", "Aberta", "Em Andamento", "Pausada", "Fechado"], key="sb_status_3")
-        filtro_criticidade_3 = st.selectbox("Filtrar por Criticidade:", ["Todos", "Alta", "Média", "Baixa"], key="sb_crit_3")
-        filtro_tempo_3 = st.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Menos de 24h", "Entre 2 e 7 dias", "Mais de 7 dias"], key="sb_tempo_3")
-    
-    container_divisor.write("---")
-    
-    with container_upload.container():
-        arquivo_upload_3 = st.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"], key="up_aba3")
-        if arquivo_upload_3 is not None:
-            try:
-                if arquivo_upload_3.name.endswith('.csv'):
-                    st.session_state.df_global = pd.read_csv(arquivo_upload_3)
-                else:
-                    st.session_state.df_global = pd.read_excel(arquivo_upload_3)
-                st.rerun()
-            except Exception as e:
-                st.error(f"Erro ao ler o arquivo: {e}")
-
+elif st.session_state.aba_atual == "🧠 Centro de Diagnóstico (IA)":
     st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
     col_esq, col_dir = st.columns(2)
     
@@ -201,3 +180,16 @@ with aba_diagnostico:
         
         resp, setor, status, data_ab = "Pedro", "Climatização", "Fechado", "20/06/2026"
         if not df.empty and 'OS' in df.columns:
+            dados_os = df[df['OS'] == st.session_state.os_selecionada]
+            if not dados_os.empty:
+                col_t = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel']), None)
+                resp = str(dados_os[col_t].values[0]) if col_t else "Pedro"
+                setor = str(dados_os['Setor'].values[0]) if 'Setor' in df.columns else "Climatização"
+                status = str(dados_os['Status'].values[0]) if 'Status' in df.columns else "Fechado"
+                data_ab = str(dados_os['Data_Abertura'].values[0]) if 'Data_Abertura' in df.columns else "20/06/2026"
+
+        html_ficha = '<div class="ficha-tecnica"><h4 style="margin-top:0; color:#1E3A8A;">📋 Ficha Técnica do Ativo</h4><ul>'
+        html_ficha += f'<li><b>ID BIM:</b> {id_bim_alvo}</li>'
+        html_ficha += f'<li><b>Responsável Técnico:</b> {resp}</li>'
+        html_ficha += f'<li><b>Setor:</b> {setor}</li>'
+        html_ficha += f'<li><b>Status Atual:</b> {status}</li>'
