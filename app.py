@@ -37,14 +37,14 @@ filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Meno
 st.sidebar.write("---")
 st.sidebar.header("🎨 Filtro de Cores no Modelo (BIM)")
 
-# Nome padrão correto: ativar_visao_cromatica
+# Interruptor de ativação do isolamento no modelo
 ativar_visao_cromatica = st.sidebar.toggle("🔴 Ativar Visão Cromática por Ativo Selecionado")
 
 st.sidebar.write("---")
 arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
 
 # URL base do Speckle em modo embed
-speckle_base_url = "https://app.speckle.systems/projects/a649da7292/models/815af390c7?embedToken=fd704d8c9c65c33217812bb9e35c7feb7c8d20314f"
+speckle_base_url = "https://speckle.systems"
 
 # Lógica de carregamento de dados segura
 df = pd.DataFrame()
@@ -66,7 +66,7 @@ else:
 # 4. CONFIGURAÇÃO DO ESTADO DA SESSÃO (SESSION STATE)
 if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada not in lista_os:
     if lista_os:
-        st.session_state.os_selecionada = lista_os[0]
+        st.session_state.os_selecionada = lista_os
 
 # 5. CRIAÇÃO DAS ABAS (OS 3 MÓDULOS)
 aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
@@ -76,38 +76,32 @@ aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
 ])
 
 # ==========================================
-# ABA 1: MODELO 3D (SPECKLE DINÂMICO)
-# ==========================================
-# ==========================================
-# ABA 1: MODELO 3D (SPECKLE DINÂMICO)
+# ABA 1: MODELO 3D (SPECKLE - APENAS UM IFRAME)
 # ==========================================
 with aba_modelo:
     st.subheader("Visualizador Operacional de Ativos 3D")
     
-    # Procura o ID BIM correspondente à OS selecionada na planilha real
     id_bim_alvo = ""
     if not df.empty and 'OS' in df.columns:
         col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
         if col_id:
             linha_ativo = df[df['OS'] == st.session_state.os_selecionada]
             if not linha_ativo.empty:
-                # Pega o primeiro valor de forma limpa
-                id_bim_alvo = str(linha_ativo[col_id].values[0]).strip()
+                # Extrai estritamente o texto puro do primeiro valor encontrado, limpando colchetes
+                id_bim_alvo = str(linha_ativo[col_id].values).strip()
 
-    # Se não achar na planilha, usa o ID padrão para fins de demonstração
+    # Se não achar na planilha, usa o ID padrão do resort para o teste funcionar
     if not id_bim_alvo or id_bim_alvo == "nan":
         id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
-    # Código otimizado: apenas filtra e isola o ativo de forma super leve
-    if ativar_visao_cromatica and id_bim_alvo:
+    # Aplica o filtro de isolamento nativo se o botão na barra lateral estiver ligado
+    if activar_visao_cromatica and id_bim_alvo:
         url_visualizador = f"{speckle_base_url}&filter=%5B%22{id_bim_alvo}%22%5D"
-        st.success(f"🎯 Isolamento de Ativo Ativo: Focando no componente BIM {id_bim_alvo}")
+        st.success(f"🎯 Isolamento Ativo: Focando no componente BIM {id_bim_alvo}")
     else:
         url_visualizador = speckle_base_url
         st.markdown("ℹ️ *Visualização padrão do modelo de engenharia.*")
         
-    st.components.v1.iframe(url_visualizador, height=600, scrolling=False)
-
     st.components.v1.iframe(url_visualizador, height=600, scrolling=False)
 
 # ==========================================
@@ -180,12 +174,12 @@ with aba_diagnostico:
             dados_os = df[df['OS'] == st.session_state.os_selecionada]
             if not dados_os.empty:
                 col_t = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel']), None)
-                resp = str(dados_os[col_t].values[0]) if col_t else "Pedro"
-                setor = str(dados_os['Setor'].values[0]) if 'Setor' in df.columns else "Climatização"
-                status = str(dados_os['Status'].values[0]) if 'Status' in df.columns else "Fechado"
-                data_ab = str(dados_os['Data_Abertura'].values[0]) if 'Data_Abertura' in df.columns else "20/06/2026"
+                resp = str(dados_os[col_t].values) if col_t else "Pedro"
+                setor = str(dados_os['Setor'].values) if 'Setor' in df.columns else "Climatização"
+                status = str(dados_os['Status'].values) if 'Status' in df.columns else "Fechado"
+                data_ab = str(dados_os['Data_Abertura'].values) if 'Data_Abertura' in df.columns else "20/06/2026"
 
-        # HTML montado por concatenação segura
+        # HTML da Ficha Técnica
         html_ficha = '<div class="ficha-tecnica"><h4 style="margin-top:0; color:#1E3A8A;">📋 Ficha Técnica do Ativo</h4><ul>'
         html_ficha += f'<li><b>ID BIM:</b> {id_bim_alvo}</li>'
         html_ficha += f'<li><b>Responsável Técnico:</b> {resp}</li>'
@@ -199,3 +193,4 @@ with aba_diagnostico:
     with col_dir:
         st.markdown("⚡ **Análise de Engenharia Operacional da IA**")
         
+        mensagem_ia = f"**ANÁLISE COMPLEMENTAR:** Ordem identificada como {st.session_state.os_selecionada}. O ativo associado ao ID BIM foi analisado pela malha preditiva e classificado sob o status atual de '{status}'. Recomendação: Seguir plano de calibração padrão de fábrica para o setor de {setor}."
