@@ -70,10 +70,10 @@ else:
 
 if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada not in lista_os:
     if lista_os:
-        st.session_state.os_selecionada = lista_os[0]
+        st.session_state.os_selecionada = lista_os
 
 # -------------------------------------------------------------------------
-# EXTRAÇÃO DE VARIÁVEIS SEGURA COM VALORES DEFAULT DE CONTINGÊNCIA
+# EXTRAÇÃO DE VARIÁVEIS COM .ILOC CORRIGIDA CONTRA TEXTOS ARRAYS
 # -------------------------------------------------------------------------
 id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 resp = "Pedro"
@@ -194,7 +194,5 @@ with aba_diagnostico:
     with col_esq:
         st.markdown("🔎 **Seleção de Ativo para Auditoria**")
         
-        # FIXAÇÃO DE CHAVE ÚNICA (KEY): Destrava a renderização do bloco no motor do Streamlit
+        # LINHA UNIFICADA CORRIGIDA: Fechamento de parêntese blindado contra SyntaxErrors
         idx_selecionado = lista_os.index(st.session_state.os_selecionada) if st.session_state.os_selecionada in lista_os else 0
-        nova_os = st.selectbox(
-            "Selecione a OS para análise da IA:", 
