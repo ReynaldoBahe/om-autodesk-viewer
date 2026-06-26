@@ -31,17 +31,26 @@ st.markdown("""
 st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de Projetos</div>', unsafe_allow_html=True)
 
 # ==========================================
-# 3. BARRA LATERAL (MENU ÚNICO COM PERSISTÊNCIA COMPLETA)
+# 3. BARRA LATERAL (MENU ÚNICO COM MEMÓRIA PERSISTENTE)
 # ==========================================
 st.sidebar.header("Painel de Controle")
 
 arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha CMMS", type=["csv", "xlsx"])
 
-# INICIALIZAÇÃO DA MEMÓRIA DE SESSÃO CONTRA TELA EM BRANCO
+st.sidebar.write("---")
+st.sidebar.subheader("Filtros de Visão")
+
+filtro_status = st.sidebar.selectbox("Filtrar por Status:", ["Todos", "Aberta", "Em Andamento", "Pausada", "Fechado"])
+filtro_criticidade = st.sidebar.selectbox("Filtrar por Criticidade:", ["Todos", "Alta", "Média", "Baixa"])
+filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Menos de 24h", "Entre 2 e 7 dias", "Mais de 7 dias"])
+
+# URL base fixa do Speckle em modo embed limpo original aprovado
+speckle_base_url = "https://speckle.systems"
+
+# Inicialização da memória persistente para evitar perda de dados nas trocas de abas
 if 'df_memoria' not in st.session_state:
     st.session_state.df_memoria = pd.DataFrame()
 
-# O arquivo só é processado se um novo arquivo for inserido, mantendo a memória travada nas abas
 if arquivo_upload is not None:
     try:
         if arquivo_upload.name.endswith('.csv'):
@@ -51,18 +60,7 @@ if arquivo_upload is not None:
     except Exception as e:
         st.sidebar.error(f"Erro ao ler o arquivo: {e}")
 
-# Amarra o df principal fixo à memória estável do Streamlit
 df = st.session_state.df_memoria
-
-st.sidebar.write("---")
-st.sidebar.subheader("Filtros de Visão")
-
-filtro_status = st.sidebar.selectbox("Filtrar por Status:", ["Todos", "Aberta", "Em Andamento", "Pausada", "Fechado"])
-filtro_criticidade = st.sidebar.selectbox("Filtrar por Criticidade:", ["Todos", "Alta", "Média", "Baixa"])
-filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Menos de 24h", "Entre 2 e 7 dias", "Mais de 7 dias"])
-
-# URL base fixa do Speckle original aprovado
-speckle_base_url = "https://speckle.systems"
 
 # Mapeia dinamicamente a lista de OS disponíveis
 if not df.empty and 'OS' in df.columns:
@@ -73,7 +71,7 @@ else:
 # Configuração estável do estado da sessão para sincronização de OS
 if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada not in lista_os:
     if lista_os:
-        st.session_state.os_selecionada = lista_os[0]
+        st.session_state.os_selecionada = lista_os
 
 # -------------------------------------------------------------------------
 # EXTRAÇÃO REATIVA DE VARIÁVEIS COM BASE NA OS SELECIONADA
@@ -90,7 +88,7 @@ if not df.empty and 'OS' in df.columns:
     dados_os = df[df['OS'].astype(str) == str(st.session_state.os_selecionada)]
     if not dados_os.empty:
         col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
-        if col_id and col_id in dados_os.columns:
+        if col_id:
             id_bim_alvo = str(dados_os[col_id].values[0]).strip()
         col_t = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel']), None)
         resp = str(dados_os[col_t].values[0]) if col_t else "Pedro"
@@ -104,93 +102,93 @@ if not id_bim_alvo or id_bim_alvo == "nan":
     id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
 # ==========================================
-# 4. CRIAÇÃO DAS ABAS NATIVAS REATIVAS (ST.TABS)
+# 4. CRIAÇÃO E RENDERIZAÇÃO DAS ABAS NATIVAS SEM BLOCOS "WITH"
 # ==========================================
-aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
+aba1, aba2, aba3 = st.tabs([
     "📦 Modelo 3D (Speckle)", 
     "📊 Produtividade da Equipe", 
     "🧠 Centro de Diagnóstico (IA)"
 ])
 
-# ==========================================
-# ABA 1: MODELO 3D (RASTREABILIDADE BIM)
-# ==========================================
-with aba_modelo:
-    st.subheader("Visualizador Operacional de Ativos 3D")
-    st.info(f"🔗 Módulo BIM Sincronizado | Rastreando Ativo ID: `{id_bim_alvo}` (Selecione outra OS na aba Centro de Diagnóstico para focar)")
-    st.components.v1.iframe(speckle_base_url, height=600, scrolling=False)
+# RENDERIZAÇÃO DA ABA 1 DIRETA NA VARIÁVEL
+aba1.subheader("Visualizador Operacional de Ativos 3D")
+aba1.info(f"🔗 Módulo BIM Sincronizado | Rastreando Ativo ID: `{id_bim_alvo}` (Selecione outra OS na aba Centro de Diagnóstico para alterar o foco)")
+aba1.components.v1.iframe(speckle_base_url, height=600, scrolling=False)
 
-# ==========================================
-# ABA 2: PRODUTIVIDADE E RELATÓRIO
-# ==========================================
-with aba_produtividade:
-    if not df.empty:
-        df_filtrado = df.copy()
-        
-        # TRATAMENTO SEGURO DE TEMPO ABERTO LOCAL
-        if 'Data_Abertura' in df_filtrado.columns:
-            try:
-                df_filtrado['Data_Abertura_dt'] = pd.to_datetime(df_filtrado['Data_Abertura'], errors='coerce')
-                data_atual = pd.to_datetime('2026-06-26')
-                df_filtrado['Dias_Aberta'] = (data_atual - df_filtrado['Data_Abertura_dt']).dt.days
-                
-                if filtro_tempo == "Menos de 24h":
-                    df_filtrado = df_filtrado[df_filtrado['Dias_Aberta'] <= 1]
-                elif filtro_tempo == "Entre 2 e 7 dias":
-                    df_filtrado = df_filtrado[(df_filtrado['Dias_Aberta'] > 1) & (df_filtrado['Dias_Aberta'] <= 7)]
-                elif filtro_tempo == "Mais de 7 dias":
-                    df_filtrado = df_filtrado[df_filtrado['Dias_Aberta'] > 7]
-            except Exception as e:
-                pass
+# RENDERIZAÇÃO DA ABA 2 DIRETA NA VARIÁVEL
+if not df.empty:
+    df_filtrado = df.copy()
+    
+    # TRATAMENTO SEGURO DE TEMPO ABERTO LOCAL
+    if 'Data_Abertura' in df_filtrado.columns:
+        try:
+            df_filtrado['Data_Abertura_dt'] = pd.to_datetime(df_filtrado['Data_Abertura'], errors='coerce')
+            data_atual = pd.to_datetime('2026-06-26')
+            df_filtrado['Dias_Aberta'] = (data_atual - df_filtrado['Data_Abertura_dt']).dt.days
+            
+            if filtro_tempo == "Menos de 24h":
+                df_filtrado = df_filtrado[df_filtrado['Dias_Aberta'] <= 1]
+            elif filtro_tempo == "Entre 2 e 7 dias":
+                df_filtrado = df_filtrado[(df_filtrado['Dias_Aberta'] > 1) & (df_filtrado['Dias_Aberta'] <= 7)]
+            elif filtro_tempo == "Mais de 7 dias":
+                df_filtrado = df_filtrado[df_filtrado['Dias_Aberta'] > 7]
+        except Exception as e:
+            pass
 
-        # APLICAÇÃO DOS FILTROS ORIGINAIS DE STATUS E CRITICIDADE
-        if filtro_status != "Todos" and 'Status' in df_filtrado.columns:
-            df_filtrado = df_filtrado[df_filtrado['Status'] == filtro_status]
-        if filtro_criticidade != "Todos" and 'Criticidade' in df_filtrado.columns:
-            df_filtrado = df_filtrado[df_filtrado['Criticidade'] == filtro_criticidade]
-            
-        st.markdown('<div class="vol-title">📊 Volumetria das Ordens de Serviço</div>', unsafe_allow_html=True)
-        col_status_name = next((c for c in df.columns if c.lower() == 'status'), None)
-        status_counts = df_filtrado[col_status_name].value_counts() if col_status_name else {}
+    # APLICAÇÃO DOS FILTROS ORIGINAIS DE STATUS E CRITICIDADE
+    if filtro_status != "Todos" and 'Status' in df_filtrado.columns:
+        df_filtrado = df_filtrado[df_filtrado['Status'] == filtro_status]
+    if filtro_criticidade != "Todos" and 'Criticidade' in df_filtrado.columns:
+        df_filtrado = df_filtrado[df_filtrado['Criticidade'] == filtro_criticidade]
         
-        v_col1, v_col2, v_col3, v_col4 = st.columns(4)
-        with v_col1:
-            st.markdown('<div><span class="status-dot dot-aberta"></span>Aberta</div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="vol-number">{int(status_counts.get("Aberta", 0))}</div>', unsafe_allow_html=True)
-        with v_col2:
-            st.markdown('<div><span class="status-dot dot-atendimento"></span>Em Atendimento</div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="vol-number">{int(status_counts.get("Em Andamento", 0))}</div>', unsafe_allow_html=True)
-        with v_col3:
-            st.markdown('<div><span class="status-dot dot-pausada"></span>Pausada</div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="vol-number">{int(status_counts.get("Pausada", 0))}</div>', unsafe_allow_html=True)
-        with v_col4:
-            st.markdown('<div><span class="status-dot dot-fechado"></span>Fechado</div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="vol-number">{int(status_counts.get("Fechado", 0))}</div>', unsafe_allow_html=True)
-            
-        st.markdown("---")
-        st.subheader("Controle de Ordens de Serviço por Técnico")
-        col_tecnico = next((c for c in df_filtrado.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel', 'técnico responsável']), df_filtrado.columns)
+    aba2.markdown('<div class="vol-title">📊 Volumetria das Ordens de Serviço</div>', unsafe_allow_html=True)
+    col_status_name = next((c for c in df.columns if c.lower() == 'status'), None)
+    status_counts = df_filtrado[col_status_name].value_counts() if col_status_name else {}
+    
+    v_col1, v_col2, v_col3, v_col4 = aba2.columns(4)
+    v_col1.markdown('<div><span class="status-dot dot-aberta"></span>Aberta</div>', unsafe_allow_html=True)
+    v_col1.markdown(f'<div class="vol-number">{int(status_counts.get("Aberta", 0))}</div>', unsafe_allow_html=True)
+    v_col2.markdown('<div><span class="status-dot dot-atendimento"></span>Em Atendimento</div>', unsafe_allow_html=True)
+    v_col2.markdown(f'<div class="vol-number">{int(status_counts.get("Em Andamento", 0))}</div>', unsafe_allow_html=True)
+    v_col3.markdown('<div><span class="status-dot dot-pausada"></span>Pausada</div>', unsafe_allow_html=True)
+    v_col3.markdown(f'<div class="vol-number">{int(status_counts.get("Pausada", 0))}</div>', unsafe_allow_html=True)
+    v_col4.markdown('<div><span class="status-dot dot-fechado"></span>Fechado</div>', unsafe_allow_html=True)
+    v_col4.markdown(f'<div class="vol-number">{int(status_counts.get("Fechado", 0))}</div>', unsafe_allow_html=True)
         
-        if not df_filtrado.empty:
-            df_produtividade = df_filtrado.groupby(col_tecnico).size().reset_index(name='Ordens')
-            df_produtividade.columns = ['Técnico', 'Ordens']
-            
-            grafico_altair = alt.Chart(df_produtividade).mark_bar(color='#1f77b4').encode(
-                x=alt.X('Técnico:N', title='Profissional Técnico', sort='-y'),
-                y=alt.Y('Ordens:Q', title='Total de Ordens de Serviço'),
-                tooltip=['Técnico', 'Ordens']
-            ).properties(width='container', height=350)
-            st.altair_chart(grafico_altair, use_container_width=True)
-        else:
-            st.info("Nenhuma ordem encontrada para a combinação de filtros selecionada.")
+    aba2.markdown("---")
+    aba2.subheader("Controle de Ordens de Serviço por Técnico")
+    col_tecnico = next((c for c in df_filtrado.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel', 'técnico responsável']), df_filtrado.columns)
+    
+    if not df_filtrado.empty:
+        df_produtividade = df_filtrado.groupby(col_tecnico).size().reset_index(name='Ordens')
+        df_produtividade.columns = ['Técnico', 'Ordens']
         
-        st.markdown("---")
-        st.markdown('📋 **Relatório Sincronizado de Ordens de Serviço**')
-        st.dataframe(df_filtrado, use_container_width=True)
+        grafico_altair = alt.Chart(df_produtividade).mark_bar(color='#1f77b4').encode(
+            x=alt.X('Técnico:N', title='Profissional Técnico', sort='-y'),
+            y=alt.Y('Ordens:Q', title='Total de Ordens de Serviço'),
+            tooltip=['Técnico', 'Ordens']
+        ).properties(width='container', height=350)
+        aba2.altair_chart(grafico_altair, use_container_width=True)
     else:
-        st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
+        aba2.info("Nenhuma ordem encontrada para a combinação de filtros selecionada.")
+    
+    aba2.markdown("---")
+    aba2.markdown('📋 **Relatório Sincronizado de Ordens de Serviço**')
+    aba2.dataframe(df_filtrado, use_container_width=True)
+else:
+    aba2.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
 
-# ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO (ESTÁVEL E PERSISTENTE)
-# ==========================================
-with aba_diagnostico:
+# RENDERIZAÇÃO DA ABA 3 DIRETA NA VARIÁVEL (TOTALMENTE IMUNE A INDENTATIONERROR)
+aba3.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
+if not df.empty:
+    col_esq, col_dir = aba3.columns(2)
+    
+    col_esq.markdown("🔎 **Seleção de Ativo para Auditoria**")
+    idx_selecionado = lista_os.index(st.session_state.os_selecionada) if st.session_state.os_selecionada in lista_os else 0
+    st.session_state.os_selecionada = col_esq.selectbox("Selecione a OS para análise da IA:", lista_os, index=idx_selecionado)
+    
+    html_ficha = "<div class='ficha-tecnica'>"
+    html_ficha += "<h4 style='margin-top:0; color:#1E3A8A;'>📋 Ficha Técnica do Ativo</h4>"
+    html_ficha += "<ul>"
+    html_ficha += f"<li><b>Ordem de Serviço:</b> {st.session_state.os_selecionada}</li>"
+    html_ficha += f"<li><b>ID BIM:</b> {id_bim_alvo}</li>"
