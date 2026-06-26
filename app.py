@@ -34,7 +34,7 @@ st.sidebar.header("Configurações do Painel")
 
 # Campo para o link do Speckle
 speckle_url_input = st.sidebar.text_input(
-    "https://app.speckle.systems/projects/a649da7292/models/815af390c7?embedToken=a4a8c1dcd53b0cd8565611e886a1f8f7701bf67c79",
+    "🔗 Link do Speckle (Cliente):",
     value="https://speckle.xyz"
 )
 
