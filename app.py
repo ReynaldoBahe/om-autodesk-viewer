@@ -35,7 +35,6 @@ st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de P
 # ==========================================
 st.sidebar.header("Painel de Controle")
 
-# Campo de carregamento unificado no topo da área cinza
 arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha CMMS", type=["csv", "xlsx"])
 
 st.sidebar.write("---")
@@ -68,7 +67,7 @@ else:
 # Configuração estável do estado da sessão para sincronização de OS
 if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada not in lista_os:
     if lista_os:
-        st.session_state.os_selecionada = lista_os
+        st.session_state.os_selecionada = lista_os[0]
 
 # -------------------------------------------------------------------------
 # EXTRAÇÃO REATIVA DE VARIÁVEIS COM BASE NA OS SELECIONADA (ALIMENTA AS ABAS)
@@ -120,7 +119,6 @@ with aba_modelo:
 # ==========================================
 with aba_produtividade:
     if not df.empty:
-        # Cria uma cópia isolada para evitar que o filtro de tempo interfira nas outras abas
         df_filtrado = df.copy()
         
         # TRATAMENTO SEGURO DE TEMPO ABERTO LOCAL
@@ -164,7 +162,6 @@ with aba_produtividade:
             st.markdown(f'<div class="vol-number">{int(status_counts.get("Fechado", 0))}</div>', unsafe_allow_html=True)
             
         st.markdown("---")
-        
         st.subheader("Controle de Ordens de Serviço por Técnico")
         col_tecnico = next((c for c in df_filtrado.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel', 'técnico responsável']), df_filtrado.columns)
         
@@ -188,10 +185,12 @@ with aba_produtividade:
         st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
 
 # ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO (ESTÁVEL E COMPLETA)
+# ABA 3: CENTRO DE DIAGNÓSTICO (ESTÁVEL E REATIVA)
 # ==========================================
 with aba_diagnostico:
     st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
     col_esq, col_dir = st.columns(2)
     
     with col_esq:
+        st.markdown("🔎 **Seleção de Ativo para Auditoria**")
+        st.session_state.os_selecionada = st.selectbox(
