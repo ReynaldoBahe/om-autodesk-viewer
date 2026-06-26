@@ -31,7 +31,7 @@ st.markdown("""
 st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de Projetos</div>', unsafe_allow_html=True)
 
 # ==========================================
-# 3. BARRA LATERAL (MENU ÚNICO, FIXO E ESTÁVEL)
+# 3. BARRA LATERAL (MENU ÚNICO COM MEMÓRIA PERSISTENTE)
 # ==========================================
 st.sidebar.header("Painel de Controle")
 
@@ -47,18 +47,24 @@ filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Meno
 # URL base fixa do Speckle em modo embed limpo original aprovado
 speckle_base_url = "https://speckle.systems"
 
-# Lógica de carregamento de dados segura no backend
-df = pd.DataFrame()
+# INICIALIZAÇÃO DA MEMÓRIA PERSISTENTE DA PLANILHA
+if 'df_memoria' not in st.session_state:
+    st.session_state.df_memoria = pd.DataFrame()
+
+# Se o usuário carregar um arquivo novo, armazena no estado permanente da sessão
 if arquivo_upload is not None:
     try:
         if arquivo_upload.name.endswith('.csv'):
-            df = pd.read_csv(arquivo_upload)
+            st.session_state.df_memoria = pd.read_csv(arquivo_upload)
         else:
-            df = pd.read_excel(arquivo_upload)
+            st.session_state.df_memoria = pd.read_excel(arquivo_upload)
     except Exception as e:
-        st.error(f"Erro ao ler o arquivo: {e}")
+        st.sidebar.error(f"Erro ao ler o arquivo: {e}")
 
-# Mapeia dinamicamente a lista de OS disponíveis
+# Recupera os dados guardados de forma segura
+df = st.session_state.df_memoria
+
+# Mapeia dinamicamente a lista de OS disponíveis sem perder a referência
 if not df.empty and 'OS' in df.columns:
     lista_os = sorted(list(df['OS'].dropna().astype(str).unique()))
 else:
@@ -115,7 +121,7 @@ with aba_modelo:
     st.components.v1.iframe(speckle_base_url, height=600, scrolling=False)
 
 # ==========================================
-# ABA 2: PRODUTIVIDADE E RELATÓRIO
+# ABA 2: PRODUTIVIDADE E RELATÓRIO (BLINDADA E ISOLADA)
 # ==========================================
 with aba_produtividade:
     if not df.empty:
@@ -185,14 +191,6 @@ with aba_produtividade:
         st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
 
 # ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO (ESTÁVEL E REATIVA)
+# ABA 3: CENTRO DE DIAGNÓSTICO (ESTÁVEL E PERSISTENTE)
 # ==========================================
 with aba_diagnostico:
-    st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
-    
-    col_esq, col_dir = st.columns(2)
-    
-    with col_esq:
-        st.markdown("🔎 **Seleção de Ativo para Auditoria**")
-        
-        idx_selecionado = lista_os.index(st.session_state.os_selecionada) if st.session_state.os_selecionada in lista_os else 0
