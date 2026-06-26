@@ -137,31 +137,32 @@ with aba_produtividade:
     else:
         st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
 
-# ==========================================
-# 3. BARRA LATERAL (FILTROS OPERACIONAIS E PAINEL DE SLA)
-# ==========================================
-st.sidebar.header("Filtros de Visão")
+# Encontre esta linha exata no seu código original:
+arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
 
-filtro_status = st.sidebar.selectbox("Filtrar por Status:", ["Todos", "Aberta", "Em Andamento", "Pausada", "Fechado"])
-filtro_criticidade = st.sidebar.selectbox("Filtrar por Criticidade:", ["Todos", "Alta", "Média", "Baixa"])
-filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Menos de 24h", "Entre 2 e 7 dias", "Mais de 7 dias"])
-
-# INJEÇÃO ISOLADA DO PAINEL DE METAS DE SLA (Estilo visual limpo)
+# ------------------------------------------------================---------
+# INJEÇÃO ISOLADA DO PAINEL OPERACIONAL DE SLA (LOGO ABAIXO DO CARREGADOR)
+# -------------------------------------------------------------------------
 st.sidebar.write("---")
 st.sidebar.subheader("📈 Metas Operacionais (SLA)")
 
-# Mapeia dinamicamente os valores de meta com base no seu arquivo ativo
-if not df.empty:
+# Verifica os dados da planilha de forma segura sem duplicar variáveis ou seletores
+if 'df' in locals() and not df.empty:
     total_os = len(df)
-    # Exemplo: Calcula OS fechadas no prazo para compor o indicador de eficiência
-    os_no_prazo = len(df[df['Status'].astype(str).str.lower() == 'fechado'])
-    indice_sla = (os_no_prazo / total_os) if total_os > 0 else 0.85
+    # Mapeia dinamicamente o índice de eficiência baseado nas ordens fechadas
+    os_fechadas = len(df[df['Status'].astype(str).str.lower().str.contains('fechado|concluído|concluido', na=False)])
+    indice_sla = (os_fechadas / total_os) if total_os > 0 else 0.85
 else:
-    indice_sla = 0.88  # Valor padrão simulado caso a planilha não tenha sido carregada
+    indice_sla = 0.88  # Valor padrão simulado se nenhuma planilha estiver ativa
 
-# Exibe o indicador de performance com barra de progresso nativa na barra cinza
-st.sidebar.metric(label="Atendimento Geral do SLA", value=f"{int(indice_sla * 100)}%", delta="⚡ Dentro da Meta" if indice_sla >= 0.80 else "⚠️ Atenção")
+# Desenha as métricas e a barra de progresso direto no rodapé da barra cinza
+st.sidebar.metric(
+    label="Atendimento Geral do SLA", 
+    value=f"{int(indice_sla * 100)}%", 
+    delta="⚡ Dentro da Meta" if indice_sla >= 0.80 else "⚠️ Atenção"
+)
 st.sidebar.progress(min(float(indice_sla), 1.0))
+
 
 st.sidebar.write("---")
 arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
