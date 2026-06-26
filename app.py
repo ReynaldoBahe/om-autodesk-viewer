@@ -69,41 +69,52 @@ aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
 ])
 
 # ==========================================
-# ABA 1: MODELO 3D (RASTREABILIDADE BIM)
+# ABA 1: MODELO 3D (RASTREABILIDADE BIM POR IDS)
 # ==========================================
 with aba_modelo:
     st.subheader("Visualizador Operacional de Ativos 3D")
     
-    # 1. Recupera o ID do Ativo correspondente à OS selecionada de forma segura
+    # 1. Filtra a planilha no Python usando as seleções da barra lateral
+    df_modelo_filtrado = df.copy()
+    if not df_modelo_filtrado.empty:
+        if filtro_status != "Todos" and 'Status' in df_modelo_filtrado.columns:
+            df_modelo_filtrado = df_modelo_filtrado[df_modelo_filtrado['Status'] == filtro_status]
+        if filtro_criticidade != "Todos" and 'Criticidade' in df_modelo_filtrado.columns:
+            df_modelo_filtrado = df_modelo_filtrado[df_modelo_filtrado['Criticidade'] == filtro_criticidade]
+
+    # 2. Coleta os IDs BIM reais resultantes da filtragem acima
+    ids_filtrados = []
+    if not df_modelo_filtrado.empty:
+        col_id = next((c for c in df_modelo_filtrado.columns if c.upper() == 'ID'), None)
+        if col_id:
+            ids_filtrados = df_modelo_filtrado[col_id].dropna().astype(str).tolist()
+
+    # 3. Identifica o ID do ativo isolado vindo do Centro de Diagnóstico
     id_bim_alvo = ""
     if not df.empty and 'OS' in df.columns:
-        col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
-        if col_id and col_id in df.columns:
+        col_id_global = next((c for c in df.columns if c.upper() == 'ID'), None)
+        if col_id_global:
             linha_ativo = df[df['OS'] == st.session_state.os_selecionada]
             if not linha_ativo.empty:
-                id_bim_alvo = str(linha_ativo[col_id].iloc[0]).strip()
+                id_bim_alvo = str(linha_ativo[col_id_global].values[0]).strip()
 
     if not id_bim_alvo or id_bim_alvo == "nan":
         id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
-    # Exibição elegante da inteligência de cruzamento de dados
     st.info(f"🔗 Módulo BIM Sincronizado | Rastreando Ativo ID: `{id_bim_alvo}` (Selecionado no Centro de Diagnóstico)")
     
-    # 2. CONSTRUÇÃO DA URL DINÂMICA COM REGRAS DE FILTRAGEM CORRIGIDAS
+    # 4. CONSTRUÇÃO DA URL DINÂMICA USANDO OS IDS DA PLANILHA
     speckle_url_interativa = speckle_base_url
     
-    # Injeção de parâmetros de filtro baseados na árvore de propriedades do Revit
-    if filtro_status != "Todos":
-        speckle_url_interativa += f'&filter=[{{"property":"parameters.Status","operator":"=","value":"{filtro_status}"}}]'
+    # Se algum filtro estiver ativo na barra lateral, isola o lote de IDs correspondentes no 3D
+    if ids_filtrados and (filtro_status != "Todos" or filtro_criticidade != "Todos"):
+        string_ids = ",".join(ids_filtrados)
+        speckle_url_interativa += f"&overlayObjIds={string_ids}"
+    elif id_bim_alvo:
+        # Se nenhum filtro em lote estiver ativo, foca e seleciona apenas o ativo da OS atual
+        speckle_url_interativa += f"&overlayObjIds={id_bim_alvo}&selection={id_bim_alvo}"
     
-    if filtro_criticidade != "Todos":
-        speckle_url_interativa += f'&cby=parameters.Criticidade'
-    
-    # Força o realce visual (overlay) e o foco de seleção nativa (selection) no ID alvo
-    if id_bim_alvo:
-        speckle_url_interativa += f'&overlayObjIds={id_bim_alvo}&selection={id_bim_alvo}'
-    
-    # 3. Renderiza o visualizador com as propriedades corrigidas
+    # 5. Renderiza o visualizador atualizado com os elementos isolados
     st.components.v1.iframe(speckle_url_interativa, height=600, scrolling=False)
 
 # ==========================================
