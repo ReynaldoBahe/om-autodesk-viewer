@@ -165,7 +165,6 @@ with aba_diagnostico:
             index=lista_os.index(st.session_state.os_selecionada) if st.session_state.os_selecionada in lista_os else 0
         )
         
-        # Reescriptura segura em linha contínua para blindar de erros na nuvem
         html_ficha = "<div class='ficha-tecnica'>"
         html_ficha += "<h4 style='margin-top:0; color:#1E3A8A;'>📋 Ficha Técnica do Ativo</h4>"
         html_ficha += "<ul>"
@@ -194,3 +193,5 @@ with aba_diagnostico:
         
         grafico_ia = alt.Chart(df_ia).mark_bar(color='#1E3A8A', size=120).encode(
             x=alt.X('Indicador:N', title=''),
+            y=alt.Y('Valor:Q', title='Progresso Operacional', scale=alt.Scale(domain=[0, 1.2])),
+            tooltip=['Indicador', 'Valor']
