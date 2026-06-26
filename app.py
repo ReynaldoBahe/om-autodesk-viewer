@@ -2,6 +2,32 @@ import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
 import altair as alt
+# 🔐 CREDENCIAIS OPERACIONAIS AUTODESK APS
+CLIENT_ID = "X1BzZjM5NSSJAYUGlCkY6FFoFCQv1GXIzZDY6Y6TwKBRAVKFT"
+CLIENT_SECRET = "d2q3uGtYPYKBjiqfFpFd5OWArAhcoBuWtZwGi0fiY25TTyTjmXPConmmOFzSMo4X"
+URN_MODELO = "dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6YTM2MHZpZXdlci1wcm90ZWN0ZWQvdDE3ODE1Nzk3NDNfOGI0ZGU3MzMtNmU1Ny00Y2IwLWIyMzQtMWYzNzYyYjkwMTY5LnJ2dA"
+
+import requests
+
+# Função oficial para obter o Token v2 da Autodesk
+@st.cache_data(ttl=3500)
+def obter_token_autodesk(client_id, client_secret):
+    url_auth = "https://autodesk.com"
+    payload = {
+        "grant_type": "client_credentials",
+        "scope": "viewables:read",
+        "client_id": client_id,
+        "client_secret": client_secret
+    }
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}
+    try:
+        response = requests.post(url_auth, data=payload, headers=headers)
+        if response.status_code == 200:
+            return response.json().get("access_token")
+        return None
+    except:
+        return None
+
 
 # 1. Configuração Básica da Página
 st.set_page_config(page_title="Portal de Manutenção e Ativos 3D", layout="wide")
