@@ -190,7 +190,9 @@ with aba_produtividade:
 with aba_diagnostico:
     st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
     
-    # Criamos a divisão em colunas de forma limpa e direta na aba sem aninhamentos complexos
     col_esq, col_dir = st.columns(2)
     
-    # Preenchimento direto na coluna da esquerda
+    with col_esq:
+        st.markdown("🔎 **Seleção de Ativo para Auditoria**")
+        
+        idx_selecionado = lista_os.index(st.session_state.os_selecionada) if st.session_state.os_selecionada in lista_os else 0
