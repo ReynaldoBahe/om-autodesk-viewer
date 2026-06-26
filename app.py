@@ -96,7 +96,8 @@ with aba_modelo:
 
     # Aplica o filtro de isolamento e cor vermelha se o toggle estiver ligado
     if ativar_visao_cromatica and id_bim_alvo:
-        url_visualizador = f"{speckle_base_url}&filter=%5B%22{id_bim_alvo}%22%5D&overlay=%5B%7B%22id%22%3A%22{id_bim_alvo}%22%2C%22color%22%3A%22%23FF0000%22%7D%5D"
+                url_visualizador = f"{speckle_base_url}&filter=%5B%22{id_bim_alvo}%22%5D&overlay=%5B%7B%22id%22%3A%22{id_bim_alvo}%22%2C%22color%22%3A%22%23FF0000%22%7D%5D"
+
         st.success(f"🎯 Visão Cromática Ativa: Filtrando e pintando o Ativo BIM {id_bim_alvo}")
     else:
         url_visualizador = speckle_base_url
