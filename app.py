@@ -86,9 +86,10 @@ with aba_modelo:
     if not df.empty and 'OS' in df.columns:
         col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
         if col_id:
-            linha_ativo = df[df['OS'] == st.session_state.os_selecionada]
+                        linha_ativo = df[df['OS'] == st.session_state.os_selecionada]
             if not linha_ativo.empty:
-                id_bim_alvo = str(linha_ativo[col_id].values).strip()
+                id_bim_alvo = str(linha_ativo[col_id].iloc[0]).strip()
+
 
     # Se não achar na planilha, usa o ID padrão para fins de demonstração
     if not id_bim_alvo:
