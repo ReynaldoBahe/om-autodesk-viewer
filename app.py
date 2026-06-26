@@ -88,28 +88,23 @@ descricao_falha = "Nenhuma descrição disponível."
 criticidade_ativo = "Média"
 
 if not df.empty and 'OS' in df.columns:
-    # Captura a linha exata da Ordem de Serviço selecionada na Aba 3
     dados_os = df[df['OS'].astype(str) == str(st.session_state.os_selecionada)]
     
     if not dados_os.empty:
-        # Extrai dinamicamente o ID BIM
         col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
         if col_id:
             id_bim_alvo = str(dados_os[col_id].values[0]).strip()
             
-        # Mapeia dinamicamente o Técnico Responsável
         col_t = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel']), None)
         if col_t:
             resp = str(dados_os[col_t].values[0])
             
-        # Coleta os demais campos mapeados da planilha real
         setor = str(dados_os['Setor'].values[0]) if 'Setor' in df.columns else "Geral"
         status = str(dados_os['Status'].values[0]) if 'Status' in df.columns else "Pendente"
         data_ab = str(dados_os['Data_Abertura'].values[0]) if 'Data_Abertura' in df.columns else "N/A"
         descricao_falha = str(dados_os['Descrição'].values[0]) if 'Descrição' in df.columns else "Sem descrição registrada."
         criticidade_ativo = str(dados_os['Criticidade'].values[0]) if 'Criticidade' in df.columns else "Média"
 
-# Evita strings nulas ou indesejadas na URL do Speckle
 if not id_bim_alvo or id_bim_alvo == "nan":
     id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
@@ -177,14 +172,12 @@ with aba_diagnostico:
     with col_esq:
         st.markdown("🔎 **Seleção de Ativo para Auditoria**")
         
-        # Selectbox escuta e atualiza a sessão imediatamente
         st.session_state.os_selecionada = st.selectbox(
             "Selecione a OS para análise da IA:", 
             lista_os, 
             index=lista_os.index(st.session_state.os_selecionada) if st.session_state.os_selecionada in lista_os else 0
         )
         
-        # Montagem dinâmica e impecável da Ficha Técnica com dados reais da planilha
         html_ficha = f"""
         <div class="ficha-tecnica">
             <h4 style="margin-top:0; color:#1E3A8A;">📋 Ficha Técnica do Ativo</h4>
@@ -204,3 +197,9 @@ with aba_diagnostico:
         st.markdown(html_ficha, unsafe_allow_html=True)
         
     with col_dir:
+        st.markdown("⚡ **Análise de Engenharia Operacional da IA**")
+        
+        mensagem_ia = f"**ANÁLISE DE FALHAS PREDITIVA:** A Ordem de Serviço **{st.session_state.os_selecionada}** associada ao Ativo ID `{id_bim_alvo}` foi mapeada sob criticidade **'{criticidade_ativo}'**. Recomenda-se auditoria imediata no subsistema de **{setor}** utilizando os manuais técnicos."
+        st.success(mensagem_ia)
+        
+        valor_grafico = 1.0 if status == "Fechado" else 0.5
