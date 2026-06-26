@@ -37,7 +37,7 @@ filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Meno
 st.sidebar.write("---")
 st.sidebar.header("🎨 Filtro de Cores no Modelo (BIM)")
 
-# Interruptor de ativação do isolamento no modelo
+# Nome padrão correto e unificado: ativar_visao_cromatica
 ativar_visao_cromatica = st.sidebar.toggle("🔴 Ativar Visão Cromática por Ativo Selecionado")
 
 st.sidebar.write("---")
@@ -66,7 +66,7 @@ else:
 # 4. CONFIGURAÇÃO DO ESTADO DA SESSÃO (SESSION STATE)
 if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada not in lista_os:
     if lista_os:
-        st.session_state.os_selecionada = lista_os
+        st.session_state.os_selecionada = lista_os[0]
 
 # 5. CRIAÇÃO DAS ABAS (OS 3 MÓDULOS)
 aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
@@ -94,8 +94,8 @@ with aba_modelo:
     if not id_bim_alvo or id_bim_alvo == "nan" or "Array" in id_bim_alvo:
         id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
-    # Aplica o filtro de isolamento nativo se o botão na barra lateral estiver ligado
-    if activar_visao_cromatica and id_bim_alvo:
+    # Verificação corrigida e unificada com 'ativar_visao_cromatica'
+    if ativar_visao_cromatica and id_bim_alvo:
         url_visualizador = f"{speckle_base_url}&filter=%5B%22{id_bim_alvo}%22%5D"
         st.success(f"🎯 Isolamento Ativo: Focando no componente BIM {id_bim_alvo}")
     else:
