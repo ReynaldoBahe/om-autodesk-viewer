@@ -8,9 +8,10 @@ import requests
 st.set_page_config(page_title="Visualizador Operacional de Ativos 3D", layout="wide")
 
 # 🔐 INSERIR CREDENCIAIS AUTODESK APS (Troque pelos seus códigos)
-CLIENT_ID = "SEU_CLIENT_ID_AQUI"
-CLIENT_SECRET = "SEU_CLIENT_SECRET_AQUI"
-URN_MODELO = "dXJuOmFmY2..." # Lembra de pegar o código longo da URL do visualizador antes do "?"
+CLIENT_ID = "X1Bz2JM95SJAyOglcRY6FFOFcQViGxI3ZbYdY6TWkBRAVKfT"
+CLIENT_SECRET = "d2q3uGTyPYKBjiqfFpFd5OWArAhco0uWtZWGi0fiY25TTyTjmXPConmmOFzSMo4X"
+URN_MODELO = "dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6YTM2MHZpZXdlci1wcm90ZWN0ZWQvdDE3ODE1Nzk3NDNfOGI0ZGU3MzMtNmU1Ny00Y2IwLWIyMzQtMWYzNzYyYjkwMTY5LnJ2dA
+" # Lembra de pegar o código longo da URL do visualizador antes do "?"
 
 # Função cacheada para obter o Token de Acesso da Autodesk
 @st.cache_data(ttl=3500)
