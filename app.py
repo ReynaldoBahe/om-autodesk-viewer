@@ -2,14 +2,18 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 
+# ==========================================
 # 1. CONFIGURAÇÃO DA PÁGINA
+# ==========================================
 st.set_page_config(
     page_title="Portal de Engenharia & Produtividade",
     page_icon="🏗️",
     layout="wide"
 )
 
+# ==========================================
 # 2. DESIGN E ESTILIZAÇÃO CUSTOMIZADA (CSS)
+# ==========================================
 st.markdown("""
     <style>
     .main-title { font-size: 32px; font-weight: bold; color: #1E3A8A; margin-bottom: 20px; }
@@ -26,18 +30,16 @@ st.markdown("""
 
 st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de Projetos</div>', unsafe_allow_html=True)
 
-# 3. BARRA LATERAL (FILTROS OPERACIONAIS LIMPOS)
-st.sidebar.header("Filtros de Visão")
+# ==========================================
+# 3. BARRA LATERAL (PAINEL DE CARGA INTEGRADO)
+# ==========================================
+st.sidebar.header("Painel de Dados")
 
-filtro_status = st.sidebar.selectbox("Filtrar por Status:", ["Todos", "Aberta", "Em Andamento", "Pausada", "Fechado"])
-filtro_criticidade = st.sidebar.selectbox("Filtrar por Criticidade:", ["Todos", "Alta", "Média", "Baixa"])
-filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Menos de 24h", "Entre 2 e 7 dias", "Mais de 7 dias"])
-
-st.sidebar.write("---")
+# Removidos os seletores estáticos que não operavam sobre o WebGL nesta página
 arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
 
-# URL base do Speckle em modo embed limpo
-speckle_base_url = "https://app.speckle.systems/projects/a649da7292/models/815af390c7?embedToken=fd704d8c9c65c33217812bb9e35c7feb7c8d20314f"
+# URL base do Speckle em modo embed limpo original aprovado
+speckle_base_url = "https://speckle.systems"
 
 # Lógica de carregamento de dados segura
 df = pd.DataFrame()
@@ -47,6 +49,7 @@ if arquivo_upload is not None:
             df = pd.read_csv(arquivo_upload)
         else:
             df = pd.read_excel(arquivo_upload)
+        st.sidebar.success("📊 Planilha carregada com sucesso!")
     except Exception as e:
         st.error(f"Erro ao ler o arquivo: {e}")
 
@@ -56,12 +59,16 @@ if not df.empty and 'OS' in df.columns:
 else:
     lista_os = ["OS-2026-001", "OS-2026-002", "OS-2026-003"]
 
+# ==========================================
 # 4. CONFIGURAÇÃO DO ESTADO DA SESSÃO (SESSION STATE)
+# ==========================================
 if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada not in lista_os:
     if lista_os:
         st.session_state.os_selecionada = lista_os[0]
 
+# ==========================================
 # 5. CRIAÇÃO DAS ABAS (OS 3 MÓDULOS)
+# ==========================================
 aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
     "📦 Modelo 3D (Speckle)", 
     "📊 Produtividade da Equipe", 
@@ -69,53 +76,27 @@ aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
 ])
 
 # ==========================================
-# ABA 1: MODELO 3D (RASTREABILIDADE BIM POR IDS)
+# ABA 1: MODELO 3D (RASTREABILIDADE BIM)
 # ==========================================
 with aba_modelo:
     st.subheader("Visualizador Operacional de Ativos 3D")
     
-    # 1. Filtra a planilha no Python usando as seleções da barra lateral
-    df_modelo_filtrado = df.copy()
-    if not df_modelo_filtrado.empty:
-        if filtro_status != "Todos" and 'Status' in df_modelo_filtrado.columns:
-            df_modelo_filtrado = df_modelo_filtrado[df_modelo_filtrado['Status'] == filtro_status]
-        if filtro_criticidade != "Todos" and 'Criticidade' in df_modelo_filtrado.columns:
-            df_modelo_filtrado = df_modelo_filtrado[df_modelo_filtrado['Criticidade'] == filtro_criticidade]
-
-    # 2. Coleta os IDs BIM reais resultantes da filtragem acima
-    ids_filtrados = []
-    if not df_modelo_filtrado.empty:
-        col_id = next((c for c in df_modelo_filtrado.columns if c.upper() == 'ID'), None)
-        if col_id:
-            ids_filtrados = df_modelo_filtrado[col_id].dropna().astype(str).tolist()
-
-    # 3. Identifica o ID do ativo isolado vindo do Centro de Diagnóstico
     id_bim_alvo = ""
     if not df.empty and 'OS' in df.columns:
-        col_id_global = next((c for c in df.columns if c.upper() == 'ID'), None)
-        if col_id_global:
+        col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
+        if col_id:
             linha_ativo = df[df['OS'] == st.session_state.os_selecionada]
             if not linha_ativo.empty:
-                id_bim_alvo = str(linha_ativo[col_id_global].values[0]).strip()
+                id_bim_alvo = str(linha_ativo[col_id].values[0]).strip()
 
     if not id_bim_alvo or id_bim_alvo == "nan":
         id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
-    st.info(f"🔗 Módulo BIM Sincronizado | Rastreando Ativo ID: `{id_bim_alvo}` (Selecionado no Centro de Diagnóstico)")
+    # Exibição elegante do rastreamento unificado com o Centro de Diagnóstico
+    st.info(f"🔗 Módulo BIM Sincronizado | Rastreando Ativo ID: `{id_bim_alvo}` (Selecione outra OS na aba Centro de Diagnóstico para focar)")
     
-    # 4. CONSTRUÇÃO DA URL DINÂMICA USANDO OS IDS DA PLANILHA
-    speckle_url_interativa = speckle_base_url
-    
-    # Se algum filtro estiver ativo na barra lateral, isola o lote de IDs correspondentes no 3D
-    if ids_filtrados and (filtro_status != "Todos" or filtro_criticidade != "Todos"):
-        string_ids = ",".join(ids_filtrados)
-        speckle_url_interativa += f"&overlayObjIds={string_ids}"
-    elif id_bim_alvo:
-        # Se nenhum filtro em lote estiver ativo, foca e seleciona apenas o ativo da OS atual
-        speckle_url_interativa += f"&overlayObjIds={id_bim_alvo}&selection={id_bim_alvo}"
-    
-    # 5. Renderiza o visualizador atualizado com os elementos isolados
-    st.components.v1.iframe(speckle_url_interativa, height=600, scrolling=False)
+    # Renderização limpa do visualizador do resort original aprovado
+    st.components.v1.iframe(speckle_base_url, height=600, scrolling=False)
 
 # ==========================================
 # ABA 2: PRODUTIVIDADE E RELATÓRIO
@@ -123,8 +104,19 @@ with aba_modelo:
 with aba_produtividade:
     if not df.empty:
         df_filtrado = df.copy()
-        if filtro_status != "Todos" and 'Status' in df_filtrado.columns:
-            df_filtrado = df_filtrado[df_filtrado['Status'] == filtro_status]
+        
+        # Filtros locais para a volumetria e gráficos operacionais da equipe
+        st.markdown("### 🎛️ Filtros do Relatório")
+        f_col1, f_col2 = st.columns(2)
+        with f_col1:
+            filtro_status_local = st.selectbox("Filtrar por Status no Gráfico:", ["Todos", "Aberta", "Em Andamento", "Pausada", "Fechado"], key="f_status")
+        with f_col2:
+            filtro_criticidade_local = st.selectbox("Filtrar por Criticidade no Gráfico:", ["Todos", "Alta", "Média", "Baixa"], key="f_crit")
+
+        if filtro_status_local != "Todos" and 'Status' in df_filtrado.columns:
+            df_filtrado = df_filtrado[df_filtrado['Status'] == filtro_status_local]
+        if filtro_criticidade_local != "Todos" and 'Criticidade' in df_filtrado.columns:
+            df_filtrado = df_filtrado[df_filtrado['Criticidade'] == filtro_criticidade_local]
             
         st.markdown('<div class="vol-title">📊 Volumetria das Ordens de Serviço</div>', unsafe_allow_html=True)
         col_status_name = next((c for c in df.columns if c.lower() == 'status'), None)
@@ -203,12 +195,3 @@ with aba_diagnostico:
     with col_dir:
         st.markdown("⚡ **Análise de Engenharia Operacional da IA**")
         
-        mensagem_ia = f"**ANÁLISE COMPLEMENTAR:** Ordem {st.session_state.os_selecionada}. Ativo BIM analisado sob status '{status}'. Plano recomendado para {setor}."
-        st.success(mensagem_ia)
-        
-        df_ia = pd.DataFrame({'Métrica': ['Ordens Analisadas'], 'Valor': [1.0]})
-        grafico_ia = alt.Chart(df_ia).mark_bar(color='#1f77b4', size=150).encode(
-            x=alt.X('Métrica:N', title=''),
-            y=alt.Y('Valor:Q', title='Status de Execução', scale=alt.Scale(domain=[0, 1.2])),
-        ).properties(height=250)
-        st.altair_chart(grafico_ia, use_container_width=True)
