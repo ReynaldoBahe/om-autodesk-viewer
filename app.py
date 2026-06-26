@@ -37,7 +37,7 @@ filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Meno
 st.sidebar.write("---")
 st.sidebar.header("🎨 Filtro de Cores no Modelo (BIM)")
 
-# Variável corrigida de forma idêntica em todo o script
+# Variável padronizada com 'i' em todo o arquivo
 ativar_visao_cromatica = st.sidebar.toggle("🔴 Ativar Visão Cromática por Ativo Selecionado")
 
 st.sidebar.write("---")
@@ -66,7 +66,7 @@ else:
 # 4. CONFIGURAÇÃO DO ESTADO DA SESSÃO (SESSION STATE)
 if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada not in lista_os:
     if lista_os:
-        st.session_state.os_selecionada = lista_os[0]
+        st.session_state.os_selecionada = lista_os
 
 # 5. CRIAÇÃO DAS ABAS (OS 3 MÓDULOS)
 aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
@@ -88,14 +88,14 @@ with aba_modelo:
         if col_id:
             linha_ativo = df[df['OS'] == st.session_state.os_selecionada]
             if not linha_ativo.empty:
-                id_bim_alvo = str(linha_ativo[col_id].values[0]).strip()
+                id_bim_alvo = str(linha_ativo[col_id].values).strip()
 
     # Se não achar na planilha, usa o ID padrão para fins de demonstração
     if not id_bim_alvo:
         id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
-    # Aplica o filtro de isolamento e cor vermelha se o toggle estiver ligado
-    if activar_visao_cromatica and id_bim_alvo:
+    # Corrigido aqui para usar 'ativar_visao_cromatica' com 'i' igual à linha 40
+    if ativar_visao_cromatica and id_bim_alvo:
         url_visualizador = f"{speckle_base_url}&filter=%5B%22{id_bim_alvo}%22%5D&overlay=%5B%7B%22id%22%3A%22{id_bim_alvo}%22%2C%22color%22%3A%22%23FF0000%22%7D%5D"
         st.success(f"🎯 Visão Cromática Ativa: Filtrando e pintando o Ativo BIM {id_bim_alvo}")
     else:
@@ -174,10 +174,10 @@ with aba_diagnostico:
             dados_os = df[df['OS'] == st.session_state.os_selecionada]
             if not dados_os.empty:
                 col_t = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel']), None)
-                resp = str(dados_os[col_t].values[0]) if col_t else "Pedro"
-                setor = str(dados_os['Setor'].values[0]) if 'Setor' in df.columns else "Climatização"
-                status = str(dados_os['Status'].values[0]) if 'Status' in df.columns else "Fechado"
-                data_ab = str(dados_os['Data_Abertura'].values[0]) if 'Data_Abertura' in df.columns else "20/06/2026"
+                resp = str(dados_os[col_t].values) if col_t else "Pedro"
+                setor = str(dados_os['Setor'].values) if 'Setor' in df.columns else "Climatização"
+                status = str(dados_os['Status'].values) if 'Status' in df.columns else "Fechado"
+                data_ab = str(dados_os['Data_Abertura'].values) if 'Data_Abertura' in df.columns else "20/06/2026"
 
         # HTML montado por concatenação segura
         html_ficha = '<div class="ficha-tecnica"><h4 style="margin-top:0; color:#1E3A8A;">📋 Ficha Técnica do Ativo</h4><ul>'
