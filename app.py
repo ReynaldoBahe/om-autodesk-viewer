@@ -29,81 +29,43 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de Projetos</div>', unsafe_allow_html=True)
-
 # ==========================================
-# 3. BARRA LATERAL (FILTROS OPERACIONAIS E DE SISTEMAS)
+# ABA 1: MODELO 3D (INTERAÇÃO COM FILTROS LATERAIS)
 # ==========================================
-st.sidebar.header("Filtros de Visão")
+with aba_modelo:
+    st.subheader("Visualizador Operacional de Ativos 3D")
+    
+    # 1. Recupera o ID do Ativo correspondente à OS selecionada
+    id_bim_alvo = ""
+    if not df.empty and 'OS' in df.columns:
+        col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
+        if col_id:
+            linha_ativo = df[df['OS'] == st.session_state.os_selecionada]
+            if not linha_ativo.empty:
+                id_bim_alvo = str(linha_ativo[col_id].values[0]).strip()
 
-filtro_status = st.sidebar.selectbox("Filtrar por Status:", ["Todos", "Aberta", "Em Andamento", "Pausada", "Fechado"])
-filtro_criticidade = st.sidebar.selectbox("Filtrar por Criticidade:", ["Todos", "Alta", "Média", "Baixa"])
-filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Menos de 24h", "Entre 2 e 7 dias", "Mais de 7 dias"])
+    if not id_bim_alvo or id_bim_alvo == "nan":
+        id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
-st.sidebar.write("---")
-st.sidebar.subheader("📐 Modelos de Vistas (Sistemas)")
-
-filtro_sistema = st.sidebar.selectbox(
-    "Selecione o Sistema do Resort:",
-    ["Vista Geral (Completo)", "Climatização (HVAC)", "Hidrossanitário", "Elétrica / Quadros", "Combate a Incêndio (PPCI)"]
-)
-
-# Mapeamento técnico de filtros para o Speckle
-sistema_mapeado = {
-    "Vista Geral (Completo)": "Completo",
-    "Climatização (HVAC)": "Climatização",
-    "Hidrossanitário": "Hidrossanitário",
-    "Elétrica / Quadros": "Elétrica",
-    "Combate a Incêndio (PPCI)": "PPCI"
-}[filtro_sistema]
-
-st.sidebar.write("---")
-arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
-
-# URL base fixa do Speckle para renderização
-speckle_base_url = "https://speckle.systems"
-
-# Lógica de carregamento de dados estruturada
-df = pd.DataFrame()
-if arquivo_upload is not None:
-    try:
-        if arquivo_upload.name.endswith('.csv'):
-            df = pd.read_csv(arquivo_upload)
-        else:
-            df = pd.read_excel(arquivo_upload)
-        st.sidebar.success("📊 Planilha processada com sucesso!")
-    except Exception as e:
-        st.error(f"Erro ao ler o arquivo: {e}")
-
-# Mapeamento flexível de cabeçalhos de coluna
-mapeamento_colunas = {
-    "OS": "OS",
-    "ID": "ID",
-    "Status": "Status",
-    "Criticidade": "Criticidade",
-    "Setor": "Setor",
-    "Tecnico": "Técnico"
-}
-
-if not df.empty:
-    for col in list(df.columns):
-        c_upper = col.upper().strip()
-        if c_upper in ["OS", "ORDEM DE SERVIÇO", "NUMERO_OS"]:
-            mapeamento_colunas["OS"] = col
-        elif c_upper in ["ID", "ID BIM", "ID_BIM", "ELEMENTID", "CODIGO"]:
-            mapeamento_colunas["ID"] = col
-        elif c_upper in ["STATUS", "SITUACAO", "SITUAÇÃO"]:
-            mapeamento_colunas["Status"] = col
-        elif c_upper in ["CRITICIDADE", "GRAVIDADE", "RISCO"]:
-            mapeamento_colunas["Criticidade"] = col
-        elif c_upper in ["SETOR", "SUBSISTEMA", "DISCIPLINA", "AREA", "ÁREA"]:
-            mapeamento_colunas["Setor"] = col
-        elif c_upper in ["TÉCNICO", "TECNICO", "RESPONSÁVEL", "RESPONSAVEL", "OPERADOR"]:
-            mapeamento_colunas["Tecnico"] = col
-
-if not df.empty and mapeamento_colunas["OS"] in df.columns:
-    lista_os = sorted(list(df[mapeamento_colunas["OS"]].dropna().unique()))
-else:
-    lista_os = ["OS-2026-001", "OS-2026-002", "OS-2026-003"]
+    st.info(f"🔗 Módulo BIM Sincronizado | Rastreando Ativo ID: `{id_bim_alvo}` (Selecionado no Centro de Diagnóstico)")
+    
+    # 2. CONSTRUÇÃO DA URL DINÂMICA COM REGRAS DE FILTRAGEM
+    speckle_url_interativa = speckle_base_url
+    
+    # Regra 1: Filtragem por Status da Barra Lateral (Isola os objetos no canvas)
+    if filtro_status != "Todos":
+        speckle_url_interativa += f'&filter=[{{"property":"status","operator":"=","value":"{filtro_status}"}}]'
+    
+    # Regra 2: Realce por Criticidade da Barra Lateral (Aplica mapeamento de cores)
+    if filtro_criticidade != "Todos":
+        speckle_url_interativa += f'&cby=criticidade'
+    
+    # Regra 3: Foca e destaca a câmera do visualizador diretamente no ativo em auditoria
+    if id_bim_alvo:
+        speckle_url_interativa += f'&overlayObjIds={id_bim_alvo}'
+    
+    # Renderiza o visualizador com a URL interativa criada
+    st.components.v1.iframe(speckle_url_interativa, height=600, scrolling=False)
 
 # ==========================================
 # 4. CONFIGURAÇÃO DO ESTADO DA SESSÃO (SESSION STATE)
