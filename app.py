@@ -35,6 +35,7 @@ st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de P
 # ==========================================
 st.sidebar.header("Painel de Controle")
 
+# Campo de carregamento unificado no topo da área cinza
 arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha CMMS", type=["csv", "xlsx"])
 
 st.sidebar.write("---")
@@ -119,6 +120,7 @@ with aba_modelo:
 # ==========================================
 with aba_produtividade:
     if not df.empty:
+        # Cria uma cópia isolada para evitar que o filtro de tempo interfira nas outras abas
         df_filtrado = df.copy()
         
         # TRATAMENTO SEGURO DE TEMPO ABERTO LOCAL
@@ -192,5 +194,3 @@ with aba_diagnostico:
     col_esq, col_dir = st.columns(2)
     
     with col_esq:
-        st.markdown("🔎 **Seleção de Ativo para Auditoria**")
-        st.session_state.os_selecionada = st.selectbox(
