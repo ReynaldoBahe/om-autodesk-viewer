@@ -2,14 +2,18 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 
+# ==========================================
 # 1. CONFIGURAÇÃO DA PÁGINA
+# ==========================================
 st.set_page_config(
     page_title="Portal de Engenharia & Produtividade",
     page_icon="🏗️",
     layout="wide"
 )
 
+# ==========================================
 # 2. DESIGN E ESTILIZAÇÃO CUSTOMIZADA (CSS)
+# ==========================================
 st.markdown("""
     <style>
     .main-title { font-size: 32px; font-weight: bold; color: #1E3A8A; margin-bottom: 20px; }
@@ -26,7 +30,9 @@ st.markdown("""
 
 st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de Projetos</div>', unsafe_allow_html=True)
 
-# 3. BARRA LATERAL (FILTROS OPERACIONAIS LIMPOS)
+# ==========================================
+# 3. BARRA LATERAL (FILTROS OPERACIONAIS E DE SISTEMAS)
+# ==========================================
 st.sidebar.header("Filtros de Visão")
 
 filtro_status = st.sidebar.selectbox("Filtrar por Status:", ["Todos", "Aberta", "Em Andamento", "Pausada", "Fechado"])
@@ -34,12 +40,29 @@ filtro_criticidade = st.sidebar.selectbox("Filtrar por Criticidade:", ["Todos", 
 filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Menos de 24h", "Entre 2 e 7 dias", "Mais de 7 dias"])
 
 st.sidebar.write("---")
+st.sidebar.subheader("📐 Modelos de Vistas (Sistemas)")
+
+filtro_sistema = st.sidebar.selectbox(
+    "Selecione o Sistema do Resort:",
+    ["Vista Geral (Completo)", "Climatização (HVAC)", "Hidrossanitário", "Elétrica / Quadros", "Combate a Incêndio (PPCI)"]
+)
+
+# Mapeamento técnico de filtros para o Speckle
+sistema_mapeado = {
+    "Vista Geral (Completo)": "Completo",
+    "Climatização (HVAC)": "Climatização",
+    "Hidrossanitário": "Hidrossanitário",
+    "Elétrica / Quadros": "Elétrica",
+    "Combate a Incêndio (PPCI)": "PPCI"
+}[filtro_sistema]
+
+st.sidebar.write("---")
 arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
 
-# URL base do Speckle em modo embed limpo
-speckle_base_url = "https://app.speckle.systems/projects/a649da7292/models/815af390c7?embedToken=fd704d8c9c65c33217812bb9e35c7feb7c8d20314f"
+# URL base fixa do Speckle para renderização
+speckle_base_url = "https://speckle.systems"
 
-# Lógica de carregamento de dados segura
+# Lógica de carregamento de dados estruturada
 df = pd.DataFrame()
 if arquivo_upload is not None:
     try:
@@ -47,21 +70,51 @@ if arquivo_upload is not None:
             df = pd.read_csv(arquivo_upload)
         else:
             df = pd.read_excel(arquivo_upload)
+        st.sidebar.success("📊 Planilha processada com sucesso!")
     except Exception as e:
         st.error(f"Erro ao ler o arquivo: {e}")
 
-# Mapeia dinamicamente a lista de OS disponíveis
-if not df.empty and 'OS' in df.columns:
-    lista_os = sorted(list(df['OS'].dropna().unique()))
+# Mapeamento flexível de cabeçalhos de coluna
+mapeamento_colunas = {
+    "OS": "OS",
+    "ID": "ID",
+    "Status": "Status",
+    "Criticidade": "Criticidade",
+    "Setor": "Setor",
+    "Tecnico": "Técnico"
+}
+
+if not df.empty:
+    for col in list(df.columns):
+        c_upper = col.upper().strip()
+        if c_upper in ["OS", "ORDEM DE SERVIÇO", "NUMERO_OS"]:
+            mapeamento_colunas["OS"] = col
+        elif c_upper in ["ID", "ID BIM", "ID_BIM", "ELEMENTID", "CODIGO"]:
+            mapeamento_colunas["ID"] = col
+        elif c_upper in ["STATUS", "SITUACAO", "SITUAÇÃO"]:
+            mapeamento_colunas["Status"] = col
+        elif c_upper in ["CRITICIDADE", "GRAVIDADE", "RISCO"]:
+            mapeamento_colunas["Criticidade"] = col
+        elif c_upper in ["SETOR", "SUBSISTEMA", "DISCIPLINA", "AREA", "ÁREA"]:
+            mapeamento_colunas["Setor"] = col
+        elif c_upper in ["TÉCNICO", "TECNICO", "RESPONSÁVEL", "RESPONSAVEL", "OPERADOR"]:
+            mapeamento_colunas["Tecnico"] = col
+
+if not df.empty and mapeamento_colunas["OS"] in df.columns:
+    lista_os = sorted(list(df[mapeamento_colunas["OS"]].dropna().unique()))
 else:
     lista_os = ["OS-2026-001", "OS-2026-002", "OS-2026-003"]
 
+# ==========================================
 # 4. CONFIGURAÇÃO DO ESTADO DA SESSÃO (SESSION STATE)
+# ==========================================
 if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada not in lista_os:
     if lista_os:
         st.session_state.os_selecionada = lista_os[0]
 
-# 5. CRIAÇÃO DAS ABAS (OS 3 MÓDULOS)
+# ==========================================
+# 5. CRIAÇÃO ÚNICA DAS ABAS DO PORTAL
+# ==========================================
 aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
     "📦 Modelo 3D (Speckle)", 
     "📊 Produtividade da Equipe", 
@@ -69,26 +122,41 @@ aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
 ])
 
 # ==========================================
-# ABA 1: MODELO 3D (RASTREABILIDADE BIM)
+# ABA 1: MODELO 3D (INTEGRAL DA DIREITA)
 # ==========================================
 with aba_modelo:
-    st.subheader("Visualizador Operacional de Ativos 3D")
+    st.subheader("📦 Visualizador Operacional de Ativos 3D")
     
     id_bim_alvo = ""
-    if not df.empty and 'OS' in df.columns:
-        col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
-        if col_id:
-            linha_ativo = df[df['OS'] == st.session_state.os_selecionada]
+    if not df.empty and mapeamento_colunas["OS"] in df.columns:
+        col_id = mapeamento_colunas["ID"]
+        if col_id in df.columns:
+            linha_ativo = df[df[mapeamento_colunas["OS"]] == st.session_state.os_selecionada]
             if not linha_ativo.empty:
                 id_bim_alvo = str(linha_ativo[col_id].values[0]).strip()
 
     if not id_bim_alvo or id_bim_alvo == "nan":
         id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
-    # Exibição elegante da inteligência de cruzamento de dados (Sem botões que não funcionam)
-    st.info(f"🔗 Módulo BIM Sincronizado | Rastreando Ativo ID: `{id_bim_alvo}` (Selecionado no Centro de Diagnóstico)")
+    c1, c2 = st.columns(2)
+    with c1:
+        st.info(f"🎯 **Ativo em Foco:** `{id_bim_alvo}` (Sincronizado com o Centro de Diagnóstico)")
+    with c2:
+        st.success("💡 **Dica de Engenharia:** Use os painéis laterais nativos do modelo para auditar parâmetros de instância do Revit.")
+
+    speckle_url_interativa = speckle_base_url
     
-    st.components.v1.iframe(speckle_base_url, height=600, scrolling=False)
+    if sistema_mapeado != "Completo":
+        speckle_url_interativa += f'&filter=[{{"property":"{mapeamento_colunas["Setor"]}","operator":"=","value":"{sistema_mapeado}"}}]'
+        speckle_url_interativa += f'&cby={mapeamento_colunas["Setor"]}'
+        
+    if filtro_status != "Todos":
+        speckle_url_interativa += f'&filter=[{{"property":"{mapeamento_colunas["Status"]}","operator":"=","value":"{filtro_status}"}}]'
+        
+    if id_bim_alvo:
+        speckle_url_interativa += f'&overlayObjIds={id_bim_alvo}&selection={id_bim_alvo}'
+        
+    st.components.v1.iframe(speckle_url_interativa, height=650, scrolling=False)
 
 # ==========================================
 # ABA 2: PRODUTIVIDADE E RELATÓRIO
@@ -96,12 +164,13 @@ with aba_modelo:
 with aba_produtividade:
     if not df.empty:
         df_filtrado = df.copy()
-        if filtro_status != "Todos" and 'Status' in df_filtrado.columns:
-            df_filtrado = df_filtrado[df_filtrado['Status'] == filtro_status]
+        col_status = mapeamento_colunas["Status"]
+        
+        if filtro_status != "Todos" and col_status in df_filtrado.columns:
+            df_filtrado = df_filtrado[df_filtrado[col_status] == filtro_status]
             
         st.markdown('<div class="vol-title">📊 Volumetria das Ordens de Serviço</div>', unsafe_allow_html=True)
-        col_status_name = next((c for c in df.columns if c.lower() == 'status'), None)
-        status_counts = df[col_status_name].value_counts() if col_status_name else {}
+        status_counts = df[col_status].value_counts() if col_status in df.columns else {}
         
         v_col1, v_col2, v_col3, v_col4 = st.columns(4)
         with v_col1:
@@ -120,7 +189,7 @@ with aba_produtividade:
         st.markdown("---")
         
         st.subheader("Controle de Ordens de Serviço por Técnico")
-        col_tecnico = next((c for c in df_filtrado.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel', 'técnico responsável']), df_filtrado.columns)
+        col_tecnico = mapeamento_colunas["Tecnico"]
         df_produtividade = df_filtrado.groupby(col_tecnico).size().reset_index(name='Ordens')
         df_produtividade.columns = ['Técnico', 'Ordens']
         
@@ -136,70 +205,20 @@ with aba_produtividade:
         st.dataframe(df_filtrado, use_container_width=True)
     else:
         st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
+
 # ==========================================
-# 3. BARRA LATERAL E TRATAMENTO SEGURO DE DADOS
+# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO
 # ==========================================
-# [Mantenha seus selectboxes de filtros da barra lateral aqui...]
-
-# Lógica de carregamento de dados segura e inteligente
-df = pd.DataFrame()
-if arquivo_upload is not None:
-    try:
-        if arquivo_upload.name.endswith('.csv'):
-            df = pd.read_csv(arquivo_upload)
-        else:
-            df = pd.read_excel(arquivo_upload)
-        st.sidebar.success("📊 Planilha processada com sucesso!")
-    except Exception as e:
-        st.error(f"Erro ao ler o arquivo: {e}")
-
-# -------------------------------------------------------------------------
-# MOTOR DE IDENTIFICAÇÃO DINÂMICA DE COLUNAS (FLEXIBILIDADE DE ENGENHARIA)
-# -------------------------------------------------------------------------
-# Dicionário global para armazenar os nomes reais das colunas da planilha
-mapeamento_colunas = {
-    "OS": "OS",
-    "ID": "ID",
-    "Status": "Status",
-    "Criticidade": "Criticidade",
-    "Setor": "Setor",
-    "Tecnico": "Técnico"
-}
-
-if not df.empty:
-    # Varre as colunas reais do arquivo para encontrar correspondências ignorando maiúsculas/acentos
-    colunas_reais = list(df.columns)
+with aba_diagnostico:
+    st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
+    col_esq, col_dir = st.columns(2)
     
-    for col in colunas_reais:
-        c_upper = col.upper().strip()
-        if c_upper in ["OS", "ORDEM DE SERVIÇO", "NUMERO_OS"]:
-            mapeamento_colunas["OS"] = col
-        elif c_upper in ["ID", "ID BIM", "ID_BIM", "ELEMENTID", "CODIGO"]:
-            mapeamento_colunas["ID"] = col
-        elif c_upper in ["STATUS", "SITUACAO", "SITUAÇÃO"]:
-            mapeamento_colunas["Status"] = col
-        elif c_upper in ["CRITICIDADE", "GRAVIDADE", "RISCO"]:
-            mapeamento_colunas["Criticidade"] = col
-        elif c_upper in ["SETOR", "SUBSISTEMA", "DISCIPLINA", "AREA", "ÁREA"]:
-            mapeamento_colunas["Setor"] = col
-        elif c_upper in ["TÉCNICO", "TECNICO", "RESPONSÁVEL", "RESPONSAVEL", "OPERADOR"]:
-            mapeamento_colunas["Tecnico"] = col
-
-# Mapeia dinamicamente a lista de OS disponíveis com base na coluna identificada
-if not df.empty and mapeamento_colunas["OS"] in df.columns:
-    lista_os = sorted(list(df[mapeamento_colunas["OS"]].dropna().unique()))
-else:
-    # Fallback caso não haja arquivo carregado
-    lista_os = ["OS-2026-001", "OS-2026-002", "OS-2026-003"]
-
-# 4. CONFIGURAÇÃO DO ESTADO DA SESSÃO (SESSION STATE)
-if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada not in lista_os:
-    if lista_os:
-        st.session_state.os_selecionada = lista_os[0]
-
-# 5. CRIAÇÃO DAS ABAS (OS 3 MÓDULOS)
-aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
-    "📦 Modelo 3D (Speckle)", 
-    "📊 Produtividade da Equipe", 
-    "🧠 Centro de Diagnóstico (IA)"
-])
+    with col_esq:
+        st.markdown("🔎 **Seleção de Ativo para Auditoria**")
+        
+        st.session_state.os_selecionada = st.selectbox(
+            "Selecione a OS para análise da IA:", 
+            lista_os, 
+            index=lista_os.index(st.session_state.os_selecionada) if st.session_state.os_selecionada in lista_os else 0
+        )
+        
