@@ -117,23 +117,24 @@ with aba_modelo:
     st.components.v1.iframe(speckle_base_url, height=600, scrolling=False)
 
 # ==========================================
-# ABA 2: PRODUTIVIDADE E RELATÓRIO (COM FILTRO DE TEMPO OPERACIONAL)
+# ABA 2: PRODUTIVIDADE E RELATÓRIO (FILTRO DE TEMPO OPERACIONAL ATIVADO)
 # ==========================================
 with aba_produtividade:
     if not df.empty:
-        # Criamos uma cópia local para os filtros não afetarem as outras abas
+        # Criamos uma cópia local isolada para os filtros de tempo não afetarem as outras abas
         df_filtrado = df.copy()
         
-        # FILTRO DE TEMPO DE ABERTURA OPERACIONAL SEGURO
+        # ⏱️ CÁLCULO DINÂMICO E SEGURO DO TEMPO ABERTA
         if 'Data_Abertura' in df_filtrado.columns:
             try:
-                # Converte a coluna para data de forma isolada nesta aba
+                # Converte a coluna de abertura para formato de data limpando erros de preenchimento
                 df_filtrado['Data_Abertura_dt'] = pd.to_datetime(df_filtrado['Data_Abertura'], errors='coerce')
-                # Considera a data atual do sistema (2026) para calcular a diferença de dias
+                # Seta a data de referência atual do sistema (26 de Junho de 2026)
                 data_atual = pd.to_datetime('2026-06-26')
+                # Calcula a diferença exata em dias corridos
                 df_filtrado['Dias_Aberta'] = (data_atual - df_filtrado['Data_Abertura_dt']).dt.days
                 
-                # Aplica as regras baseadas na seleção da barra lateral cinza
+                # Executa a filtragem reativa baseada na escolha do menu lateral cinza
                 if filtro_tempo == "Menos de 24h":
                     df_filtrado = df_filtrado[df_filtrado['Dias_Aberta'] <= 1]
                 elif filtro_tempo == "Entre 2 e 7 dias":
@@ -143,7 +144,7 @@ with aba_produtividade:
             except Exception:
                 pass
 
-        # FILTROS ORIGINAIS DE STATUS E CRITICIDADE APROVADOS
+        # FILTROS ORIGINAIS DE STATUS E CRITICIDADE MANTIDOS INTEGRALMENTE
         if filtro_status != "Todos" and 'Status' in df_filtrado.columns:
             df_filtrado = df_filtrado[df_filtrado['Status'] == filtro_status]
         if filtro_criticidade != "Todos" and 'Criticidade' in df_filtrado.columns:
@@ -183,7 +184,7 @@ with aba_produtividade:
             ).properties(width='container', height=350)
             st.altair_chart(grafico_altair, use_container_width=True)
         else:
-            st.info("Nenhuma ordem encontrada para a combinação de filtros selecionada.")
+            st.info("⚠️ Nenhuma ordem encontrada para o intervalo de tempo e filtros selecionados.")
         
         st.markdown("---")
         st.markdown('📋 **Relatório Sincronizado de Ordens de Serviço**')
