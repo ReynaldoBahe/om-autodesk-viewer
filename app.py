@@ -44,7 +44,7 @@ filtro_status = st.sidebar.selectbox("Filtrar por Status:", ["Todos", "Aberta", 
 filtro_criticidade = st.sidebar.selectbox("Filtrar por Criticidade:", ["Todos", "Alta", "Média", "Baixa"])
 filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Menos de 24h", "Entre 2 e 7 dias", "Mais de 7 dias"])
 
-# URL base do Speckle em modo embed limpo original aprovado
+# URL base do Speckle original aprovado
 speckle_base_url = "https://speckle.systems"
 
 # Lógica de persistência estável em Session State contra perda de dados entre abas
@@ -62,7 +62,7 @@ if arquivo_upload is not None:
 
 df = st.session_state.df_permanente
 
-# O SEGREDO DO CÓDIGO APROVADO: Lista nasce sempre preenchida com fallback seguro
+# Mapeia dinamicamente a lista de OS disponíveis
 if not df.empty and 'OS' in df.columns:
     lista_os = sorted(list(df['OS'].dropna().astype(str).unique()))
 else:
@@ -72,7 +72,7 @@ if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada n
     st.session_state.os_selecionada = lista_os[0] if lista_os else ""
 
 # -------------------------------------------------------------------------
-# O BLOCO CENTRAL ORIGINAL: Valores padrão fixos que garantem renderização
+# AJUSTE CIRÚRGICO: Extração com [0] garante texto limpo eliminando o bug de array
 # -------------------------------------------------------------------------
 id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 resp = "Pedro"
@@ -86,7 +86,7 @@ if not df.empty and 'OS' in df.columns:
     dados_os = df[df['OS'].astype(str) == str(st.session_state.os_selecionada)]
     if not dados_os.empty:
         col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
-        if col_id:
+        if col_id and col_id in dados_os.columns:
             id_bim_alvo = str(dados_os[col_id].values[0]).strip()
         col_t = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel']), None)
         resp = str(dados_os[col_t].values[0]) if col_t else "Pedro"
@@ -109,7 +109,7 @@ aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
 ])
 
 # ==========================================
-# ABA 1: MODELO 3D (INTEGRALMENTE ORIGINAL)
+# ABA 1: MODELO 3D
 # ==========================================
 with aba_modelo:
     st.subheader("Visualizador Operacional de Ativos 3D")
@@ -117,7 +117,7 @@ with aba_modelo:
     st.components.v1.iframe(speckle_base_url, height=600, scrolling=False)
 
 # ==========================================
-# ABA 2: PRODUTIVIDADE E RELATÓRIO (MANTIDA ORIGINAL E COMPLETA)
+# ABA 2: PRODUTIVIDADE E RELATÓRIO
 # ==========================================
 with aba_produtividade:
     if not df.empty:
@@ -167,7 +167,7 @@ with aba_produtividade:
         st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
 
 # ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO (INTEGRALMENTE RESTAURADO)
+# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO
 # ==========================================
 with aba_diagnostico:
     st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
@@ -176,11 +176,11 @@ with aba_diagnostico:
     with col_esq:
         st.markdown("🔎 **Seleção de Ativo para Auditoria**")
         
-        # O selectbox original aprovado que nunca ficava em branco
+        idx_selecionado = lista_os.index(st.session_state.os_selecionada) if st.session_state.os_selecionada in lista_os else 0
         st.session_state.os_selecionada = st.selectbox(
             "Selecione a OS para análise da IA:", 
             lista_os, 
-            index=lista_os.index(st.session_state.os_selecionada) if st.session_state.os_selecionada in lista_os else 0
+            index=idx_selecionado
         )
         
         html_ficha = "<div class='ficha-tecnica'>"
@@ -194,3 +194,4 @@ with aba_diagnostico:
         html_ficha += f"<li><b>Criticidade:</b> {criticidade_ativo}</li>"
         html_ficha += f"<li><b>Data de Abertura:</b> {data_ab}</li>"
         html_ficha += "</ul>"
+        html_ficha += "<hr style='border: 0; border-top: 1px solid #BFDBFE; margin: 10px 0;'>"
