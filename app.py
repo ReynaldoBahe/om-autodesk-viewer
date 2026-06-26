@@ -2,14 +2,18 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 
+# ==========================================
 # 1. CONFIGURAÇÃO DA PÁGINA
+# ==========================================
 st.set_page_config(
     page_title="Portal de Engenharia & Produtividade",
     page_icon="🏗️",
     layout="wide"
 )
 
+# ==========================================
 # 2. DESIGN E ESTILIZAÇÃO CUSTOMIZADA (CSS)
+# ==========================================
 st.markdown("""
     <style>
     .main-title { font-size: 32px; font-weight: bold; color: #1E3A8A; margin-bottom: 20px; }
@@ -26,20 +30,25 @@ st.markdown("""
 
 st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de Projetos</div>', unsafe_allow_html=True)
 
-# 3. BARRA LATERAL (FILTROS OPERACIONAIS LIMPOS)
-st.sidebar.header("Filtros de Visão")
+# ==========================================
+# 3. BARRA LATERAL (MENU ÚNICO, FIXO E ESTÁVEL NAS 3 ABAS)
+# ==========================================
+st.sidebar.header("Painel de Controle")
+
+# Campo de carregamento unificado no topo da área cinza
+arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha CMMS (.csv)", type=["csv", "xlsx"])
+
+st.sidebar.write("---")
+st.sidebar.subheader("Filtros de Visão")
 
 filtro_status = st.sidebar.selectbox("Filtrar por Status:", ["Todos", "Aberta", "Em Andamento", "Pausada", "Fechado"])
 filtro_criticidade = st.sidebar.selectbox("Filtrar por Criticidade:", ["Todos", "Alta", "Média", "Baixa"])
 filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Menos de 24h", "Entre 2 e 7 dias", "Mais de 7 dias"])
 
-st.sidebar.write("---")
-arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
-
-# URL base do Speckle em modo embed limpo
+# URL base fixa do Speckle em modo embed limpo original aprovado
 speckle_base_url = "https://speckle.systems"
 
-# Lógica de carregamento de dados segura
+# Lógica de carregamento de dados segura e silenciosa no backend
 df = pd.DataFrame()
 if arquivo_upload is not None:
     try:
@@ -50,25 +59,20 @@ if arquivo_upload is not None:
     except Exception as e:
         st.error(f"Erro ao ler o arquivo: {e}")
 
-# Mapeia dinamicamente a lista de OS disponíveis
+# Mapeia dinamicamente a lista de OS disponíveis com base na planilha ativa
 if not df.empty and 'OS' in df.columns:
     lista_os = sorted(list(df['OS'].dropna().astype(str).unique()))
 else:
     lista_os = ["OS-2026-001", "OS-2026-002", "OS-2026-003"]
 
-# 4. CONFIGURAÇÃO DO ESTADO DA SESSÃO (SESSION STATE)
+# Configuração estável do estado da sessão para sincronização de OS
 if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada not in lista_os:
     if lista_os:
         st.session_state.os_selecionada = lista_os[0]
 
-# 5. CRIAÇÃO DAS ABAS (OS 3 MÓDULOS)
-aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
-    "📦 Modelo 3D (Speckle)", 
-    "📊 Produtividade da Equipe", 
-    "🧠 Centro de Diagnóstico (IA)"
-])
-
-# PROCESSAMENTO SEGURO DE VARIÁVEIS GLOBAIS
+# -------------------------------------------------------------------------
+# EXTRAÇÃO REATIVA DE VARIÁVEIS COM BASE NA OS SELECIONADA
+# -------------------------------------------------------------------------
 id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 resp = "Pedro"
 setor = "Climatização"
@@ -95,21 +99,32 @@ if not id_bim_alvo or id_bim_alvo == "nan":
     id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
 # ==========================================
+# 4. CRIAÇÃO DAS ABAS NATIVAS REATIVAS (ST.TABS)
+# ==========================================
+aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
+    "📦 Modelo 3D (Speckle)", 
+    "📊 Produtividade da Equipe", 
+    "🧠 Centro de Diagnóstico (IA)"
+])
+
+# ==========================================
 # ABA 1: MODELO 3D (RASTREABILIDADE BIM)
 # ==========================================
 with aba_modelo:
     st.subheader("Visualizador Operacional de Ativos 3D")
-    st.info(f"🔗 Módulo BIM Sincronizado | Rastreando Ativo ID: `{id_bim_alvo}` (Selecionado no Centro de Diagnóstico)")
+    st.info(f"🔗 Módulo BIM Sincronizado | Rastreando Ativo ID: `{id_bim_alvo}` (Selecione outra OS na aba Centro de Diagnóstico para alterar o foco)")
     st.components.v1.iframe(speckle_base_url, height=600, scrolling=False)
 
 # ==========================================
-# ABA 2: PRODUTIVIDADE E RELATÓRIO
+# ABA 2: PRODUTIVIDADE E RELATÓRIO (CÓDIGO ORIGINAL INTEGRAL APROVADO)
 # ==========================================
 with aba_produtividade:
     if not df.empty:
         df_filtrado = df.copy()
         if filtro_status != "Todos" and 'Status' in df_filtrado.columns:
             df_filtrado = df_filtrado[df_filtrado['Status'] == filtro_status]
+        if filtro_criticidade != "Todos" and 'Criticidade' in df_filtrado.columns:
+            df_filtrado = df_filtrado[df_filtrado['Criticidade'] == filtro_criticidade]
             
         st.markdown('<div class="vol-title">📊 Volumetria das Ordens de Serviço</div>', unsafe_allow_html=True)
         col_status_name = next((c for c in df.columns if c.lower() == 'status'), None)
@@ -150,7 +165,7 @@ with aba_produtividade:
         st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
 
 # ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO
+# ABA 3: CENTRO DE DIAGNÓSTICO (CÓDIGO ORIGINAL INTEGRAL APROVADO)
 # ==========================================
 with aba_diagnostico:
     st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
@@ -177,17 +192,3 @@ with aba_diagnostico:
         html_ficha += f"<li><b>Data de Abertura:</b> {data_ab}</li>"
         html_ficha += "</ul>"
         html_ficha += "<hr style='border: 0; border-top: 1px solid #BFDBFE; margin: 10px 0;'>"
-        html_ficha += f"<p style='margin:0; font-size:13px; color:#1E40AF;'><b>Ocorrência Relatada:</b> {descricao_falha}</p>"
-        html_ficha += "</div>"
-        
-        st.markdown(html_ficha, unsafe_allow_html=True)
-        
-    with col_dir:
-        st.markdown("⚡ **Análise de Engenharia Operacional da IA**")
-        
-        mensagem_ia = f"**ANÁLISE DE FALHAS PREDITIVA:** A Ordem de Serviço **{st.session_state.os_selecionada}** associada ao Ativo ID `{id_bim_alvo}` foi mapeada sob criticidade **'{criticidade_ativo}'**. Recomenda-se auditoria imediata no subsistema de **{setor}** utilizando os manuais técnicos."
-        st.success(mensagem_ia)
-        
-        df_ia = pd.DataFrame({'Indicador': ['Índice de Conclusão'], 'Valor': [1.0 if status == "Fechado" else 0.5]})
-        
-        # Gráfico unilinear totalmente corrigido e fechado contra SyntaxErrors
