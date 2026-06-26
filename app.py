@@ -73,7 +73,7 @@ if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada n
         st.session_state.os_selecionada = lista_os[0]
 
 # -------------------------------------------------------------------------
-# EXTRAÇÃO DE VARIÁVEIS COM ÍNDICE [0] (CAPTURA APENAS TEXTO PURO)
+# EXTRAÇÃO OPERACIONAL RIGOROSA DE STRING PURA (PROVÊ DADOS VISÍVEIS NA TELA)
 # -------------------------------------------------------------------------
 id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 resp = "Pedro"
