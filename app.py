@@ -186,7 +186,7 @@ with aba_produtividade:
     else:
         st.info("⚠️ Nenhuma ordem encontrada para o intervalo de tempo e filtros selecionados.")
     st.markdown("---")
-        st.markdown('📋 **Relatório Sincronizado de Ordens de Serviço**')
+    st.markdown('📋 **Relatório Sincronizado de Ordens de Serviço**')
     colunas_exibir = [c for c in df_filtrado.columns if c not in ['Data_Abertura_dt', 'Dias_Aberta', 'Tempo_Num']]
     st.dataframe(df_filtrado[colunas_exibir], use_container_width=True)
 
