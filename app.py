@@ -2,18 +2,14 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 
-# ==========================================
 # 1. CONFIGURAÇÃO DA PÁGINA
-# ==========================================
 st.set_page_config(
     page_title="Portal de Engenharia & Produtividade",
     page_icon="🏗️",
     layout="wide"
 )
 
-# ==========================================
 # 2. DESIGN E ESTILIZAÇÃO CUSTOMIZADA (CSS)
-# ==========================================
 st.markdown("""
     <style>
     .main-title { font-size: 32px; font-weight: bold; color: #1E3A8A; margin-bottom: 20px; }
@@ -30,9 +26,7 @@ st.markdown("""
 
 st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de Projetos</div>', unsafe_allow_html=True)
 
-# ==========================================
-# 3. BARRA LATERAL (ESTRUTURA ORIGINAL COMPLETA)
-# ==========================================
+# 3. BARRA LATERAL (FILTROS OPERACIONAIS LIMPOS)
 st.sidebar.header("Filtros de Visão")
 
 filtro_status = st.sidebar.selectbox("Filtrar por Status:", ["Todos", "Aberta", "Em Andamento", "Pausada", "Fechado"])
@@ -42,10 +36,10 @@ filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Meno
 st.sidebar.write("---")
 arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
 
-# URL base do Speckle em modo embed limpo original aprovado
+# URL base do Speckle em modo embed limpo
 speckle_base_url = "https://speckle.systems"
 
-# Lógica de carregamento de dados segura e silenciosa
+# Lógica de carregamento de dados segura
 df = pd.DataFrame()
 if arquivo_upload is not None:
     try:
@@ -62,56 +56,54 @@ if not df.empty and 'OS' in df.columns:
 else:
     lista_os = ["OS-2026-001", "OS-2026-002", "OS-2026-003"]
 
-# Configuração estável do estado da sessão
+# 4. CONFIGURAÇÃO DO ESTADO DA SESSÃO (SESSION STATE)
 if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada not in lista_os:
     if lista_os:
-        st.session_state.os_selecionada = lista_os
+        st.session_state.os_selecionada = lista_os[0]
 
-# ==========================================
-# 5. CRIAÇÃO DAS ABAS ORIGINAIS (ESTRUTURA APROVADA)
-# ==========================================
+# 5. CRIAÇÃO DAS ABAS (OS 3 MÓDULOS)
 aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
     "📦 Modelo 3D (Speckle)", 
     "📊 Produtividade da Equipe", 
     "🧠 Centro de Diagnóstico (IA)"
 ])
 
-# Cálculo global e seguro do ID BIM Alvo para todas as abas
-id_bim_alvo = ""
+# PROCESSAMENTO SEGURO DE VARIÁVEIS GLOBAIS
+id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
+resp = "Pedro"
+setor = "Climatização"
+status = "Fechado"
+data_ab = "20/06/2026"
+descricao_falha = "Aguardando verificação do sistema."
+criticidade_ativo = "Média"
+
 if not df.empty and 'OS' in df.columns:
-    col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
-    if col_id:
-        linha_ativo = df[df['OS'] == st.session_state.os_selecionada]
-        if not linha_ativo.empty:
-            id_bim_alvo = str(linha_ativo[col_id].values[0]).strip()
+    dados_os = df[df['OS'].astype(str) == str(st.session_state.os_selecionada)]
+    if not dados_os.empty:
+        col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
+        if col_id:
+            id_bim_alvo = str(dados_os[col_id].values[0]).strip()
+        col_t = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel']), None)
+        resp = str(dados_os[col_t].values[0]) if col_t else "Pedro"
+        setor = str(dados_os['Setor'].values[0]) if 'Setor' in df.columns else "Climatização"
+        status = str(dados_os['Status'].values[0]) if 'Status' in df.columns else "Fechado"
+        data_ab = str(dados_os['Data_Abertura'].values[0]) if 'Data_Abertura' in df.columns else "20/06/2026"
+        descricao_falha = str(dados_os['Descrição'].values[0]) if 'Descrição' in df.columns else "Sem descrição."
+        criticidade_ativo = str(dados_os['Criticidade'].values[0]) if 'Criticidade' in df.columns else "Média"
 
 if not id_bim_alvo or id_bim_alvo == "nan":
     id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
 # ==========================================
-# ABA 1: MODELO 3D (FAIXA CINZA LIMPA VISUALMENTE)
+# ABA 1: MODELO 3D (RASTREABILIDADE BIM)
 # ==========================================
 with aba_modelo:
-    # Solução CSS local estável: remove os inputs da barra lateral APENAS se o painel 1 estiver ativo em primeiro plano.
-    # Não quebra o layout interno das tabelas ou textos das outras páginas.
-    st.markdown("""
-        <style>
-        div[data-baseweb="tab-panel"]:nth-of-type(1) ~ div[data-testid="stSidebar"] [data-testid="stWidgetFormModifier"],
-        div[data-baseweb="tab-panel"]:nth-of-type(1) ~ div[data-testid="stSidebar"] div.stSelectbox,
-        div[data-baseweb="tab-panel"]:nth-of-type(1) ~ div[data-testid="stSidebar"] div.stFileUploader,
-        div[data-baseweb="tab-panel"]:nth-of-type(1) ~ div[data-testid="stSidebar"] hr,
-        div[data-baseweb="tab-panel"]:nth-of-type(1) ~ div[data-testid="stSidebar"] h2 {
-            display: none !important;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-
     st.subheader("Visualizador Operacional de Ativos 3D")
-    st.info(f"🔗 Módulo BIM Sincronizado | Rastreando Ativo ID: `{id_bim_alvo}` (Selecione outra OS na aba Centro de Diagnóstico para focar)")
+    st.info(f"🔗 Módulo BIM Sincronizado | Rastreando Ativo ID: `{id_bim_alvo}` (Selecionado no Centro de Diagnóstico)")
     st.components.v1.iframe(speckle_base_url, height=600, scrolling=False)
 
 # ==========================================
-# ABA 2: PRODUTIVIDADE E RELATÓRIO (CÓDIGO ORIGINAL INTEGRAL APROVADO)
+# ABA 2: PRODUTIVIDADE E RELATÓRIO
 # ==========================================
 with aba_produtividade:
     if not df.empty:
@@ -152,12 +144,13 @@ with aba_produtividade:
         st.altair_chart(grafico_altair, use_container_width=True)
         
         st.markdown("---")
+        st.markdown('📋 **Relatório Sincronizado de Ordens de Serviço**')
         st.dataframe(df_filtrado, use_container_width=True)
     else:
         st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
 
 # ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO (CÓDIGO ORIGINAL INTEGRAL APROVADO)
+# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO
 # ==========================================
 with aba_diagnostico:
     st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
@@ -172,23 +165,36 @@ with aba_diagnostico:
             index=lista_os.index(st.session_state.os_selecionada) if st.session_state.os_selecionada in lista_os else 0
         )
         
-        resp, setor, status, data_ab = "Pedro", "Climatização", "Fechado", "20/06/2026"
-        descricao_falha = "Aguardando carregamento dos dados."
-        criticidade_ativo = "Média"
+        html_ficha = f"""
+        <div class="ficha-tecnica">
+            <h4 style="margin-top:0; color:#1E3A8A;">📋 Ficha Técnica do Ativo</h4>
+            <ul>
+                <li><b>Ordem de Serviço:</b> {st.session_state.os_selecionada}</li>
+                <li><b>ID BIM:</b> {id_bim_alvo}</li>
+                <li><b>Responsável Técnico:</b> {resp}</li>
+                <li><b>Setor / Subsistema:</b> {setor}</li>
+                <li><b>Status Atual:</b> {status}</li>
+                <li><b>Criticidade:</b> {criticidade_ativo}</li>
+                <li><b>Data de Abertura:</b> {data_ab}</li>
+            </ul>
+            <hr style='border: 0; border-top: 1px solid #BFDBFE; margin: 10px 0;'>
+            <p style='margin:0; font-size:13px; color:#1E40AF;'><b>Ocorrência Relatada:</b> {descricao_falha}</p>
+        </div>
+        """
+        st.markdown(html_ficha, unsafe_allow_html=True)
         
-        if not df.empty and 'OS' in df.columns:
-            dados_os = df[df['OS'].astype(str) == str(st.session_state.os_selecionada)]
-            if not dados_os.empty:
-                col_t = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel']), None)
-                resp = str(dados_os[col_t].values[0]) if col_t else "Pedro"
-                setor = str(dados_os['Setor'].values[0]) if 'Setor' in df.columns else "Climatização"
-                status = str(dados_os['Status'].values[0]) if 'Status' in df.columns else "Fechado"
-                data_ab = str(dados_os['Data_Abertura'].values[0]) if 'Data_Abertura' in df.columns else "20/06/2026"
-                descricao_falha = str(dados_os['Descrição'].values[0]) if 'Descrição' in df.columns else "Sem descrição."
-                criticidade_ativo = str(dados_os['Criticidade'].values[0]) if 'Criticidade' in df.columns else "Média"
-
-        # Formatação string compacta e linear à prova de falhas de interpretador
-        html_ficha = "<div class='ficha-tecnica'>"
-        html_ficha += "<h4 style='margin-top:0; color:#1E3A8A;'>📋 Ficha Técnica do Ativo</h4>"
-        html_ficha += "<ul>"
-        html_ficha += f"<li><b>Ordem de Serviço:</b> {st.session_state.os_selecionada}</li>"
+    with col_dir:
+        st.markdown("⚡ **Análise de Engenharia Operacional da IA**")
+        
+        mensagem_ia = f"**ANÁLISE DE FALHAS PREDITIVA:** A Ordem de Serviço **{st.session_state.os_selecionada}** associada ao Ativo ID `{id_bim_alvo}` foi mapeada sob criticidade **'{criticidade_ativo}'**. Recomenda-se auditoria imediata no subsistema de **{setor}** utilizando os manuais técnicos."
+        st.success(mensagem_ia)
+        
+        valor_grafico = 1.0 if status == "Fechado" else 0.5
+        df_ia = pd.DataFrame({'Indicador': ['Índice de Conclusão'], 'Valor': [valor_grafico]})
+        
+        grafico_ia = alt.Chart(df_ia).mark_bar(color='#1E3A8A', size=120).encode(
+            x=alt.X('Indicador:N', title=''),
+            y=alt.Y('Valor:Q', title='Progresso Operacional', scale=alt.Scale(domain=[0, 1.2])),
+            tooltip=['Indicador', 'Valor']
+        ).properties(height=230)
+        st.altair_chart(grafico_ia, use_container_width=True)
