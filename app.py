@@ -42,7 +42,7 @@ filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Meno
 st.sidebar.write("---")
 arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
 
-# URL base do Speckle em modo embed limpo original aprovado
+# URL base do Speckle original aprovado
 speckle_base_url = "https://speckle.systems"
 
 # Lógica de carregamento de dados segura
@@ -87,7 +87,7 @@ else:
 # 4. CONFIGURAÇÃO DO ESTADO DA SESSÃO (SESSION STATE)
 if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada not in lista_os:
     if lista_os:
-        st.session_state.os_selecionada = lista_os[0]
+        st.session_state.os_selecionada = lista_os
 
 # 5. CRIAÇÃO DAS ABAS (OS 3 MÓDULOS)
 aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
@@ -108,7 +108,7 @@ with aba_modelo:
         if col_id:
             linha_ativo = df[df['OS'].astype(str) == str(st.session_state.os_selecionada)]
             if not linha_ativo.empty:
-                id_bim_alvo = str(linha_ativo[col_id].iloc[0]).strip()
+                id_bim_alvo = str(linha_ativo[col_id].squeeze()).strip()
 
     if not id_bim_alvo or id_bim_alvo == "nan":
         id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
@@ -164,7 +164,7 @@ with aba_produtividade:
         st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
 
 # ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO
+# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO (ESTRUTURA COMPLETA)
 # ==========================================
 with aba_diagnostico:
     st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
@@ -187,13 +187,14 @@ with aba_diagnostico:
         if not dados_os.empty:
             col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
             if col_id and col_id in dados_os.columns:
-                id_bim_alvo = str(dados_os[col_id].iloc[0]).strip()
+                id_bim_alvo = str(dados_os[col_id].squeeze()).strip()
             col_t = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel']), None)
-            # CORREÇÃO CRÍTICA: Uso de .iloc[0] para extrair texto limpo (string pura)
-            resp = str(dados_os[col_t].iloc[0]) if col_t else "Pedro"
-            setor = str(dados_os['Setor'].iloc[0]) if 'Setor' in df.columns else "Climatização"
-            status = str(dados_os['Status'].iloc[0]) if 'Status' in df.columns else "Fechado"
-            data_ab = str(dados_os['Data_Abertura'].iloc[0]) if 'Data_Abertura' in df.columns else "20/06/2026"
+            
+            # SQUEEZE EXTRAI APENAS TEXTO PURO: Remove colchetes de array de forma ultra-segura
+            resp = str(dados_os[col_t].squeeze()) if col_t else "Pedro"
+            setor = str(dados_os['Setor'].squeeze()) if 'Setor' in df.columns else "Climatização"
+            status = str(dados_os['Status'].squeeze()) if 'Status' in df.columns else "Fechado"
+            data_ab = str(dados_os['Data_Abertura'].squeeze()) if 'Data_Abertura' in df.columns else "20/06/2026"
 
     html_ficha = '<div class="ficha-tecnica"><h4 style="margin-top:0; color:#1E3A8A;">📋 Ficha Técnica do Ativo</h4><ul>'
     html_ficha += f'<li><b>ID BIM:</b> {id_bim_alvo}</li>'
