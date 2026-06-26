@@ -44,7 +44,7 @@ st.sidebar.write("---")
 arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
 
 # URL base do Speckle em modo embed
-speckle_base_url = "https://app.speckle.systems/projects/a649da7292/models/815af390c7?embedToken=fd704d8c9c65c33217812bb9e35c7feb7c8d20314f"
+speckle_base_url = "https://speckle.systems"
 
 # Lógica de carregamento de dados segura
 df = pd.DataFrame()
@@ -95,9 +95,8 @@ with aba_modelo:
         id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
     # Aplica o filtro de isolamento e cor vermelha se o toggle estiver ligado
-    if ativar_visao_cromatica and id_bim_alvo:
-                url_visualizador = f"{speckle_base_url}&filter=%5B%22{id_bim_alvo}%22%5D&overlay=%5B%7B%22id%22%3A%22{id_bim_alvo}%22%2C%22color%22%3A%22%23FF0000%22%7D%5D"
-
+    if activar_visao_cromatica and id_bim_alvo:
+        url_visualizador = f"{speckle_base_url}&filter=%5B%22{id_bim_alvo}%22%5D&overlay=%5B%7B%22id%22%3A%22{id_bim_alvo}%22%2C%22color%22%3A%22%23FF0000%22%7D%5D"
         st.success(f"🎯 Visão Cromática Ativa: Filtrando e pintando o Ativo BIM {id_bim_alvo}")
     else:
         url_visualizador = speckle_base_url
@@ -180,7 +179,7 @@ with aba_diagnostico:
                 status = str(dados_os['Status'].values[0]) if 'Status' in df.columns else "Fechado"
                 data_ab = str(dados_os['Data_Abertura'].values[0]) if 'Data_Abertura' in df.columns else "20/06/2026"
 
-        # HTML montado de forma segura e limpa por concatenação
+        # HTML montado por concatenação segura
         html_ficha = '<div class="ficha-tecnica"><h4 style="margin-top:0; color:#1E3A8A;">📋 Ficha Técnica do Ativo</h4><ul>'
         html_ficha += f'<li><b>ID BIM:</b> {id_bim_alvo}</li>'
         html_ficha += f'<li><b>Responsável Técnico:</b> {resp}</li>'
@@ -194,4 +193,3 @@ with aba_diagnostico:
     with col_dir:
         st.markdown("⚡ **Análise de Engenharia Operacional da IA**")
         
-        # String linear e direta para evitar erros de compilação da f-string
