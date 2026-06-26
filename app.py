@@ -138,50 +138,30 @@ with aba_produtividade:
         st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
 
 # ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO
+# 3. BARRA LATERAL (FILTROS OPERACIONAIS E PAINEL DE SLA)
 # ==========================================
-with aba_diagnostico:
-    st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
-    col_esq, col_dir = st.columns(2)
-    
-    with col_esq:
-        st.markdown("🔎 **Seleção de Ativo para Auditoria**")
-        
-        st.session_state.os_selecionada = st.selectbox(
-            "Selecione a OS para análise da IA:", 
-            lista_os, 
-            index=lista_os.index(st.session_state.os_selecionada) if st.session_state.os_selecionada in lista_os else 0
-        )
-        
-        resp, setor, status, data_ab = "Pedro", "Climatização", "Fechado", "20/06/2026"
-        if not df.empty and 'OS' in df.columns:
-            dados_os = df[df['OS'] == st.session_state.os_selecionada]
-            if not dados_os.empty:
-                col_t = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel']), None)
-                resp = str(dados_os[col_t].values[0]) if col_t else "Pedro"
-                setor = str(dados_os['Setor'].values[0]) if 'Setor' in df.columns else "Climatização"
-                status = str(dados_os['Status'].values[0]) if 'Status' in df.columns else "Fechado"
-                data_ab = str(dados_os['Data_Abertura'].values[0]) if 'Data_Abertura' in df.columns else "20/06/2026"
+st.sidebar.header("Filtros de Visão")
 
-        html_ficha = '<div class="ficha-tecnica"><h4 style="margin-top:0; color:#1E3A8A;">📋 Ficha Técnica do Ativo</h4><ul>'
-        html_ficha += f'<li><b>ID BIM:</b> {id_bim_alvo}</li>'
-        html_ficha += f'<li><b>Responsável Técnico:</b> {resp}</li>'
-        html_ficha += f'<li><b>Setor:</b> {setor}</li>'
-        html_ficha += f'<li><b>Status Atual:</b> {status}</li>'
-        html_ficha += f'<li><b>Data de Abertura:</b> {data_ab}</li>'
-        html_ficha += '<li><b>Histórico de Quebras:</b> 3 recorrências registradas nos últimos 180 dias.</li></ul>'
-        html_ficha += '<a href="#" style="color:#2563EB; font-weight:bold; text-decoration:none;">📄 Acessar Manual Técnico do Ativo</a></div>'
-        st.markdown(html_ficha, unsafe_allow_html=True)
-        
-    with col_dir:
-        st.markdown("⚡ **Análise de Engenharia Operacional da IA**")
-        
-        mensagem_ia = f"**ANÁLISE COMPLEMENTAR:** Ordem {st.session_state.os_selecionada}. Ativo BIM analisado sob status '{status}'. Plano recomendado para {setor}."
-        st.success(mensagem_ia)
-        
-        df_ia = pd.DataFrame({'Métrica': ['Ordens Analisadas'], 'Valor': [1.0]})
-        grafico_ia = alt.Chart(df_ia).mark_bar(color='#1f77b4', size=150).encode(
-            x=alt.X('Métrica:N', title=''),
-            y=alt.Y('Valor:Q', title='Status de Execução', scale=alt.Scale(domain=[0, 1.2])),
-        ).properties(height=250)
-        st.altair_chart(grafico_ia, use_container_width=True)
+filtro_status = st.sidebar.selectbox("Filtrar por Status:", ["Todos", "Aberta", "Em Andamento", "Pausada", "Fechado"])
+filtro_criticidade = st.sidebar.selectbox("Filtrar por Criticidade:", ["Todos", "Alta", "Média", "Baixa"])
+filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Menos de 24h", "Entre 2 e 7 dias", "Mais de 7 dias"])
+
+# INJEÇÃO ISOLADA DO PAINEL DE METAS DE SLA (Estilo visual limpo)
+st.sidebar.write("---")
+st.sidebar.subheader("📈 Metas Operacionais (SLA)")
+
+# Mapeia dinamicamente os valores de meta com base no seu arquivo ativo
+if not df.empty:
+    total_os = len(df)
+    # Exemplo: Calcula OS fechadas no prazo para compor o indicador de eficiência
+    os_no_prazo = len(df[df['Status'].astype(str).str.lower() == 'fechado'])
+    indice_sla = (os_no_prazo / total_os) if total_os > 0 else 0.85
+else:
+    indice_sla = 0.88  # Valor padrão simulado caso a planilha não tenha sido carregada
+
+# Exibe o indicador de performance com barra de progresso nativa na barra cinza
+st.sidebar.metric(label="Atendimento Geral do SLA", value=f"{int(indice_sla * 100)}%", delta="⚡ Dentro da Meta" if indice_sla >= 0.80 else "⚠️ Atenção")
+st.sidebar.progress(min(float(indice_sla), 1.0))
+
+st.sidebar.write("---")
+arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
