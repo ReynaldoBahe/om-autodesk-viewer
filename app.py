@@ -39,10 +39,13 @@ arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM",
 # URL base do Speckle em modo embed limpo
 speckle_base_url = "https://speckle.systems"
 
-# BLINDAGEM DE MEMÓRIA: Mantém a tabela guardada de forma estável entre as abas
+# ==========================================
+# O SEGREDO DA CORREÇÃO: PERSISTÊNCIA DE MEMÓRIA DE SESSÃO
+# ==========================================
 if 'df_permanente' not in st.session_state:
     st.session_state.df_permanente = pd.DataFrame()
 
+# Se houver um upload ativo, grava na sessão estável
 if arquivo_upload is not None:
     try:
         if arquivo_upload.name.endswith('.csv'):
@@ -52,6 +55,7 @@ if arquivo_upload is not None:
     except Exception as e:
         st.error(f"Erro ao ler o arquivo: {e}")
 
+# O df principal passa a ler da memória protegida da sessão
 df = st.session_state.df_permanente
 
 # Mapeia dinamicamente a lista de OS disponíveis
@@ -73,7 +77,7 @@ aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
 ])
 
 # ==========================================
-# ABA 1: MODELO 3D (RASTREABILIDADE BIM) - INTEGRAL ORIGINAL
+# ABA 1: MODELO 3D (RASTREABILIDADE BIM)
 # ==========================================
 with aba_modelo:
     st.subheader("Visualizador Operacional de Ativos 3D")
@@ -99,11 +103,11 @@ with aba_produtividade:
     if not df.empty:
         df_filtrado = df.copy()
         
-        # FILTRO DE TEMPO OPERACIONAL SEGURO (Baseado na data atual do sistema: 2026)
+        # FILTRAGEM CIRÚRGICA POR TEMPO OPERACIONAL (Totalmente protegida por try/except)
         if 'Data_Abertura' in df_filtrado.columns:
             try:
                 df_filtrado['Data_Abertura_dt'] = pd.to_datetime(df_filtrado['Data_Abertura'], errors='coerce')
-                # Calcula a diferença de dias de forma isolada nesta aba
+                # Calcula a diferença usando a data atual do sistema (2026)
                 df_filtrado['Dias_Aberta'] = (pd.to_datetime('2026-06-26') - df_filtrado['Data_Abertura_dt']).dt.days
                 
                 if filtro_tempo == "Menos de 24h":
@@ -159,7 +163,7 @@ with aba_produtividade:
         st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
 
 # ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO - INTEGRAL ORIGINAL
+# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO (CÓDIGO ORIGINAL SEU)
 # ==========================================
 with aba_diagnostico:
     st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
@@ -190,4 +194,3 @@ with aba_diagnostico:
         html_ficha += f'<li><b>Setor:</b> {setor}</li>'
         html_ficha += f'<li><b>Status Atual:</b> {status}</li>'
         html_ficha += f'<li><b>Data de Abertura:</b> {data_ab}</li>'
-        html_ficha += '<li><b>Histórico de Quebras:</b> 3 recorrências registradas nos últimos 180 dias.</li></ul>'
