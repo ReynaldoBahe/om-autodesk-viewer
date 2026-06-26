@@ -31,7 +31,21 @@ st.markdown("""
 st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de Projetos</div>', unsafe_allow_html=True)
 
 # ==========================================
-# 3. BARRA LATERAL (MENU ÚNICO COM MEMÓRIA PERSISTENTE)
+# 3. FUNÇÃO DE CACHE ADAPTATIVA (BLINDA OS DADOS ENTRE ABAS)
+# ==========================================
+@st.cache_data
+def carregar_dados_planilha(arquivo):
+    try:
+        if arquivo.name.endswith('.csv'):
+            return pd.read_csv(arquivo)
+        else:
+            return pd.read_excel(arquivo)
+    except Exception as e:
+        st.error(f"Erro ao ler a planilha: {e}")
+        return pd.DataFrame()
+
+# ==========================================
+# 4. BARRA LATERAL ESTÁVEL
 # ==========================================
 st.sidebar.header("Painel de Controle")
 
@@ -44,31 +58,21 @@ filtro_status = st.sidebar.selectbox("Filtrar por Status:", ["Todos", "Aberta", 
 filtro_criticidade = st.sidebar.selectbox("Filtrar por Criticidade:", ["Todos", "Alta", "Média", "Baixa"])
 filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Menos de 24h", "Entre 2 e 7 dias", "Mais de 7 dias"])
 
-# URL base fixa do Speckle em modo embed limpo original aprovado
+# URL base fixa do Speckle original aprovado
 speckle_base_url = "https://speckle.systems"
 
-# Inicialização da memória persistente para evitar perda de dados nas trocas de abas
-if 'df_memoria' not in st.session_state:
-    st.session_state.df_memoria = pd.DataFrame()
-
+# Processamento seguro com cache persistente
+df = pd.DataFrame()
 if arquivo_upload is not None:
-    try:
-        if arquivo_upload.name.endswith('.csv'):
-            st.session_state.df_memoria = pd.read_csv(arquivo_upload)
-        else:
-            st.session_state.df_memoria = pd.read_excel(arquivo_upload)
-    except Exception as e:
-        st.sidebar.error(f"Erro ao ler o arquivo: {e}")
+    df = carregar_dados_planilha(arquivo_upload)
 
-df = st.session_state.df_memoria
-
-# Mapeia dinamicamente a lista de OS disponíveis de forma segura
+# Mapeia dinamicamente a lista de OS disponíveis
 if not df.empty and 'OS' in df.columns:
     lista_os = sorted(list(df['OS'].dropna().astype(str).unique()))
 else:
     lista_os = ["OS-2026-001", "OS-2026-002", "OS-2026-003"]
 
-# Configuração estável do estado da sessão para sincronização de OS
+# Sincronização e persistência da OS selecionada no session_state
 if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada not in lista_os:
     if lista_os:
         st.session_state.os_selecionada = lista_os[0]
@@ -102,7 +106,7 @@ if not id_bim_alvo or id_bim_alvo == "nan":
     id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
 # ==========================================
-# 4. CRIAÇÃO DAS ABAS NATIVAS REATIVAS (ST.TABS)
+# 5. CRIAÇÃO DAS ABAS NATIVAS REATIVAS (ST.TABS)
 # ==========================================
 aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
     "📦 Modelo 3D (Speckle)", 
@@ -115,11 +119,11 @@ aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
 # ==========================================
 with aba_modelo:
     st.subheader("Visualizador Operacional de Ativos 3D")
-    st.info(f"🔗 Módulo BIM Sincronizado | Rastreando Ativo ID: `{id_bim_alvo}` (Selecione outra OS na aba Centro de Diagnóstico para alterar o foco)")
+    st.info(f"🔗 Módulo BIM Sincronizado | Rastreando Ativo ID: `{id_bim_alvo}` (Selecione outra OS na aba Centro de Diagnóstico para focar)")
     st.components.v1.iframe(speckle_base_url, height=600, scrolling=False)
 
 # ==========================================
-# ABA 2: PRODUTIVIDADE E RELATÓRIO (BLINDADA E ISOLADA)
+# ABA 2: PRODUTIVIDADE E RELATÓRIO
 # ==========================================
 with aba_produtividade:
     if not df.empty:
@@ -141,7 +145,7 @@ with aba_produtividade:
             except Exception as e:
                 pass
 
-        # APLICAÇÃO DOS FILTROS ORIGINAIS DE STATUS E CRITICIDADE
+        # APLICAÇÃO DOS FILTROS DE STATUS E CRITICIDADE
         if filtro_status != "Todos" and 'Status' in df_filtrado.columns:
             df_filtrado = df_filtrado[df_filtrado['Status'] == filtro_status]
         if filtro_criticidade != "Todos" and 'Criticidade' in df_filtrado.columns:
@@ -189,8 +193,10 @@ with aba_produtividade:
         st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
 
 # ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO (ESTÁVEL E REATIVA)
+# ABA 3: CENTRO DE DIAGNÓSTICO (ESTÁVEL E REATIVA COM DATA CACHE)
 # ==========================================
 with aba_diagnostico:
     st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
+    
+    col_esq, col_dir = st.columns(2)
     
