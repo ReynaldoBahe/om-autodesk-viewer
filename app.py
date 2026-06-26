@@ -73,7 +73,7 @@ if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada n
         st.session_state.os_selecionada = lista_os[0]
 
 # -------------------------------------------------------------------------
-# EXTRAÇÃO OPERACIONAL RIGOROSA DE STRING PURA (PROVÊ DADOS VISÍVEIS NA TELA)
+# EXTRAÇÃO DE VARIÁVEIS COM .ILOC[0] (PROVÊ STRING LIMPA SEM COLCHETES)
 # -------------------------------------------------------------------------
 id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 resp = "Pedro"
@@ -88,15 +88,15 @@ if not df.empty and 'OS' in df.columns:
     if not dados_os.empty:
         col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
         if col_id and col_id in dados_os.columns:
-            id_bim_alvo = str(dados_os[col_id].values[0]).strip()
+            id_bim_alvo = str(dados_os[col_id].iloc[0]).strip()
         
         col_t = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel']), None)
-        resp = str(dados_os[col_t].values[0]) if col_t else "Pedro"
-        setor = str(dados_os['Setor'].values[0]) if 'Setor' in df.columns else "Climatização"
-        status = str(dados_os['Status'].values[0]) if 'Status' in df.columns else "Fechado"
-        data_ab = str(dados_os['Data_Abertura'].values[0]) if 'Data_Abertura' in df.columns else "20/06/2026"
-        descricao_falha = str(dados_os['Descrição'].values[0]) if 'Descrição' in df.columns else "Sem descrição cadastrada."
-        criticidade_ativo = str(dados_os['Criticidade'].values[0]) if 'Criticidade' in df.columns else "Média"
+        resp = str(dados_os[col_t].iloc[0]) if col_t else "Pedro"
+        setor = str(dados_os['Setor'].iloc[0]) if 'Setor' in df.columns else "Climatização"
+        status = str(dados_os['Status'].iloc[0]) if 'Status' in df.columns else "Fechado"
+        data_ab = str(dados_os['Data_Abertura'].iloc[0]) if 'Data_Abertura' in df.columns else "20/06/2026"
+        descricao_falha = str(dados_os['Descrição'].iloc[0]) if 'Descrição' in df.columns else "Sem descrição cadastrada."
+        criticidade_ativo = str(dados_os['Criticidade'].iloc[0]) if 'Criticidade' in df.columns else "Média"
 
 if not id_bim_alvo or id_bim_alvo == "nan":
     id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
@@ -125,6 +125,22 @@ with aba_produtividade:
     if not df.empty:
         df_filtrado = df.copy()
         
+        # TRATAMENTO SEGURO DE TEMPO ABERTO LOCAL
+        if 'Data_Abertura' in df_filtrado.columns:
+            try:
+                df_filtrado['Data_Abertura_dt'] = pd.to_datetime(df_filtrado['Data_Abertura'], errors='coerce')
+                data_atual = pd.to_datetime('2026-06-26')
+                df_filtrado['Dias_Aberta'] = (data_atual - df_filtrado['Data_Abertura_dt']).dt.days
+                
+                if filtro_tempo == "Menos de 24h":
+                    df_filtrado = df_filtrado[df_filtrado['Dias_Aberta'] <= 1]
+                elif filtro_tempo == "Entre 2 e 7 dias":
+                    df_filtrado = df_filtrado[(df_filtrado['Dias_Aberta'] > 1) & (df_filtrado['Dias_Aberta'] <= 7)]
+                elif filtro_tempo == "Mais de 7 dias":
+                    df_filtrado = df_filtrado[df_filtrado['Dias_Aberta'] > 7]
+            except Exception as e:
+                pass
+
         if filtro_status != "Todos" and 'Status' in df_filtrado.columns:
             df_filtrado = df_filtrado[df_filtrado['Status'] == filtro_status]
         if filtro_criticidade != "Todos" and 'Criticidade' in df_filtrado.columns:
@@ -183,14 +199,3 @@ with aba_diagnostico:
             "Selecione a OS para análise da IA:", 
             lista_os, 
             index=idx_selecionado
-        )
-        
-        html_ficha = '<div class="ficha-tecnica"><h4 style="margin-top:0; color:#1E3A8A;">📋 Ficha Técnica do Ativo</h4><ul>'
-        html_ficha += f'<li><b>Ordem de Serviço:</b> {st.session_state.os_selecionada}</li>'
-        html_ficha += f'<li><b>ID BIM:</b> {id_bim_alvo}</li>'
-        html_ficha += f'<li><b>Responsável Técnico:</b> {resp}</li>'
-        html_ficha += f'<li><b>Setor:</b> {setor}</li>'
-        html_ficha += f'<li><b>Status Atual:</b> {status}</li>'
-        html_ficha += f'<li><b>Criticidade:</b> {criticidade_ativo}</li>'
-        html_ficha += f'<li><b>Data de Abertura:</b> {data_ab}</li>'
-        html_ficha += f'<li><b>Histórico de Quebras:</b> 3 recorrências registradas nos últimos 180 dias.</li></ul>'
