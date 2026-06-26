@@ -97,7 +97,7 @@ with aba_modelo:
     # Aplica o filtro de isolamento e cor vermelha se o toggle estiver ligado
     if ativar_visao_cromatica and id_bim_alvo:
         url_visualizador = f"{speckle_base_url}&filter=%5B%22{id_bim_alvo}%22%5D&overlay=%5B%7B%22id%22%3A%22{id_bim_alvo}%22%2C%22color%22%3A%22%23FF0000%22%7D%5D"
-        st.success(f"🎯 Visão Cromática Ativa: Filtrando e pintando o Ativo BIM `{id_bim_alvo}`")
+        st.success(f"🎯 Visão Cromática Ativa: Filtrando e pintando o Ativo BIM {id_bim_alvo}")
     else:
         url_visualizador = speckle_base_url
         st.markdown("ℹ️ *Visualização padrão do modelo de engenharia.*")
@@ -163,40 +163,34 @@ with aba_diagnostico:
     with col_esq:
         st.markdown("🔎 **Seleção de Ativo para Auditoria**")
         
-        # Menu dropdown que atualiza a variável global do app
         st.session_state.os_selecionada = st.selectbox(
             "Selecione a OS para análise da IA:", 
             lista_os, 
             index=lista_os.index(st.session_state.os_selecionada) if st.session_state.os_selecionada in lista_os else 0
         )
         
-        # Coleta de metadados dinâmicos da planilha com valores de reserva
         resp, setor, status, data_ab = "Pedro", "Climatização", "Fechado", "20/06/2026"
         if not df.empty and 'OS' in df.columns:
             dados_os = df[df['OS'] == st.session_state.os_selecionada]
             if not dados_os.empty:
                 col_t = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel']), None)
-                resp = dados_os[col_t].values[0] if col_t else "Pedro"
-                setor = dados_os['Setor'].values[0] if 'Setor' in df.columns else "Climatização"
-                status = dados_os['Status'].values[0] if 'Status' in df.columns else "Fechado"
-                data_ab = dados_os['Data_Abertura'].values[0] if 'Data_Abertura' in df.columns else "20/06/2026"
+                resp = str(dados_os[col_t].values[0]) if col_t else "Pedro"
+                setor = str(dados_os['Setor'].values[0]) if 'Setor' in df.columns else "Climatização"
+                status = str(dados_os['Status'].values[0]) if 'Status' in df.columns else "Fechado"
+                data_ab = str(dados_os['Data_Abertura'].values[0]) if 'Data_Abertura' in df.columns else "20/06/2026"
 
-        st.markdown(f"""
-        <div class="ficha-tecnica">
-            <h4 style="margin-top:0; color:#1E3A8A;">📋 Ficha Técnica do Ativo</h4>
-            <ul>
-                <li><b>ID BIM:</b> {id_bim_alvo}</li>
-                <li><b>Responsável Técnico:</b> {resp}</li>
-                <li><b>Setor:</b> {setor}</li>
-                <li><b>Status Atual:</b> {status}</li>
-                <li><b>Data de Abertura:</b> {data_ab}</li>
-                <li><b>Histórico de Quebras:</b> 3 recorrências registradas nos últimos 180 dias.</li>
-            </ul>
-            <a href="#" style="color:#2563EB; font-weight:bold; text-decoration:none;">📄 Acessar Manual Técnico do Ativo</a>
-        </div>
-        """, unsafe_allow_html=True)
+        # HTML montado de forma segura e limpa por concatenação
+        html_ficha = '<div class="ficha-tecnica"><h4 style="margin-top:0; color:#1E3A8A;">📋 Ficha Técnica do Ativo</h4><ul>'
+        html_ficha += f'<li><b>ID BIM:</b> {id_bim_alvo}</li>'
+        html_ficha += f'<li><b>Responsável Técnico:</b> {resp}</li>'
+        html_ficha += f'<li><b>Setor:</b> {setor}</li>'
+        html_ficha += f'<li><b>Status Atual:</b> {status}</li>'
+        html_ficha += f'<li><b>Data de Abertura:</b> {data_ab}</li>'
+        html_ficha += '<li><b>Histórico de Quebras:</b> 3 recorrências registradas nos últimos 180 dias.</li></ul>'
+        html_ficha += '<a href="#" style="color:#2563EB; font-weight:bold; text-decoration:none;">📄 Acessar Manual Técnico do Ativo</a></div>'
+        st.markdown(html_ficha, unsafe_allow_html=True)
         
     with col_dir:
         st.markdown("⚡ **Análise de Engenharia Operacional da IA**")
-        st.success(f"""
-        **ANÁLISE COMPLEMENTAR:** Ordem identificada como {st.session_state.os_selecionada}. O ativo associado ao ID BIM foi analisado pela malha preditiva e classificado sob o status atual de '{status}'.
+        
+        # String linear e direta para evitar erros de compilação da f-string
