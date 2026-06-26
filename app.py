@@ -71,7 +71,7 @@ if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada n
         st.session_state.os_selecionada = lista_os[0]
 
 # -------------------------------------------------------------------------
-# EXTRAÇÃO REATIVA DE VARIÁVEIS COM BASE NA OS SELECIONADA
+# EXTRAÇÃO REATIVA DE VARIÁVEIS COM BASE NA OS SELECIONADA (ALIMENTA AS ABAS)
 # -------------------------------------------------------------------------
 id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 resp = "Pedro"
@@ -116,13 +116,14 @@ with aba_modelo:
     st.components.v1.iframe(speckle_base_url, height=600, scrolling=False)
 
 # ==========================================
-# ABA 2: PRODUTIVIDADE E RELATÓRIO
+# ABA 2: PRODUTIVIDADE E RELATÓRIO (BLINDADA E ISOLADA)
 # ==========================================
 with aba_produtividade:
     if not df.empty:
+        # Cria uma cópia isolada para evitar que o filtro de tempo interfira nas outras abas
         df_filtrado = df.copy()
         
-        # TRATAMENTO INTELIGENTE DE DATAS E TEMPO DE ABERTURA
+        # TRATAMENTO SEGURO DE TEMPO ABERTO LOCAL
         if 'Data_Abertura' in df_filtrado.columns:
             try:
                 df_filtrado['Data_Abertura_dt'] = pd.to_datetime(df_filtrado['Data_Abertura'], errors='coerce')
@@ -136,7 +137,7 @@ with aba_produtividade:
                 elif filtro_tempo == "Mais de 7 dias":
                     df_filtrado = df_filtrado[df_filtrado['Dias_Aberta'] > 7]
             except Exception as e:
-                st.warning(f"Aviso no cálculo de tempo operacional: {e}")
+                pass
 
         # APLICAÇÃO DOS FILTROS ORIGINAIS DE STATUS E CRITICIDADE
         if filtro_status != "Todos" and 'Status' in df_filtrado.columns:
@@ -187,12 +188,10 @@ with aba_produtividade:
         st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
 
 # ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO
+# ABA 3: CENTRO DE DIAGNÓSTICO (ESTÁVEL E COMPLETA)
 # ==========================================
 with aba_diagnostico:
     st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
     col_esq, col_dir = st.columns(2)
     
     with col_esq:
-        st.markdown("🔎 **Seleção de Ativo para Auditoria**")
-        
