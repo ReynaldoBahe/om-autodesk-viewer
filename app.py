@@ -192,7 +192,7 @@ with aba_produtividade:
         st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
 
 # ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO (COM PESOS DE PROGRESSO REAL)
+# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO (BOTÃO DE LINK NATIVO)
 # ==========================================
 with aba_diagnostico:
     st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
@@ -206,12 +206,13 @@ with aba_diagnostico:
             "Selecione a OS para análise da IA:", 
             lista_os, 
             index=idx_selecionado,
-            key="selector_diagnostico_real_pesos"
+            key="selector_diagnostico_real_links_nativos_v2"
         )
         
         resp, setor, status, data_ab = "Não identificado", "Geral", "Aberto", "20/06/2026"
         descricao_falha = "Nenhuma descrição detalhada registrada na planilha."
         criticidade_ativo = "Média"
+        link_manual = ""  # Nasce vazio para validação do botão nativo
         
         if not df.empty and 'OS' in df.columns:
             dados_os = df[df['OS'].astype(str) == str(st.session_state.os_selecionada)]
@@ -222,13 +223,18 @@ with aba_diagnostico:
                 status = str(dados_os['Status'].squeeze()) if 'Status' in df.columns else "Fechado"
                 data_ab = str(dados_os['Data_Abertura'].squeeze()) if 'Data_Abertura' in df.columns else "20/06/2026"
                 
-                col_desc = next((c for c in df.columns if c.lower() in ['descrição', 'descricao', 'ocorrência', 'ocorrencia', 'falha']), None)
+                col_desc = next((c for c in df.columns if c.lower() in ['descrição', 'descricao', 'ocorrência', 'ocorrencia', 'falha', 'sintoma_detalhado']), None)
                 if col_desc:
                     descricao_falha = str(dados_os[col_desc].squeeze())
                 
                 col_crit = next((c for c in df.columns if 'CRITIC' in c.upper()), None)
                 if col_crit:
                     criticidade_ativo = str(dados_os[col_crit].squeeze())
+                
+                # 🔗 BLINDAGEM DE ESCRITA: Ignora maiúsculas, minúsculas e espaços ocultos
+                col_link = next((c for c in df.columns if 'LINK_MANUAL_TECNICO' in c.upper().strip().replace(' ', '_')), None)
+                if col_link and not pd.isna(dados_os[col_link].squeeze()):
+                    link_manual = str(dados_os[col_link].squeeze()).strip()
 
         html_ficha = '<div class="ficha-tecnica"><h4 style="margin-top:0; color:#1E3A8A;">📋 Ficha Técnica do Ativo</h4><ul>'
         html_ficha += f'<li><b>ID BIM:</b> {id_bim_alvo}</li>'
@@ -237,17 +243,22 @@ with aba_diagnostico:
         html_ficha += f'<li><b>Status Atual:</b> {status}</li>'
         html_ficha += f'<li><b>Criticidade Real:</b> {criticidade_ativo}</li>'
         html_ficha += f'<li><b>Data de Abertura:</b> {data_ab}</li></ul>'
-        html_ficha += f'<hr style="border:0; border-top:1px solid #BFDBFE; margin:10px 0;"><p style="margin:0; font-size:13px; color:#1E40AF;"><b>Ocorrência Registrada na Planilha:</b> {descricao_falha}</p>'
-        html_ficha += '<br><a href="#" style="color:#2563EB; font-weight:bold; text-decoration:none;">📄 Acessar Manual Técnico do Ativo</a></div>'
+        html_ficha += f'<hr style="border:0; border-top:1px solid #BFDBFE; margin:10px 0;"><p style="margin:0; font-size:13px; color:#1E40AF;"><b>Ocorrência Registrada na Planilha:</b> {descricao_falha}</p></div>'
         st.markdown(html_ficha, unsafe_allow_html=True)
         
+        # 🎯 BOTÃO NATIVO DO STREAMLIT: Abre em nova aba automaticamente de forma indestrutível
+        st.write("")
+        if link_manual and link_manual != "#" and link_manual != "nan" and link_manual.startswith("http"):
+            st.link_button("🔗📄 Acessar Manual Técnico do Ativo", url=link_manual, use_container_width=True)
+        else:
+            st.info("⚠️ Nenhum manual anexado a esta Ordem ou link inválido na planilha.")
+            
     with col_dir:
         st.markdown("⚡ **Análise de Engenharia Operacional da IA**")
         
         mensagem_ia = f"**ANÁLISE COMPLEMENTAR:** Ordem {st.session_state.os_selecionada}. Ativo BIM analisado sob status '{status}' e criticidade '{criticidade_ativo}'. Plano operacional recomendado para o subsistema de {setor}."
         st.success(mensagem_ia)
         
-        # 📈 MAPEAMENTO REATIVO DE PESOS OPERACIONAIS REAIS
         status_limpo = str(status).lower().strip()
         if 'abert' in status_limpo:
             valor_progresso = 0.1
@@ -258,13 +269,12 @@ with aba_diagnostico:
         elif 'fechad' in status_limpo or 'conclu' in status_limpo:
             valor_progresso = 1.0
         else:
-            valor_progresso = 0.5  # Fallback neutro se o status for desconhecido
+            valor_progresso = 0.5
             
         df_ia = pd.DataFrame({'Métrica': ['Progresso Operacional'], 'Valor': [valor_progresso]})
         
         grafico_ia = alt.Chart(df_ia).mark_bar(color='#1f77b4', size=150).encode(
             x=alt.X('Métrica:N', title=''),
-            # Formata o tooltip e o eixo para exibir em formato de porcentagem limpa no Altair
             y=alt.Y('Valor:Q', title='Evolução de Conclusão', scale=alt.Scale(domain=[0, 1.1])),
             tooltip=['Métrica', alt.Tooltip('Valor:Q', format='.0%')]
         ).properties(height=250)
