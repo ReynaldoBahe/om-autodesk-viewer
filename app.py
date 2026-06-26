@@ -2,18 +2,14 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 
-# ==========================================
 # 1. CONFIGURAÇÃO DA PÁGINA
-# ==========================================
 st.set_page_config(
     page_title="Portal de Engenharia & Produtividade",
     page_icon="🏗️",
     layout="wide"
 )
 
-# ==========================================
 # 2. DESIGN E ESTILIZAÇÃO CUSTOMIZADA (CSS)
-# ==========================================
 st.markdown("""
     <style>
     .main-title { font-size: 32px; font-weight: bold; color: #1E3A8A; margin-bottom: 20px; }
@@ -30,17 +26,20 @@ st.markdown("""
 
 st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de Projetos</div>', unsafe_allow_html=True)
 
-# ==========================================
-# 3. BARRA LATERAL (PAINEL DE CARGA INTEGRADO - SEM CARTÃO VERDE)
-# ==========================================
-st.sidebar.header("Painel de Dados")
+# 3. BARRA LATERAL (FILTROS OPERACIONAIS LIMPOS)
+st.sidebar.header("Filtros de Visão")
 
+filtro_status = st.sidebar.selectbox("Filtrar por Status:", ["Todos", "Aberta", "Em Andamento", "Pausada", "Fechado"])
+filtro_criticidade = st.sidebar.selectbox("Filtrar por Criticidade:", ["Todos", "Alta", "Média", "Baixa"])
+filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Menos de 24h", "Entre 2 e 7 dias", "Mais de 7 dias"])
+
+st.sidebar.write("---")
 arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
 
-# URL base do Speckle em modo embed limpo original aprovado
-speckle_base_url = "https://speckle.systems"
+# URL base do Speckle em modo embed limpo
+speckle_base_url = "https://app.speckle.systems/projects/a649da7292/models/815af390c7?embedToken=fd704d8c9c65c33217812bb9e35c7feb7c8d20314f"
 
-# Lógica de carregamento de dados segura e silenciosa
+# Lógica de carregamento de dados segura
 df = pd.DataFrame()
 if arquivo_upload is not None:
     try:
@@ -57,16 +56,12 @@ if not df.empty and 'OS' in df.columns:
 else:
     lista_os = ["OS-2026-001", "OS-2026-002", "OS-2026-003"]
 
-# ==========================================
 # 4. CONFIGURAÇÃO DO ESTADO DA SESSÃO (SESSION STATE)
-# ==========================================
 if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada not in lista_os:
     if lista_os:
         st.session_state.os_selecionada = lista_os[0]
 
-# ==========================================
 # 5. CRIAÇÃO DAS ABAS (OS 3 MÓDULOS)
-# ==========================================
 aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
     "📦 Modelo 3D (Speckle)", 
     "📊 Produtividade da Equipe", 
@@ -90,30 +85,19 @@ with aba_modelo:
     if not id_bim_alvo or id_bim_alvo == "nan":
         id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
-    # Exibição unificada com o Centro de Diagnóstico
-    st.info(f"🔗 Módulo BIM Sincronizado | Rastreando Ativo ID: `{id_bim_alvo}` (Selecione outra OS na aba Centro de Diagnóstico para focar)")
+    # Exibição elegante da inteligência de cruzamento de dados (Sem botões que não funcionam)
+    st.info(f"🔗 Módulo BIM Sincronizado | Rastreando Ativo ID: `{id_bim_alvo}` (Selecionado no Centro de Diagnóstico)")
     
     st.components.v1.iframe(speckle_base_url, height=600, scrolling=False)
 
 # ==========================================
-# ABA 2: PRODUTIVIDADE E RELATÓRIO (CÓDIGO ORIGINAL E APROVADO)
+# ABA 2: PRODUTIVIDADE E RELATÓRIO
 # ==========================================
 with aba_produtividade:
     if not df.empty:
         df_filtrado = df.copy()
-        
-        # Filtros locais para os gráficos operacionais da equipe
-        st.markdown("### 🎛️ Filtros do Relatório")
-        f_col1, f_col2 = st.columns(2)
-        with f_col1:
-            filtro_status_local = st.selectbox("Filtrar por Status no Gráfico:", ["Todos", "Aberta", "Em Andamento", "Pausada", "Fechado"], key="f_status")
-        with f_col2:
-            filtro_criticidade_local = st.selectbox("Filtrar por Criticidade no Gráfico:", ["Todos", "Alta", "Média", "Baixa"], key="f_crit")
-
-        if filtro_status_local != "Todos" and 'Status' in df_filtrado.columns:
-            df_filtrado = df_filtrado[df_filtrado['Status'] == filtro_status_local]
-        if filtro_criticidade_local != "Todos" and 'Criticidade' in df_filtrado.columns:
-            df_filtrado = df_filtrado[df_filtrado['Criticidade'] == filtro_criticidade_local]
+        if filtro_status != "Todos" and 'Status' in df_filtrado.columns:
+            df_filtrado = df_filtrado[df_filtrado['Status'] == filtro_status]
             
         st.markdown('<div class="vol-title">📊 Volumetria das Ordens de Serviço</div>', unsafe_allow_html=True)
         col_status_name = next((c for c in df.columns if c.lower() == 'status'), None)
@@ -154,7 +138,7 @@ with aba_produtividade:
         st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
 
 # ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO (CÓDIGO ORIGINAL E APROVADO)
+# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO
 # ==========================================
 with aba_diagnostico:
     st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
@@ -195,3 +179,9 @@ with aba_diagnostico:
         mensagem_ia = f"**ANÁLISE COMPLEMENTAR:** Ordem {st.session_state.os_selecionada}. Ativo BIM analisado sob status '{status}'. Plano recomendado para {setor}."
         st.success(mensagem_ia)
         
+        df_ia = pd.DataFrame({'Métrica': ['Ordens Analisadas'], 'Valor': [1.0]})
+        grafico_ia = alt.Chart(df_ia).mark_bar(color='#1f77b4', size=150).encode(
+            x=alt.X('Métrica:N', title=''),
+            y=alt.Y('Valor:Q', title='Status de Execução', scale=alt.Scale(domain=[0, 1.2])),
+        ).properties(height=250)
+        st.altair_chart(grafico_ia, use_container_width=True)
