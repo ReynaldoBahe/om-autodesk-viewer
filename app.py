@@ -9,28 +9,11 @@ st.set_page_config(
     layout="wide"
 )
 
-# 2. DESIGN E ESTILIZAÇÃO CUSTOMIZADA
+# 2. DESIGN E ESTILIZAÇÃO CUSTOMIZADA (CSS)
 st.markdown("""
     <style>
-    .main-title {
-        font-size: 32px;
-        font-weight: bold;
-        color: #1E3A8A;
-        margin-bottom: 20px;
-    }
-    .metric-box {
-        background-color: #F3F4F6;
-        padding: 15px;
-        border-radius: 8px;
-        border-left: 5px solid #2563EB;
-    }
-    .ficha-tecnica {
-        background-color: #EFF6FF;
-        padding: 20px;
-        border-radius: 8px;
-        border: 1px solid #BFDBFE;
-    }
-    /* Estilos para as bolinhas coloridas da volumetria */
+    .main-title { font-size: 32px; font-weight: bold; color: #1E3A8A; margin-bottom: 20px; }
+    .ficha-tecnica { background-color: #EFF6FF; padding: 20px; border-radius: 8px; border: 1px solid #BFDBFE; }
     .vol-title { font-size: 20px; font-weight: bold; margin-top: 15px; }
     .status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; }
     .dot-aberta { background-color: #22C55E; }
@@ -43,18 +26,23 @@ st.markdown("""
 
 st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de Projetos</div>', unsafe_allow_html=True)
 
-# 3. BARRA LATERAL (CONFIGURAÇÕES E FILTROS)
-st.sidebar.header("Configurações do Painel")
+# 3. BARRA LATERAL (FILTROS CONSOLIDADOS - SEM SETOR)
+st.sidebar.header("Filtros de Visão")
 
-speckle_url_input = st.sidebar.text_input(
-    "🔗 Link do Speckle (Cliente):",
-    value="https://speckle.systems"
-)
+# Filtros por caixas de seleção
+filtro_status = st.sidebar.selectbox("Filtrar por Status:", ["Todos", "Aberta", "Em Andamento", "Pausada", "Fechado"])
+filtro_criticidade = st.sidebar.selectbox("Filtrar por Criticidade:", ["Todos", "Alta", "Média", "Baixa"])
+filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Menos de 24h", "Entre 2 e 7 dias", "Mais de 7 dias"])
 
 st.sidebar.write("---")
-st.sidebar.header("Filtros Operacionais")
+st.sidebar.header("🎨 Filtro de Cores no Modelo (BIM)")
+ativar_visao_cromatica = st.sidebar.toggle("🔴 Ativar Visão Cromática por Ativo Selecionado")
 
+st.sidebar.write("---")
 arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
+
+# URL base do Speckle em modo embed
+speckle_base_url = "https://speckle.systems"
 
 # Lógica de carregamento de dados segura
 df = pd.DataFrame()
@@ -67,7 +55,15 @@ if arquivo_upload is not None:
     except Exception as e:
         st.error(f"Erro ao ler o arquivo: {e}")
 
-# 4. CRIAÇÃO DAS ABAS
+# Criamos uma lista de OS padrão caso o arquivo não tenha sido carregado ainda
+lista_os = list(df['OS'].unique()) if not df.empty and 'OS' in df.columns else ["OS-2026-001", "OS-2026-002", "OS-2026-003"]
+
+# 4. CONFIGURAÇÃO DE SESSÃO PARA SINCRONIZAR AS ABAS
+# Isso permite que a escolha da OS na Aba 3 controle o link que roda na Aba 1
+if 'os_selecionada' not in st.session_state:
+    st.session_state.os_selecionada = lista_os[0]
+
+# 5. CRIAÇÃO DAS ABAS
 aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
     "📦 Modelo 3D (Speckle)", 
     "📊 Produtividade da Equipe", 
@@ -75,105 +71,118 @@ aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
 ])
 
 # ==========================================
-# ABA 1: MODELO 3D (SPECKLE INTERATIVO)
+# ABA 1: MODELO 3D (SPECKLE DINÂMICO)
 # ==========================================
 with aba_modelo:
-    st.subheader("Visualização do Modelo Digital do Resort")
-    st.markdown("ℹ️ *Carregamento direto via infraestrutura aberta Speckle. Custo de API: $0.00.*")
-    st.components.v1.iframe(speckle_url_input, height=600, scrolling=False)
+    st.subheader("Visualizador Operacional de Ativos 3D")
+    
+    # Busca o ID BIM correspondente à OS selecionada na base de dados
+    id_bim_alvo = ""
+    if not df.empty and 'OS' in df.columns and 'ID' in df.columns:
+        linha_ativo = df[df['OS'] == st.session_state.os_selecionada]
+        if not list(linha_ativo['ID']):
+            id_bim_alvo = str(linha_ativo['ID'].values[0])
+
+    # Se não houver arquivo, usamos o ID padrão do print para testar
+    if not id_bim_alvo:
+        id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
+
+    # Constrói a URL final do Speckle aplicando o filtro de cor cirúrgico
+    if activar_visao_cromatica and id_bim_alvo:
+        # Passa o ID BIM via parâmetro oficial do Speckle para isolar e pintar o ativo de Vermelho (#FF0000)
+        url_visualizador = f"{speckle_base_url}&filter=%5B%22{id_bim_alvo}%22%5D&overlay=%5B%7B%22id%22%3A%22{id_bim_alvo}%22%2C%22color%22%3A%22%23FF0000%22%7D%5D"
+        st.markdown(f"🎯 *Visão Cromática Ativa: Focando exclusivamente no Ativo ID `{id_bim_alvo}`*")
+    else:
+        url_visualizador = speckle_base_url
+        st.markdown("ℹ️ *Visualização padrão do modelo de engenharia.*")
+        
+    st.components.v1.iframe(url_visualizador, height=600, scrolling=False)
 
 # ==========================================
-# ABA 2: PRODUTIVIDADE (COM VOLUMETRIA E RELATÓRIO)
+# ABA 2: PRODUTIVIDADE E RELATÓRIO
 # ==========================================
 with aba_produtividade:
     if not df.empty:
-        # --- SEÇÃO 1: VOLUMETRIA DAS OSs ---
+        # Filtros aplicados na tabela de dados
+        df_filtrado = df.copy()
+        if filtro_status != "Todos" and 'Status' in df_filtrado.columns:
+            df_filtrado = df_filtrado[df_filtrado['Status'] == filtro_status]
+            
+        # Volumetria
         st.markdown('<div class="vol-title">📊 Volumetria das Ordens de Serviço</div>', unsafe_allow_html=True)
-        
-        # Contagem dinâmica baseada na coluna 'Status' da sua planilha
         col_status_name = next((c for c in df.columns if c.lower() == 'status'), None)
+        status_counts = df[col_status_name].value_counts() if col_status_name else {}
         
-        qtd_aberta = 0
-        qtd_atendimento = 0
-        qtd_pausada = 0
-        qtd_fechado = 0
-        
-        if col_status_name:
-            status_counts = df[col_status_name].value_counts()
-            qtd_aberta = int(status_counts.get('Aberta', 0))
-            qtd_atendimento = int(status_counts.get('Em Andamento', 0))
-            qtd_pausada = int(status_counts.get('Pausada', 0))
-            qtd_fechado = int(status_counts.get('Fechado', 0))
-        
-        # Renderização dos 4 cards de volumetria lado a lado
         v_col1, v_col2, v_col3, v_col4 = st.columns(4)
         with v_col1:
-            st.markdown(f'<div><span class="status-dot dot-aberta"></span>Aberta</div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="vol-number">{qtd_aberta}</div>', unsafe_allow_html=True)
+            st.markdown('<div><span class="status-dot dot-aberta"></span>Aberta</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="vol-number">{int(status_counts.get("Aberta", 0))}</div>', unsafe_allow_html=True)
         with v_col2:
-            st.markdown(f'<div><span class="status-dot dot-atendimento"></span>Em Atendimento</div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="vol-number">{qtd_atendimento}</div>', unsafe_allow_html=True)
+            st.markdown('<div><span class="status-dot dot-atendimento"></span>Em Atendimento</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="vol-number">{int(status_counts.get("Em Andamento", 0))}</div>', unsafe_allow_html=True)
         with v_col3:
-            st.markdown(f'<div><span class="status-dot dot-pausada"></span>Pausada</div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="vol-number">{qtd_pausada}</div>', unsafe_allow_html=True)
+            st.markdown('<div><span class="status-dot dot-pausada"></span>Pausada</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="vol-number">{int(status_counts.get("Pausada", 0))}</div>', unsafe_allow_html=True)
         with v_col4:
-            st.markdown(f'<div><span class="status-dot dot-fechado"></span>Fechado</div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="vol-number">{qtd_fechado}</div>', unsafe_allow_html=True)
+            st.markdown('<div><span class="status-dot dot-fechado"></span>Fechado</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="vol-number">{int(status_counts.get("Fechado", 0))}</div>', unsafe_allow_html=True)
             
         st.markdown("---")
         
-        # --- SEÇÃO 2: GRÁFICO ALTAIR ---
+        # Gráfico Altair
         st.subheader("Controle de Ordens de Serviço por Técnico")
-        col_tecnico = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel', 'técnico responsável']), df.columns[0])
-        col_ordens = next((c for c in df.columns if c.lower() in ['ordens', 'om', 'quantidade', 'total']), None)
-        
-        if col_ordens:
-            df_produtividade = df.groupby(col_tecnico)[col_ordens].sum().reset_index()
-            df_produtividade.columns = ['Técnico', 'Ordens']
-        else:
-            df_produtividade = df.groupby(col_tecnico).size().reset_index(name='Ordens')
-            df_produtividade.columns = ['Técnico', 'Ordens']
+        col_tecnico = next((c for c in df_filtrado.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel', 'técnico responsável']), df_filtrado.columns)
+        df_produtividade = df_filtrado.groupby(col_tecnico).size().reset_index(name='Ordens')
+        df_produtividade.columns = ['Técnico', 'Ordens']
         
         grafico_altair = alt.Chart(df_produtividade).mark_bar(color='#1f77b4').encode(
             x=alt.X('Técnico:N', title='Profissional Técnico', sort='-y'),
             y=alt.Y('Ordens:Q', title='Total de Ordens de Serviço'),
             tooltip=['Técnico', 'Ordens']
         ).properties(width='container', height=350)
-        
         st.altair_chart(grafico_altair, use_container_width=True)
         
         st.markdown("---")
-        
-        # --- SEÇÃO 3: RELATÓRIO SINCRONIZADO (A TABELA) ---
         st.markdown('📋 **Relatório Sincronizado de Ordens de Serviço**')
-        # Exibe a planilha formatada de forma nativa e elegante na tela
-        st.dataframe(df, use_container_width=True, hide_index=False)
-        
+        st.dataframe(df_filtrado, use_container_width=True)
     else:
-        st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral para gerar os gráficos e tabelas automaticamente.")
+        st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
 
 # ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO (IA PREDITIVA)
+# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO
 # ==========================================
 with aba_diagnostico:
     st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
-    
     col_esq, col_dir = st.columns(2)
     
     with col_esq:
         st.markdown("🔎 **Seleção de Ativo para Auditoria**")
-        lista_os = ["OS-2026-001", "OS-2026-002", "OS-2026-003"]
-        os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os)
+        # Armazena a seleção diretamente no session_state para mandar para a Aba 1
+        st.session_state.os_selecionada = st.selectbox(
+            "Selecione a OS para análise da IA:", 
+            lista_os, 
+            index=lista_os.index(st.session_state.os_selecionada) if st.session_state.os_selecionada in lista_os else 0
+        )
         
+        # Coleta dados dinâmicos da OS selecionada caso a planilha exista
+        resp, setor, status, data_ab = "Pedro", "Climatização", "Fechado", "20/06/2026"
+        if not df.empty and 'OS' in df.columns:
+            dados_os = df[df['OS'] == st.session_state.os_selecionada]
+            if not dados_os.empty:
+                resp = dados_os.get('Técnico', dados_os.get('Técnico Responsável', ["Pedro"])).values[0]
+                setor = dados_os.get('Setor', ["Climatização"]).values[0]
+                status = dados_os.get('Status', ["Fechado"]).values[0]
+                data_ab = dados_os.get('Data_Abertura', ["20/06/2026"]).values[0]
+
         st.markdown(f"""
         <div class="ficha-tecnica">
             <h4 style="margin-top:0; color:#1E3A8A;">📋 Ficha Técnica do Ativo</h4>
             <ul>
-                <li><b>ID BIM:</b> 29e456a92924eb3747bbcd9bb3edd623</li>
-                <li><b>Responsável Técnico:</b> Pedro</li>
-                <li><b>Setor:</b> Climatização</li>
-                <li><b>Status Atual:</b> Fechado</li>
-                <li><b>Data de Abertura:</b> 20/06/2026</li>
+                <li><b>ID BIM:</b> {id_bim_alvo}</li>
+                <li><b>Responsável Técnico:</b> {resp}</li>
+                <li><b>Setor:</b> {setor}</li>
+                <li><b>Status Atual:</b> {status}</li>
+                <li><b>Data de Abertura:</b> {data_ab}</li>
                 <li><b>Histórico de Quebras:</b> 3 recorrências registradas nos últimos 180 dias.</li>
             </ul>
             <a href="#" style="color:#2563EB; font-weight:bold; text-decoration:none;">📄 Acessar Manual Técnico do Ativo</a>
@@ -181,16 +190,10 @@ with aba_diagnostico:
         """, unsafe_allow_html=True)
         
     with col_dir:
-        st.markdown("⚡ **Análise de Engenharia Operational da IA**")
-        st.success("""
-        **ANÁLISE COMPLEMENTAR:** Ordem Encerrada. A OS executada por Pedro referente a 
-        'Manutenção preventiva de ar-condicionado UH-202' foi devidamente finalizada de acordo 
-        com as especificações técnicas do fabricante. **Recomendação:** Agendar inspeção preventiva em 90 dias.
+        st.markdown("⚡ **Análise de Engenharia Operacional da IA**")
+        st.success(f"""
+        **ANÁLISE COMPLEMENTAR:** Ordem identificada como {st.session_state.os_selecionada}. O ativo associado ao ID BIM foi analisado pela malha preditiva e classificado sob o status atual de '{status}'. 
+        **Recomendação:** Seguir plano de calibração padrão de fábrica para o setor de {setor}.
         """)
         
-        df_ia = pd.DataFrame({'Métrica': ['Ordens Fechadas'], 'Valor': [1.0]})
-        grafico_ia = alt.Chart(df_ia).mark_bar(color='#1f77b4', size=150).encode(
-            x=alt.X('Métrica:N', title=''),
-            y=alt.Y('Valor:Q', title='Ordens Fechadas', scale=alt.Scale(domain=[0, 1.2])),
-        ).properties(height=250)
-        st.altair_chart(grafico_ia, use_container_width=True)
+        df_ia = pd.DataFrame({'Métrica': ['Ordens Analisadas'], 'Valor': [1.0]})
