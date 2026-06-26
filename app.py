@@ -164,7 +164,7 @@ with aba_produtividade:
         st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
 
 # ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO (100% REAL)
+# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO (COM PESOS DE PROGRESSO REAL)
 # ==========================================
 with aba_diagnostico:
     st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
@@ -178,10 +178,9 @@ with aba_diagnostico:
             "Selecione a OS para análise da IA:", 
             lista_os, 
             index=idx_selecionado,
-            key="selector_diagnostico_real_final"
+            key="selector_diagnostico_real_pesos"
         )
         
-        # Valores padrão de fallback caso a linha falhe
         resp, setor, status, data_ab = "Não identificado", "Geral", "Aberto", "20/06/2026"
         descricao_falha = "Nenhuma descrição detalhada registrada na planilha."
         criticidade_ativo = "Média"
@@ -195,12 +194,10 @@ with aba_diagnostico:
                 status = str(dados_os['Status'].squeeze()) if 'Status' in df.columns else "Fechado"
                 data_ab = str(dados_os['Data_Abertura'].squeeze()) if 'Data_Abertura' in df.columns else "20/06/2026"
                 
-                # BUSCA DINÂMICA DA OCORRÊNCIA REAL (Procura colunas como Descrição, Ocorrência, Falha)
                 col_desc = next((c for c in df.columns if c.lower() in ['descrição', 'descricao', 'ocorrência', 'ocorrencia', 'falha']), None)
                 if col_desc:
                     descricao_falha = str(dados_os[col_desc].squeeze())
                 
-                # BUSCA DINÂMICA DA CRITICIDADE REAL
                 col_crit = next((c for c in df.columns if 'CRITIC' in c.upper()), None)
                 if col_crit:
                     criticidade_ativo = str(dados_os[col_crit].squeeze())
@@ -219,16 +216,28 @@ with aba_diagnostico:
     with col_dir:
         st.markdown("⚡ **Análise de Engenharia Operacional da IA**")
         
-        # Frase da IA reativa e baseada estritamente na criticidade e setor da planilha
         mensagem_ia = f"**ANÁLISE COMPLEMENTAR:** Ordem {st.session_state.os_selecionada}. Ativo BIM analisado sob status '{status}' e criticidade '{criticidade_ativo}'. Plano operacional recomendado para o subsistema de {setor}."
         st.success(mensagem_ia)
         
-        # Gráfico dinâmico: Se a OS estiver Fechada o progresso é 1.0 (100%), se não é 0.5 (50%)
-        valor_progresso = 1.0 if str(status).lower() in ['fechado', 'concluído', 'concluido'] else 0.5
-        df_ia = pd.DataFrame({'Métrica': ['Status de Execução'], 'Valor': [valor_progresso]})
+        # 📈 MAPEAMENTO REATIVO DE PESOS OPERACIONAIS REAIS
+        status_limpo = str(status).lower().strip()
+        if 'abert' in status_limpo:
+            valor_progresso = 0.1
+        elif 'andament' in status_limpo or 'atendiment' in status_limpo:
+            valor_progresso = 0.5
+        elif 'pausad' in status_limpo:
+            valor_progresso = 0.3
+        elif 'fechad' in status_limpo or 'conclu' in status_limpo:
+            valor_progresso = 1.0
+        else:
+            valor_progresso = 0.5  # Fallback neutro se o status for desconhecido
+            
+        df_ia = pd.DataFrame({'Métrica': ['Progresso Operacional'], 'Valor': [valor_progresso]})
         
         grafico_ia = alt.Chart(df_ia).mark_bar(color='#1f77b4', size=150).encode(
             x=alt.X('Métrica:N', title=''),
-            y=alt.Y('Valor:Q', title='Progresso Operacional', scale=alt.Scale(domain=[0, 1.2])),
+            # Formata o tooltip e o eixo para exibir em formato de porcentagem limpa no Altair
+            y=alt.Y('Valor:Q', title='Evolução de Conclusão', scale=alt.Scale(domain=[0, 1.1])),
+            tooltip=['Métrica', alt.Tooltip('Valor:Q', format='.0%')]
         ).properties(height=250)
         st.altair_chart(grafico_ia, use_container_width=True)
