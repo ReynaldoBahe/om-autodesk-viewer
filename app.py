@@ -35,7 +35,6 @@ st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de P
 # ==========================================
 st.sidebar.header("Painel de Controle")
 
-# Campo de carregamento unificado no topo da área cinza
 arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha CMMS", type=["csv", "xlsx"])
 
 st.sidebar.write("---")
@@ -48,7 +47,7 @@ filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Meno
 # URL base fixa do Speckle em modo embed limpo original aprovado
 speckle_base_url = "https://speckle.systems"
 
-# Lógica de carregamento de dados segura e silenciosa no backend
+# Lógica de carregamento de dados segura no backend
 df = pd.DataFrame()
 if arquivo_upload is not None:
     try:
@@ -59,7 +58,7 @@ if arquivo_upload is not None:
     except Exception as e:
         st.error(f"Erro ao ler o arquivo: {e}")
 
-# Mapeia dinamicamente a lista de OS disponíveis com base na planilha ativa
+# Mapeia dinamicamente a lista de OS disponíveis
 if not df.empty and 'OS' in df.columns:
     lista_os = sorted(list(df['OS'].dropna().astype(str).unique()))
 else:
@@ -71,7 +70,7 @@ if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada n
         st.session_state.os_selecionada = lista_os[0]
 
 # -------------------------------------------------------------------------
-# EXTRAÇÃO REATIVA DE VARIÁVEIS COM BASE NA OS SELECIONADA (ALIMENTA AS ABAS)
+# EXTRAÇÃO REATIVA DE VARIÁVEIS COM BASE NA OS SELECIONADA
 # -------------------------------------------------------------------------
 id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 resp = "Pedro"
@@ -116,11 +115,10 @@ with aba_modelo:
     st.components.v1.iframe(speckle_base_url, height=600, scrolling=False)
 
 # ==========================================
-# ABA 2: PRODUTIVIDADE E RELATÓRIO (BLINDADA E ISOLADA)
+# ABA 2: PRODUTIVIDADE E RELATÓRIO
 # ==========================================
 with aba_produtividade:
     if not df.empty:
-        # Cria uma cópia isolada para evitar que o filtro de tempo interfira nas outras abas
         df_filtrado = df.copy()
         
         # TRATAMENTO SEGURO DE TEMPO ABERTO LOCAL
@@ -191,6 +189,8 @@ with aba_produtividade:
 # ==========================================
 with aba_diagnostico:
     st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
+    
+    # Criamos a divisão em colunas de forma limpa e direta na aba sem aninhamentos complexos
     col_esq, col_dir = st.columns(2)
     
-    with col_esq:
+    # Preenchimento direto na coluna da esquerda
