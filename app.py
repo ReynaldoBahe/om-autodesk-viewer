@@ -15,7 +15,7 @@ URN_MODELO = "dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6YTM2MHZpZXdlci1wcm90ZWN0ZWQvdD
 # Função cacheaa para obter o Token de Acesso da Autodesk
 @st.cache_data(ttl=3500)
 def obter_token_autodesk(client_id, client_secret):
-    url = "https://autodesk.com"
+    url = "https://viewer.autodesk.com/id/dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6YTM2MHZpZXdlci1wcm90ZWN0ZWQvdDE3ODE1Nzk3NDNfOGI0ZGU3MzMtNmU1Ny00Y2IwLWIyMzQtMWYzNzYyYjkwMTY5LnJ2dA?sheetId=YjlmYmFlYzYtN2VjOC1kZWIzLWRkZDEtMmIyNzA5ZWU0YWZl"
     payload = {"grant_type": "client_credentials", "scope": "viewables:read"}
     try:
         response = requests.post(url, data=payload, auth=(client_id, client_secret))
