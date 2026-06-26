@@ -1,5 +1,5 @@
-import streamlit as st
-import pandas as pd
+import streamlit st
+import pandas pd
 import altair as alt
 
 # ==========================================
@@ -31,7 +31,7 @@ st.markdown("""
 st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de Projetos</div>', unsafe_allow_html=True)
 
 # ==========================================
-# 3. BARRA LATERAL (ESTRUTURA ORIGINAL E COMPLETA)
+# 3. BARRA LATERAL (ESTRUTURA ORIGINAL COMPLETA)
 # ==========================================
 st.sidebar.header("Filtros de Visão")
 
@@ -78,7 +78,7 @@ aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
     "🧠 Centro de Diagnóstico (IA)"
 ])
 
-# Cálculo global e seguro do ID BIM Alvo para evitar NameError nas abas seguintes
+# Cálculo global e seguro do ID BIM Alvo
 id_bim_alvo = ""
 if not df.empty and 'OS' in df.columns:
     col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
@@ -91,18 +91,20 @@ if not id_bim_alvo or id_bim_alvo == "nan":
     id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
 # ==========================================
-# ABA 1: MODELO 3D (FAIXA CINZA LIMPA COM CSS SEGURO)
+# ABA 1: MODELO 3D (FAIXA CINZA LIMPA COM CSS EMBUTIDO COMPATÍVEL)
 # ==========================================
 with aba_modelo:
-    # Esta regra oculta apenas os elementos internos do painel, preservando a faixa cinza lateral
+    # Esta regra oculta temporariamente os controles de dentro da barra lateral usando classes exclusivas do painel 1
     st.markdown("""
         <style>
-        [data-baseweb="tab-panel"]:nth-of-type(1) [data-testid="stSidebar"] [data-testid="stWidgetFormModifier"],
-        [data-baseweb="tab-panel"]:nth-of-type(1) [data-testid="stSidebar"] div.stSelectbox,
-        [data-baseweb="tab-panel"]:nth-of-type(1) [data-testid="stSidebar"] div.stFileUploader,
-        [data-baseweb="tab-panel"]:nth-of-type(1) [data-testid="stSidebar"] hr,
-        [data-baseweb="tab-panel"]:nth-of-type(1) [data-testid="stSidebar"] h2 {
-            display: none !important;
+        [data-baseweb="tab-panel"] > div:nth-child(1) ~ [data-testid="stSidebar"] [data-testid="stWidgetFormModifier"],
+        [data-baseweb="tab-panel"] > div:nth-child(1) ~ [data-testid="stSidebar"] div.stSelectbox,
+        [data-baseweb="tab-panel"] > div:nth-child(1) ~ [data-testid="stSidebar"] div.stFileUploader,
+        [data-baseweb="tab-panel"] > div:nth-child(1) ~ [data-testid="stSidebar"] hr {
+            visibility: hidden;
+            height: 0;
+            margin: 0;
+            padding: 0;
         }
         </style>
     """, unsafe_allow_html=True)
