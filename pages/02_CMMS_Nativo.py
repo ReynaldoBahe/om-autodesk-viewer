@@ -78,7 +78,8 @@ else:
             
             st.session_state['dados_os'] = pd.concat([df, pd.DataFrame([novo_registro])], ignore_index=True)
             st.success(f"✅ {nova_os} registrada com sucesso!")
-            st.rerun()
+          st.experimental_rerun()
+
 
     # --------------------------------------------------------
     # PAINEL DE ATUALIZAÇÃO RÁPIDA (BAIXA EM OS)
@@ -115,7 +116,8 @@ else:
                 st.session_state['dados_os'].at[idx_global, 'Data_Fechamento'] = pd.Timestamp.now().strftime('%d/%m/%Y %H:%M:%S')
                 
             st.success(f"📊 Status da {os_selecionada} modificado para '{novo_status}' com sucesso!")
-            st.rerun()
+           st.experimental_rerun()
+
 
     # --------------------------------------------------------
     # RECURSO ADICIONAL: EXPORTAÇÃO DOS DADOS ATUALIZADOS
