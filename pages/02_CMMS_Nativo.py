@@ -42,12 +42,13 @@ if df_base.empty:
 if 'dados_os' not in st.session_state or st.session_state['dados_os'].empty:
     st.session_state['dados_os'] = df_base
 
-df = st.session_state['dados_os']
+# Força todas as colunas a aceitarem qualquer tipo de texto para evitar o TypeError
+df = st.session_state['dados_os'].astype(object)
 
-# Garantir que colunas críticas existam de forma correta
-for col in ['Pecas_substituidas', 'Causa_Raiz']:
+for col in ['Pecas_substituidas', 'Causa_Raiz', 'Data_Fechamento']:
     if col not in df.columns:
         df[col] = ""
+    df[col] = df[col].fillna("").astype(str)
 
 # --------------------------------------------------------
 # CAIXA 1: FORMULÁRIO DE ABERTURA DE NOVA OS
@@ -85,7 +86,8 @@ with st.form("formulario_nova_os", clear_on_submit=False):
             'Tempo_Parado_Horas': 0, 'Causa_Raiz': 'Pendente de Análise'
         }
         
-        st.session_state['dados_os'] = pd.concat([st.session_state['dados_os'], pd.DataFrame([novo_registro])], ignore_index=True)
+        df_atualizado = pd.concat([df, pd.DataFrame([novo_registro])], ignore_index=True)
+        st.session_state['dados_os'] = df_atualizado
         st.success(f"✅ {nova_os} registrada com sucesso!")
         st.experimental_rerun()
 
@@ -98,13 +100,14 @@ st.subheader("⚡ Atualização Rápida de Status (Operador)")
 lista_os = df['OS'].unique()
 os_selecionada = st.selectbox("Selecione uma OS para dar baixa ou alterar status:", lista_os)
 
-indices_encontrados = df[df['OS'] == os_selecionada].index
+# 🛠️ SISTEMA DE BUSCA ULTRA SEGURO POR MÁSCARA BOOLEANA
+condicao = df['OS'] == os_selecionada
 
-if len(indices_encontrados) > 0:
-    idx_real = int(indices_encontrados[0])  # 🔥 TRAVA DE INTEIRO: Converte para número inteiro simples
-    
-    status_atual = df.at[idx_real, 'Status']
-    pecas_atuais = df.at[idx_real, 'Pecas_substituidas']
+if condicao.any():
+    # Extrai os dados atuais como string para evitar falhas de visualização
+    status_atual = str(df.loc[condicao, 'Status'].values[0])
+    pecas_atuais = df.loc[condicao, 'Pecas_substituidas'].values[0]
+    pecas_texto = "" if pd.isna(pecas_atuais) or pecas_atuais == "nan" else str(pecas_atuais)
     
     col_edit1, col_edit2, col_edit3 = st.columns(3)
     with col_edit1:
@@ -112,19 +115,20 @@ if len(indices_encontrados) > 0:
         idx_status = status_padrao.index(status_atual) if status_atual in status_padrao else 0
         novo_status = st.selectbox("Novo Status", status_padrao, index=idx_status)
     with col_edit2:
-        pecas = st.text_input("Peças Substituídas", value="" if pd.isna(pecas_atuais) else str(pecas_atuais))
+        pecas = st.text_input("Peças Substituídas", value=pecas_texto)
     with col_edit3:
         causa = st.selectbox("Causa Raiz", ["Desgaste Natural", "Falha Elétrica", "Erro Operacional", "Falha Mecânica"], index=0)
         
     if st.button("🔄 Atualizar Registro"):
-        # Modificação direta garantida usando o índice inteiro unificado
-        st.session_state['dados_os'].at[idx_real, 'Status'] = novo_status
-        st.session_state['dados_os'].at[idx_real, 'Pecas_substituidas'] = pecas
-        st.session_state['dados_os'].at[idx_real, 'Causa_Raiz'] = causa
+        # 🔥 A CARTADA FINAL: .loc garante a alteração direta e segura sem erros de tipo
+        df.loc[condicao, 'Status'] = str(novo_status)
+        df.loc[condicao, 'Pecas_substituidas'] = str(pecas)
+        df.loc[condicao, 'Causa_Raiz'] = str(causa)
         
         if novo_status == "Fechado":
-            st.session_state['dados_os'].at[idx_real, 'Data_Fechamento'] = pd.Timestamp.now().strftime('%d/%m/%Y %H:%M:%S')
+            df.loc[condicao, 'Data_Fechamento'] = pd.Timestamp.now().strftime('%d/%m/%Y %H:%M:%S')
             
+        st.session_state['dados_os'] = df
         st.success(f"📊 Status da {os_selecionada} modificado para '{novo_status}' com sucesso!")
         st.experimental_rerun()
 
