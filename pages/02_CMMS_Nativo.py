@@ -44,9 +44,9 @@ if 'dados_os' not in st.session_state or st.session_state['dados_os'].empty:
 
 df = st.session_state['dados_os']
 
-# Garantir que colunas críticas existam com strings limpas
-for col em ['Pecas_substituidas', 'Causa_Raiz']:
-    if col não em df.columns:
+# Garantir que colunas críticas existam de forma correta (Corrigido para sintaxe em inglês)
+for col in ['Pecas_substituidas', 'Causa_Raiz']:
+    if col not in df.columns:
         df[col] = ""
 
 # --------------------------------------------------------
@@ -98,11 +98,10 @@ st.subheader("⚡ Atualização Rápida de Status (Operador)")
 lista_os = df['OS'].unique()
 os_selecionada = st.selectbox("Selecione uma OS para dar baixa ou alterar status:", lista_os)
 
-# Localiza o índice numérico real da linha correspondente no DataFrame mestre
 indices_encontrados = df[df['OS'] == os_selecionada].index
 
 if len(indices_encontrados) > 0:
-    idx_real = indices_encontrados[0]  # 🔥 CORREÇÃO DA JOGADA: Coleta o número escalar puro do índice
+    idx_real = indices_encontrados[0]  # Coleta o número escalar puro do índice de forma segura
     
     status_atual = df.at[idx_real, 'Status']
     pecas_atuais = df.at[idx_real, 'Pecas_substituidas']
@@ -118,7 +117,6 @@ if len(indices_encontrados) > 0:
         causa = st.selectbox("Causa Raiz", ["Desgaste Natural", "Falha Elétrica", "Erro Operacional", "Falha Mecânica"], index=0)
         
     if st.button("🔄 Atualizar Registro"):
-        # 🔥 CORREÇÃO DAS GRAVAÇÕES: Usando rigorosamente o idx_real numérico nas três linhas
         st.session_state['dados_os'].at[idx_real, 'Status'] = novo_status
         st.session_state['dados_os'].at[idx_real, 'Pecas_substituidas'] = pecas
         st.session_state['dados_os'].at[idx_real, 'Causa_Raiz'] = causa
