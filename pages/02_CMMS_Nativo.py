@@ -52,17 +52,17 @@ for col in ['Pecas_substituidas', 'Causa_Raiz', 'Data_Fechamento', 'Setor', 'Tip
 st.subheader("➕ Registrar Nova Ordem de Serviço")
 
 # 1. Montagem dinâmica do Setor
-setores_existentes = sorted([s for s in df['Setor'].unique() if s.strip() != ""])
+setores_existentes = sorted(list(set([str(s).strip() for s in df['Setor'].unique() if str(s).strip() not in ["", "nan"]])))
 if not setores_existentes: setores_existentes = ["Climatização", "Elétrica", "Hidráulica", "Mecânica", "Civil"]
 opcoes_setor = setores_existentes + ["➕ Cadastrar Outro Setor..."]
 
 # 2. Montagem dinâmica do Tipo de Manutenção
-tipos_existentes = sorted([t for t in df['Tipo_manutencao'].unique() if t.strip() != ""])
+tipos_existentes = sorted(list(set([str(t).strip() for t in df['Tipo_manutencao'].unique() if str(t).strip() not in ["", "nan"]])))
 if not tipos_existentes: tipos_existentes = ["Corretiva", "Preventiva", "Preditiva"]
 opcoes_tipo = tipos_existentes + ["➕ Cadastrar Outro Tipo..."]
 
-# 3. 🔥 NOVIDADE: Montagem dinâmica do Profissional Técnico
-tecnicos_existentes = sorted([r for r in df['Responsavel'].unique() if r.strip() != ""])
+# 3. Montagem dinâmica do Profissional Técnico
+tecnicos_existentes = sorted(list(set([str(r).strip() for r in df['Responsavel'].unique() if str(r).strip() not in ["", "nan"]])))
 if not tecnicos_existentes: tecnicos_existentes = ["Pedro", "Marcos", "Tiago", "Francisco", "Joaquim"]
 opcoes_tecnico = tecnicos_existentes + ["➕ Cadastrar Outro Técnico..."]
 
@@ -82,9 +82,9 @@ with st.form("form_nova_os", clear_on_submit=True):
         tipo_selecionado = st.selectbox("Tipo de Manutenção", opcoes_tipo)
         novo_tipo_input = ""
         if tipo_selecionado == "➕ Cadastrar Outro Tipo...":
-            novo_tipo_input = st.text_input("Digite o NOVO Tipo de Manutenção:", placeholder="Ex: Melhoria, Instalação...")
+            novo_tipo_input = st.text_input("Digite o nome do NOVO Tipo de Manutenção:", placeholder="Ex: Melhoria, Instalação, Calibração...")
             
-        # 🔥 Seletor Dinâmico de Profissional Técnico
+        # Seletor de Técnico
         tecnico_selecionado = st.selectbox("Profissional Técnico", opcoes_tecnico)
         novo_tecnico_input = ""
         if tecnico_selecionado == "➕ Cadastrar Outro Técnico...":
@@ -180,4 +180,3 @@ if condicao.any():
             if novo_status == "Fechado":
                 df_mestre.loc[condicao_mestre, 'Data_Fechamento'] = pd.Timestamp.now().strftime('%d/%m/%Y %H:%M:%S')
                 
-            st.session_state['dados_os'] = df_mestre
