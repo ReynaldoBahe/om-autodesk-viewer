@@ -44,7 +44,7 @@ if 'dados_os' not in st.session_state or st.session_state['dados_os'].empty:
 
 df = st.session_state['dados_os']
 
-# Garantir que colunas críticas existam de forma correta (Corrigido para sintaxe em inglês)
+# Garantir que colunas críticas existam de forma correta
 for col in ['Pecas_substituidas', 'Causa_Raiz']:
     if col not in df.columns:
         df[col] = ""
@@ -101,7 +101,7 @@ os_selecionada = st.selectbox("Selecione uma OS para dar baixa ou alterar status
 indices_encontrados = df[df['OS'] == os_selecionada].index
 
 if len(indices_encontrados) > 0:
-    idx_real = indices_encontrados[0]  # Coleta o número escalar puro do índice de forma segura
+    idx_real = int(indices_encontrados[0])  # 🔥 TRAVA DE INTEIRO: Converte para número inteiro simples
     
     status_atual = df.at[idx_real, 'Status']
     pecas_atuais = df.at[idx_real, 'Pecas_substituidas']
@@ -117,6 +117,7 @@ if len(indices_encontrados) > 0:
         causa = st.selectbox("Causa Raiz", ["Desgaste Natural", "Falha Elétrica", "Erro Operacional", "Falha Mecânica"], index=0)
         
     if st.button("🔄 Atualizar Registro"):
+        # Modificação direta garantida usando o índice inteiro unificado
         st.session_state['dados_os'].at[idx_real, 'Status'] = novo_status
         st.session_state['dados_os'].at[idx_real, 'Pecas_substituidas'] = pecas
         st.session_state['dados_os'].at[idx_real, 'Causa_Raiz'] = causa
