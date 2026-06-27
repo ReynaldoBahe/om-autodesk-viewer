@@ -100,19 +100,29 @@ os_selecionada = st.selectbox("Selecione uma OS para dar baixa ou alterar status
 condicao = df['OS'] == os_selecionada
 
 if condicao.any():
-    status_atual = str(df.loc[condicao, 'Status'].values[0])
+    # 🛠️ CAPTURA GARANTIDA: Converte os dados da planilha para strings limpas
+    status_atual = str(df.loc[condicao, 'Status'].values[0]).strip()
+    
     pecas_atuais = df.loc[condicao, 'Pecas_substituidas'].values[0]
-    pecas_texto = "" if pd.isna(pecas_atuais) or pecas_atuais == "nan" else str(pecas_atuais)
+    pecas_texto = "" if pd.isna(pecas_atuais) or str(pecas_atuais).lower() in ["nan", ""] else str(pecas_atuais)
+    
+    causa_atual = df.loc[condicao, 'Causa_Raiz'].values[0]
+    causa_texto = "Desgaste Natural" if pd.isna(causa_atual) or str(causa_atual).lower() in ["nan", "", "pendente"] else str(causa_atual)
     
     col_edit1, col_edit2, col_edit3 = st.columns(3)
     with col_edit1:
         status_padrao = ["Aberta", "Em Andamento", "Pausada", "Fechado"]
         idx_status = status_padrao.index(status_atual) if status_atual in status_padrao else 0
         novo_status = st.selectbox("Novo Status", status_padrao, index=idx_status)
+        
     with col_edit2:
         pecas = st.text_input("Peças Substituídas", value=pecas_texto)
+        
     with col_edit3:
-        causa = st.selectbox("Causa Raiz", ["Desgaste Natural", "Falha Elétrica", "Erro Operacional", "Falha Mecânica"], index=0)
+        # 🛠️ SINCRONIZAÇÃO DA CAUSA RAIZ: Pré-seleciona a causa se ela já existir na planilha
+        causas_padrao = ["Desgaste Natural", "Falha Elétrica", "Erro Operacional", "Falha Mecânica", "Corretiva por Vazamento", "Pendente de Análise"]
+        idx_causa = causas_padrao.index(causa_texto) if causa_texto in causas_padrao else 0
+        causa = st.selectbox("Causa Raiz", causas_padrao, index=idx_causa)
         
     if st.button("🔄 Atualizar Registro"):
         df_mestre = st.session_state['dados_os']
