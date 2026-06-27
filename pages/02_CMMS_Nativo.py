@@ -77,12 +77,12 @@ with st.form("form_nova_os", clear_on_submit=True):
         link_manual = st.text_input("Link do Manual Técnico (URL)", value="")
         id_sonoff = st.text_input("ID do Sensor Sonoff Vinculado", value="Não Vinculado")
 
-    # 💡 AJUSTE VISUAL: Os campos extras agora ficam organizados em colunas limpas abaixo dos seletores
+        # 💡 AJUSTE VISUAL DE OURO: Cada campo de texto só aparece se a sua respectiva opção for selecionada!
     novo_setor_input = ""
     novo_tipo_input = ""
     novo_tecnico_input = ""
     
-    if "➕ Cadastrar Outro Setor..." in setor_selecionado or "➕ Cadastrar Outro Tipo..." in tipo_selecionado or "➕ Cadastrar Outro Técnico..." in tecnico_selecionado:
+    if setor_selecionado == "➕ Cadastrar Outro Setor..." or tipo_selecionado == "➕ Cadastrar Outro Tipo..." or tecnico_selecionado == "➕ Cadastrar Outro Técnico...":
         st.info("📝 Preencha os campos abaixo para os novos cadastros detectados:")
         c_inst1, c_inst2, c_inst3 = st.columns(3)
         with c_inst1:
@@ -94,6 +94,7 @@ with st.form("form_nova_os", clear_on_submit=True):
         with c_inst3:
             if tecnico_selecionado == "➕ Cadastrar Outro Técnico...":
                 novo_tecnico_input = st.text_input("Nome do NOVO Técnico:")
+
         
     btn_registrar = st.form_submit_button("💾 Registrar OS no Sistema")
     
