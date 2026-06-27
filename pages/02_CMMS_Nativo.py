@@ -18,13 +18,12 @@ for chave in ['dados_os', 'df_filtrado', 'df', 'df_os']:
             break
 
 # 2. SE CONTINUAR VAZIO: Lê direto o arquivo físico do seu repositório para nunca quebrar
+if df_base.empty:
     try:
-        # Tenta a primeira opção (com hífen gerado pelo Google)
         df_base = pd.read_csv("CMMS_Export_RB - CMMS_RB.csv")
         st.session_state['dados_os'] = df_base
     except Exception:
         try:
-            # Tenta a segunda opção (nome limpo padrão)
             df_base = pd.read_csv("CMMS_Export_RB.csv")
             st.session_state['dados_os'] = df_base
         except Exception:
@@ -34,6 +33,7 @@ for chave in ['dados_os', 'df_filtrado', 'df', 'df_os']:
             except Exception:
                 pass
 
+# 3. VERIFICAÇÃO FINAL DE SEGURANÇA
 if df_base.empty:
     st.warning("⚠️ Certifique-se de que o arquivo 'CMMS_Export_RB - CMMS_RB.csv' está na raiz do seu repositório GitHub para liberar o CMMS Nativo.")
 else:
@@ -78,8 +78,7 @@ else:
             
             st.session_state['dados_os'] = pd.concat([df, pd.DataFrame([novo_registro])], ignore_index=True)
             st.success(f"✅ {nova_os} registrada com sucesso!")
-          st.experimental_rerun()
-
+            st.experimental_rerun()
 
     # --------------------------------------------------------
     # PAINEL DE ATUALIZAÇÃO RÁPIDA (BAIXA EM OS)
@@ -116,8 +115,7 @@ else:
                 st.session_state['dados_os'].at[idx_global, 'Data_Fechamento'] = pd.Timestamp.now().strftime('%d/%m/%Y %H:%M:%S')
                 
             st.success(f"📊 Status da {os_selecionada} modificado para '{novo_status}' com sucesso!")
-           st.experimental_rerun()
-
+            st.experimental_rerun()
 
     # --------------------------------------------------------
     # RECURSO ADICIONAL: EXPORTAÇÃO DOS DADOS ATUALIZADOS
