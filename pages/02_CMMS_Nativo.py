@@ -7,7 +7,6 @@ st.set_page_config(layout="wide", page_title="CMMS Nativo - RB Consultoria")
 st.markdown('### 🛠️ CMMS Proprietário — Gestão de Ordens de Serviço')
 st.write("Abra e controle ordens de serviço de forma nativa e integrada ao ecossistema.")
 
-# 🔗 CONEXÃO COM O BANCO DE DADOS EM MEMÓRIA DO PORTAL
 # 🔗 CONEXÃO COM O BANCO DE DADOS EM MEMÓRIA OU ARQUIVO LOCAL
 df_base = pd.DataFrame()
 
@@ -23,23 +22,18 @@ if df_base.empty:
     try:
         # Lê o seu CSV padrão que está na raiz do GitHub
         df_base = pd.read_csv("CMMS_Export_RB.csv")
-        # Alimenta a sessão global para sincronizar com as outras abas
         st.session_state['dados_os'] = df_base
     except Exception:
-        # Se falhar o CSV, tenta ler se por acaso tiver um Excel com o mesmo nome
         try:
             df_base = pd.read_excel("CMMS_Export_RB.xlsx")
             st.session_state['dados_os'] = df_base
         except Exception:
             pass
 
-# 3. VERIFICAÇÃO FINAL DE SEGURANÇA (Se mesmo assim não achar o arquivo no GitHub)
+# 3. VERIFICAÇÃO FINAL DE SEGURANÇA
 if df_base.empty:
     st.warning("⚠️ Certifique-se de que o arquivo 'CMMS_Export_RB.csv' está na raiz do seu repositório GitHub para liberar o CMMS Nativo.")
 else:
-    # Cria uma cópia limpa para manipulação
-    df = df_base.copy()
-
     # Cria uma cópia limpa para manipulação
     df = df_base.copy()
 
@@ -79,9 +73,8 @@ else:
                 'Tempo_Parado_Horas': 0, 'Causa_Raiz': 'Pendente de Análise'
             }
             
-            # Injeta a nova linha diretamente na memória compartilhada do Streamlit
             st.session_state['dados_os'] = pd.concat([df, pd.DataFrame([novo_registro])], ignore_index=True)
-            st.success(f"✅ {nova_os} registrada com sucesso! Os gráficos e a IA das outras abas já foram atualizados.")
+            st.success(f"✅ {nova_os} registrada com sucesso!")
             st.rerun()
 
     # --------------------------------------------------------
@@ -91,8 +84,6 @@ else:
     st.subheader("⚡ Atualização Rápida de Status (Operador)")
     
     os_selecionada = st.selectbox("Selecione uma OS para dar baixa ou alterar status:", df['OS'].unique())
-    
-    # Extrai a linha específica correspondente à OS selecionada
     linha_os = df[df['OS'] == os_selecionada]
     
     if not linha_os.empty:
@@ -111,15 +102,14 @@ else:
             causa = st.selectbox("Causa Raiz", ["Desgaste Natural", "Falha Elétrica", "Erro Operacional", "Falha Mecânica"], index=0)
             
         if st.button("🔄 Atualizar Registro"):
-            # Localiza o índice numérico exato na tabela mestre do Session State
             idx_global = df[df['OS'] == os_selecionada].index
             
-            st.session_state['dados_os'].at[idx_global[0], 'Status'] = novo_status
-            st.session_state['dados_os'].at[idx_global[0], 'Pecas_substituidas'] = pecas
-            st.session_state['dados_os'].at[idx_global[0], 'Causa_Raiz'] = causa
+            st.session_state['dados_os'].at[idx_global, 'Status'] = novo_status
+            st.session_state['dados_os'].at[idx_global, 'Pecas_substituidas'] = pecas
+            st.session_state['dados_os'].at[idx_global, 'Causa_Raiz'] = causa
             
             if novo_status == "Fechado":
-                st.session_state['dados_os'].at[idx_global[0], 'Data_Fechamento'] = pd.Timestamp.now().strftime('%d/%m/%Y %H:%M:%S')
+                st.session_state['dados_os'].at[idx_global, 'Data_Fechamento'] = pd.Timestamp.now().strftime('%d/%m/%Y %H:%M:%S')
                 
             st.success(f"📊 Status da {os_selecionada} modificado para '{novo_status}' com sucesso!")
             st.rerun()
@@ -129,9 +119,7 @@ else:
     # --------------------------------------------------------
     st.markdown("---")
     st.subheader("💾 Exportar Banco de Dados Atualizado")
-    st.write("Baixe as alterações feitas no portal de volta para o seu computador.")
     
-    # Converte o DataFrame atual da memória para formato CSV pronto para download
     csv_data = st.session_state['dados_os'].to_csv(index=False).encode('utf-8')
     st.download_button(
         label="📥 Baixar Planilha CMMS Atualizada (.CSV)",
