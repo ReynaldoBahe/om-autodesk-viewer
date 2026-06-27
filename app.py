@@ -17,7 +17,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de Projetos</div>', unsafe_allow_html=True)
+st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de Ativos</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">Bem-vindo ao centro de controle operacional. Utilize o menu de navegação lateral à esquerda para acessar os módulos do sistema.</div>', unsafe_allow_html=True)
 
 # Desenho dos Cards Informativos na Home
