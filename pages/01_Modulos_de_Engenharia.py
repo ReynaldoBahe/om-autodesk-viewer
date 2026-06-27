@@ -28,7 +28,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de Projetos</div>', unsafe_allow_html=True)
+st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de Ativos</div>', unsafe_allow_html=True)
 
 # ==========================================
 # 3. BARRA LATERAL (FILTROS OPERACIONAIS E PAINEL DE CONTROLE)
