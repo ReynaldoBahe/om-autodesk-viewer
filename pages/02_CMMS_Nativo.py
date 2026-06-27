@@ -89,7 +89,7 @@ with st.form("formulario_nova_os", clear_on_submit=False):
         df_atualizado = pd.concat([df, pd.DataFrame([novo_registro])], ignore_index=True)
         st.session_state['dados_os'] = df_atualizado
         st.success(f"✅ {nova_os} registrada com sucesso!")
-        st.experimental_rerun()
+        st.rerun()
 
 # --------------------------------------------------------
 # CAIXA 2: PAINEL DE ATUALIZAÇÃO RÁPIDA (BAIXA EM OS)
@@ -130,7 +130,7 @@ if condicao.any():
             
         st.session_state['dados_os'] = df
         st.success(f"📊 Status da {os_selecionada} modificado para '{novo_status}' com sucesso!")
-        st.experimental_rerun()
+        st.rerun()
 
 # --------------------------------------------------------
 # CAIXA 3: EXPORTAÇÃO DOS DADOS ATUALIZADOS
