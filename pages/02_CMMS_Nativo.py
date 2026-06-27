@@ -41,21 +41,25 @@ if 'dados_os' not in st.session_state or st.session_state['dados_os'].empty:
 
 df = st.session_state['dados_os'].astype(object)
 
-for col in ['Pecas_substituidas', 'Causa_Raiz', 'Data_Fechamento', 'Setor']:
+for col in ['Pecas_substituidas', 'Causa_Raiz', 'Data_Fechamento', 'Setor', 'Tipo_manutencao']:
     if col not in df.columns:
         df[col] = ""
     df[col] = df[col].fillna("").astype(str)
 
 # --------------------------------------------------------
-# CAIXA 1: REGISTRO DE NOVA OS (MENU DINÂMICO DE SETOR)
+# CAIXA 1: REGISTRO DE NOVA OS (MENUS DINÂMICOS COMPLETOS)
 # --------------------------------------------------------
 st.subheader("➕ Registrar Nova Ordem de Serviço")
 
-# EXTRAÇÃO DINÂMICA: Lê os setores que já existem na planilha e monta a lista
+# 1. Montagem dinâmica do Setor
 setores_existentes = sorted([s for s in df['Setor'].unique() if s.strip() != ""])
-if not setores_existentes:
-    setores_existentes = ["Climatização", "Elétrica", "Hidráulica", "Mecânica", "Civil"]
+if not setores_existentes: setores_existentes = ["Climatização", "Elétrica", "Hidráulica", "Mecânica", "Civil"]
 opcoes_setor = setores_existentes + ["➕ Cadastrar Outro Setor..."]
+
+# 2. 🔥 NOVIDADE: Montagem dinâmica do Tipo de Manutenção
+tipos_existentes = sorted([t for t in df['Tipo_manutencao'].unique() if t.strip() != ""])
+if not tipos_existentes: tipos_existentes = ["Corretiva", "Preventiva", "Preditiva"]
+opcoes_tipo = tipos_existentes + ["➕ Cadastrar Outro Tipo..."]
 
 with st.form("form_nova_os", clear_on_submit=True):
     col1, col2 = st.columns(2)
@@ -63,15 +67,18 @@ with st.form("form_nova_os", clear_on_submit=True):
         st.text_input("Código da OS (Automático)", value=f"OS-2026-{len(df) + 1:03d}", disabled=True)
         id_bim = st.text_input("ID BIM do Ativo (Speckle)", value="29e456...")
         
-        # Caixa de seleção dinâmica de Setor
+        # Seletor de Setor
         setor_selecionado = st.selectbox("Setor Responsável", opcoes_setor)
-        
-        # Se escolher cadastrar outro, abre um campo extra de digitação na hora
         novo_setor_input = ""
         if setor_selecionado == "➕ Cadastrar Outro Setor...":
             novo_setor_input = st.text_input("Digite o nome do NOVO Setor:", placeholder="Ex: Telecom, Incêndio...")
             
-        tipo_manutencao = st.selectbox("Tipo de Manutenção", ["Corretiva", "Preventiva", "Preditiva"])
+        # 🔥 Seletor Dinâmico de Tipo de Manutenção
+        tipo_selecionado = st.selectbox("Tipo de Manutenção", opcoes_tipo)
+        novo_tipo_input = ""
+        if tipo_selecionado == "➕ Cadastrar Outro Tipo...":
+            novo_tipo_input = st.text_input("Digite o NOVO Tipo de Manutenção:", placeholder="Ex: Melhoria, Instalação, Calibração...")
+            
         responsavel = st.selectbox("Profissional Técnico", ["Pedro", "Marcos", "Tiago", "Francisco", "Joaquim"])
         
     with col2:
@@ -86,16 +93,18 @@ with st.form("form_nova_os", clear_on_submit=True):
         if not sintoma.strip():
             st.error("⚠️ Por favor, descreva o sintoma antes de registrar a Ordem de Serviço.")
         elif setor_selecionado == "➕ Cadastrar Outro Setor..." and not novo_setor_input.strip():
-            st.error("⚠️ Por favor, digite o nome do novo setor campo correspondente.")
+            st.error("⚠️ Por favor, digite o nome do novo setor.")
+        elif tipo_selecionado == "➕ Cadastrar Outro Tipo..." and not novo_tipo_input.strip():
+            st.error("⚠️ Por favor, digite o nome do novo tipo de manutenção.")
         else:
-            # Define se usa o setor da lista ou o inédito que acabou de ser digitado
             setor_final = novo_setor_input.strip() if setor_selecionado == "➕ Cadastrar Outro Setor..." else setor_selecionado
+            tipo_final = novo_tipo_input.strip() if tipo_selecionado == "➕ Cadastrar Outro Tipo..." else tipo_selecionado
             
             novo_registro = {
                 'OS': f"OS-2026-{len(df) + 1:03d}", 'ID': id_bim,
                 'Data_Abertura': pd.Timestamp.now().strftime('%d/%m/%Y %H:%M:%S'), 'Data_Fechamento': '',
                 'Descrição': f"Atendimento nativo criado via portal para setor de {setor_final}.",
-                'Status': 'Aberta', 'Setor': setor_final, 'Tipo_manutencao': tipo_manutencao,
+                'Status': 'Aberta', 'Setor': setores_existentes, 'Tipo_manutencao': tipo_final,
                 'Responsavel': responsavel, 'Criticidade': criticidade,
                 'Sintoma_detalhado': sintoma, 'Pecas_substituidas': '',
                 'link_manual_tecnico': link_manual, 'Custo_Material': 0.0,
@@ -103,7 +112,7 @@ with st.form("form_nova_os", clear_on_submit=True):
             }
             
             st.session_state['dados_os'] = pd.concat([st.session_state['dados_os'], pd.DataFrame([novo_registro])], ignore_index=True)
-            st.success(f"✅ {novo_registro['OS']} registrada com sucesso no setor '{setor_final}'!")
+            st.success(f"✅ {novo_registro['OS']} registrada com sucesso!")
             st.rerun()
 
 # --------------------------------------------------------
@@ -118,13 +127,12 @@ os_selecionada = st.selectbox("Selecione uma OS para dar baixa ou alterar status
 condicao = df['OS'] == os_selecionada
 
 if condicao.any():
-    status_atual = str(df.loc[condicao, 'Status'].values[0]).strip()
-    pecas_atuais = df.loc[condicao, 'Pecas_substituidas'].values[0]
+    status_atual = str(df.loc[condicao, 'Status'].values).strip()
+    pecas_atuais = df.loc[condicao, 'Pecas_substituidas'].values
     pecas_texto = "" if pd.isna(pecas_atuais) or str(pecas_atuais).lower() in ["nan", ""] else str(pecas_atuais)
     
-    causa_atual = str(df.loc[condicao, 'Causa_Raiz'].values[0]).strip()
+    causa_atual = str(df.loc[condicao, 'Causa_Raiz'].values).strip()
     
-    # EXTRAÇÃO DINÂMICA: Monta a lista de causas lendo a planilha + as padrão de mercado
     causas_na_planilha = [c for c in df['Causa_Raiz'].unique() if c.strip() not in ["", "nan", "Pendente de Análise"]]
     causas_base = ["Desgaste Natural", "Falha Elétrica", "Erro Operacional", "Falha Mecânica", "Corretiva por Vazamento"]
     causas_unificadas = sorted(list(set(causas_base + causas_na_planilha)))
@@ -140,7 +148,6 @@ if condicao.any():
     with col_edit3:
         causa_selecionada = st.selectbox("Causa Raiz", opcoes_causa, index=opcoes_causa.index(causa_atual) if causa_atual in opcoes_causa else 0)
         
-        # Se escolher outra causa raiz, abre campo para digitar
         nova_causa_input = ""
         if causa_selecionada == "➕ Cadastrar Outra Causa Raiz...":
             nova_causa_input = st.text_input("Digite a NOVA Causa Raiz:")
