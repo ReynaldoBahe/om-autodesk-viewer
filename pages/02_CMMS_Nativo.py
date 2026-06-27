@@ -19,26 +19,64 @@ for chave in ['dados_os', 'df_filtrado', 'df', 'df_os']:
 
 # 2. SE CONTINUAR VAZIO: Lê direto o arquivo físico do seu repositório para nunca quebrar
 if df_base.empty:
-    try:
-        df_base = pd.read_csv("CMMS_Export_RB - CMMS_RB.csv")
-        st.session_state['dados_os'] = df_base
-    except Exception:
+    for nome_arq in ["CMMS_Export_RB - CMMS_RB.csv", "CMMS_Export_RB.csv"]:
         try:
-            df_base = pd.read_csv("CMMS_Export_RB.csv")
+            df_base = pd.read_csv(nome_arq)
             st.session_state['dados_os'] = df_base
+            break
         except Exception:
-            try:
-                df_base = pd.read_excel("CMMS_Export_RB.xlsx")
-                st.session_state['dados_os'] = df_base
-            except Exception:
-                pass
+            continue
 
 # 3. VERIFICAÇÃO FINAL DE SEGURANÇA
 if df_base.empty:
-    st.warning("⚠️ Certifique-se de que o arquivo 'CMMS_Export_RB - CMMS_RB.csv' está na raiz do seu repositório GitHub para liberar o CMMS Nativo.")
+    st.warning("⚠️ Certifique-se de que o arquivo de dados está na raiz do seu repositório GitHub para liberar o CMMS Nativo.")
 else:
-    # Cria uma cópia limpa para manipulação
     df = df_base.copy()
+
+    # 🛠️ FUNÇÕES DE CALLBACK (RODAM ANTES DA TELA LIMPAR)
+    def salvar_nova_os():
+        # Captura os dados diretamente usando as chaves dos widgets
+        novo_registro = {
+            'OS': st.session_state.get('k_os', f"OS-2026-{len(df) + 1:03d}"),
+            'ID': st.session_state.get('k_id', '29e456...'),
+            'Data_Abertura': pd.Timestamp.now().strftime('%d/%m/%Y %H:%M:%S'),
+            'Data_Fechamento': '',
+            'Descrição': f"Atendimento nativo criado via portal para setor de {st.session_state.get('k_setor', 'Climatização')}.",
+            'Status': 'Aberta',
+            'Setor': st.session_state.get('k_setor', 'Climatização'),
+            'Tipo_manutencao': st.session_state.get('k_tipo', 'Corretiva'),
+            'Responsavel': st.session_state.get('k_resp', 'Pedro'),
+            'Criticidade': st.session_state.get('k_crit', 'Alta'),
+            'Sintoma_detalhado': st.session_state.get('k_sintoma', ''),
+            'Pecas_substituidas': '',
+            'link_manual_tecnico': st.session_state.get('k_manual', ''),
+            'Custo_Material': 0.0,
+            'Custo_Mao_Obra': 0.0,
+            'ID_Sonoff': st.session_state.get('k_sonoff', 'Não Vinculado'),
+            'Tempo_Parado_Horas': 0,
+            'Causa_Raiz': 'Pendente de Análise'
+        }
+        
+        # Concatena e atualiza a memória mestre global
+        df_novo = pd.concat([df, pd.DataFrame([novo_registro])], ignore_index=True)
+        st.session_state['dados_os'] = df_novo
+        st.toast(f"✅ {st.session_state.get('k_os')} registrada com sucesso!")
+
+    def atualizar_status_os():
+        os_sel = st.session_state.get('k_os_sel')
+        if 'dados_os' in st.session_state:
+            df_mestre = st.session_state['dados_os']
+            idx = df_mestre[df_mestre['OS'] == os_sel].index
+            
+            df_mestre.at[idx, 'Status'] = st.session_state.get('k_novo_status')
+            df_mestre.at[idx, 'Pecas_substituidas'] = st.session_state.get('k_pecas')
+            df_mestre.at[idx, 'Causa_Raiz'] = st.session_state.get('k_causa')
+            
+            if st.session_state.get('k_novo_status') == "Fechado":
+                df_mestre.at[idx, 'Data_Fechamento'] = pd.Timestamp.now().strftime('%d/%m/%Y %H:%M:%S')
+                
+            st.session_state['dados_os'] = df_mestre
+            st.toast(f"📊 Status da {os_sel} atualizado!")
 
     # --------------------------------------------------------
     # FORMULÁRIO DE ABERTURA DE NOVA OS
@@ -48,37 +86,20 @@ else:
         
         col1, col2 = st.columns(2)
         with col1:
-            nova_os = st.text_input("Código da OS", value=f"OS-2026-{len(df) + 1:03d}")
-            id_bim = st.text_input("ID BIM do Ativo (Speckle)", value="29e456...")
-            setor = st.selectbox("Setor Responsável", ["Climatização", "Elétrica", "Hidráulica", "Mecânica", "Civil"])
-            tipo_manutencao = st.selectbox("Tipo de Manutenção", ["Corretiva", "Preventiva", "Preditiva"])
-            responsavel = st.selectbox("Profissional Técnico", ["Pedro", "Marcos", "Tiago", "Francisco", "Joaquim"])
+            st.text_input("Código da OS", value=f"OS-2026-{len(df) + 1:03d}", key='k_os')
+            st.text_input("ID BIM do Ativo (Speckle)", value="29e456...", key='k_id')
+            st.selectbox("Setor Responsável", ["Climatização", "Elétrica", "Hidráulica", "Mecânica", "Civil"], key='k_setor')
+            st.selectbox("Tipo de Manutenção", ["Corretiva", "Preventiva", "Preditiva"], key='k_tipo')
+            st.selectbox("Profissional Técnico", ["Pedro", "Marcos", "Tiago", "Francisco", "Joaquim"], key='k_resp')
             
         with col2:
-            criticidade = st.selectbox("Grau de Criticidade", ["Alta", "Média", "Baixa"])
-            sintoma = st.text_area("Sintoma Detalhado / Descrição do Problema", placeholder="Descreva o comportamento anômalo...")
-            link_manual = st.text_input("Link do Manual Técnico (URL)", value="")
-            id_sonoff = st.text_input("ID do Sensor Sonoff Vinculado", value="Não Vinculado")
+            st.selectbox("Grau de Criticidade", ["Alta", "Média", "Baixa"], key='k_crit')
+            st.text_area("Sintoma Detalhado / Descrição do Problema", placeholder="Descreva o comportamento...", key='k_sintoma')
+            st.text_input("Link do Manual Técnico (URL)", value="", key='k_manual')
+            st.text_input("ID do Sensor Sonoff Vinculado", value="Não Vinculado", key='k_sonoff')
             
-        btn_registrar = st.form_submit_button("💾 Registrar OS no Sistema")
-        
-        if btn_registrar:
-            novo_registro = {
-                'OS': nova_os, 'ID': id_bim,
-                'Data_Abertura': pd.Timestamp.now().strftime('%d/%m/%Y %H:%M:%S'),
-                'Data_Fechamento': '',
-                'Descrição': f"Atendimento nativo criado via portal para setor de {setor}.",
-                'Status': 'Aberta', 'Setor': setor, 'Tipo_manutencao': tipo_manutencao,
-                'Responsavel': responsavel, 'Criticidade': criticidade,
-                'Sintoma_detalhado': sintoma, 'Pecas_substituidas': '',
-                'link_manual_tecnico': link_manual, 'Custo_Material': 0.0,
-                'Custo_Mao_Obra': 0.0, 'ID_Sonoff': id_sonoff,
-                'Tempo_Parado_Horas': 0, 'Causa_Raiz': 'Pendente de Análise'
-            }
-            
-            st.session_state['dados_os'] = pd.concat([df, pd.DataFrame([novo_registro])], ignore_index=True)
-            st.success(f"✅ {nova_os} registrada com sucesso!")
-            st.experimental_rerun()
+        # Conecta a função de callback diretamente ao botão de envio
+        st.form_submit_button("💾 Registrar OS no Sistema", on_click=salvar_nova_os)
 
     # --------------------------------------------------------
     # PAINEL DE ATUALIZAÇÃO RÁPIDA (BAIXA EM OS)
@@ -86,7 +107,7 @@ else:
     st.markdown("---")
     st.subheader("⚡ Atualização Rápida de Status (Operador)")
     
-    os_selecionada = st.selectbox("Selecione uma OS para dar baixa ou alterar status:", df['OS'].unique())
+    os_selecionada = st.selectbox("Selecione uma OS para dar baixa ou alterar status:", df['OS'].unique(), key='k_os_sel')
     linha_os = df[df['OS'] == os_selecionada]
     
     if not linha_os.empty:
@@ -97,25 +118,14 @@ else:
             status_padrao = ["Aberta", "Em Andamento", "Pausada", "Fechado"]
             status_atual = dados_os_sel.get('Status', 'Aberta')
             idx_status = status_padrao.index(status_atual) if status_atual in status_padrao else 0
-            novo_status = st.selectbox("Novo Status", status_padrao, index=idx_status)
+            st.selectbox("Novo Status", status_padrao, index=idx_status, key='k_novo_status')
         with col_edit2:
             pecas_atuais = dados_os_sel.get('Pecas_substituidas', '')
-            pecas = st.text_input("Peças Substituídas", value="" if pd.isna(pecas_atuais) else str(pecas_atuais))
+            st.text_input("Peças Substituídas", value="" if pd.isna(pecas_atuais) else str(pecas_atuais), key='k_pecas')
         with col_edit3:
-            causa = st.selectbox("Causa Raiz", ["Desgaste Natural", "Falha Elétrica", "Erro Operacional", "Falha Mecânica"], index=0)
+            st.selectbox("Causa Raiz", ["Desgaste Natural", "Falha Elétrica", "Erro Operacional", "Falha Mecânica"], index=0, key='k_causa')
             
-        if st.button("🔄 Atualizar Registro"):
-            idx_global = df[df['OS'] == os_selecionada].index
-            
-            st.session_state['dados_os'].at[idx_global, 'Status'] = novo_status
-            st.session_state['dados_os'].at[idx_global, 'Pecas_substituidas'] = pecas
-            st.session_state['dados_os'].at[idx_global, 'Causa_Raiz'] = causa
-            
-            if novo_status == "Fechado":
-                st.session_state['dados_os'].at[idx_global, 'Data_Fechamento'] = pd.Timestamp.now().strftime('%d/%m/%Y %H:%M:%S')
-                
-            st.success(f"📊 Status da {os_selecionada} modificado para '{novo_status}' com sucesso!")
-            st.experimental_rerun()
+        st.button("🔄 Atualizar Registro", on_click=atualizar_status_os)
 
     # --------------------------------------------------------
     # RECURSO ADICIONAL: EXPORTAÇÃO DOS DADOS ATUALIZADOS
@@ -123,10 +133,11 @@ else:
     st.markdown("---")
     st.subheader("💾 Exportar Banco de Dados Atualizado")
     
-    csv_data = st.session_state['dados_os'].to_csv(index=False).encode('utf-8')
-    st.download_button(
-        label="📥 Baixar Planilha CMMS Atualizada (.CSV)",
-        data=csv_data,
-        file_name="CMMS_Export_RB_Atualizado.csv",
-        mime="text/csv"
-    )
+    if 'dados_os' in st.session_state:
+        csv_data = st.session_state['dados_os'].to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="📥 Baixar Planilha CMMS Atualizada (.CSV)",
+            data=csv_data,
+            file_name="CMMS_Export_RB_Atualizado.csv",
+            mime="text/csv"
+        )
