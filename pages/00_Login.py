@@ -15,7 +15,7 @@ except KeyError:
         "gerente.om@resortboaviagem.com": {"password": "SenhaResort123", "token": "852369", "cliente": "Resort Boa Viagem"}
     }
 
-# --- INJEÇÃO DE CSS DE ALTO IMPACTO (FONTES AMPLIADAS E REDE ROBUSTA) ---
+# --- INJEÇÃO DE CSS DE ALTO IMPACTO (SUPER FONTES E REDE AMPLIADA) ---
 st.markdown("""
 <style>
     .stApp { 
@@ -23,39 +23,42 @@ st.markdown("""
         color: #FFFFFF !important; 
     }
     
-    .left-panel { padding: 20px; text-align: center; }
+    .left-panel { padding: 10px; text-align: center; }
     
+    /* 1. AMPLIAÇÃO DA ÁREA DA REDE DE ATIVOS */
     .network-container {
         position: relative;
-        width: 320px;
-        height: 260px;
-        margin: 0 auto 25px auto;
+        width: 380px;
+        height: 300px;
+        margin: 0 auto 30px auto;
     }
     
+    /* Círculo Central com Super Destaque */
     .node-center {
         position: absolute;
         top: 50%; left: 50%;
         transform: translate(-50%, -50%);
         background: linear-gradient(135deg, #092543 0%, #103B66 100%);
         border-radius: 50%;
-        width: 110px; height: 110px;
+        width: 140px; height: 140px;
         display: flex; flex-direction: column; justify-content: center; align-items: center;
-        font-weight: 800; color: #00D2FF; font-size: 22px;
-        border: 2.5px solid #00D2FF;
-        box-shadow: 0 0 25px rgba(0,210,255,0.5);
+        font-weight: 900; color: #00D2FF; font-size: 28px;
+        border: 3.5px solid #00D2FF;
+        box-shadow: 0 0 30px rgba(0,210,255,0.6);
         z-index: 10;
     }
-    .node-center span { font-size: 11px; font-weight: bold; color: #8AB4F8; margin-top: -1px; letter-spacing: 0.5px; }
+    .node-center span { font-size: 14px; font-weight: 800; color: #8AB4F8; margin-top: 0px; letter-spacing: 0.5px; }
     
+    /* Círculos Satélites com Diâmetro e Fontes Robustas */
     .node-sat {
         position: absolute;
         background-color: #06182B;
         border-radius: 50%;
-        width: 65px; height: 65px;
+        width: 80px; height: 80px;
         display: flex; justify-content: center; align-items: center;
-        font-size: 15px; font-weight: 800; color: #FFFFFF;
-        border: 2px solid #1A446F;
-        box-shadow: 0 6px 15px rgba(0,0,0,0.5);
+        font-size: 18px; font-weight: 900; color: #FFFFFF;
+        border: 2.5px solid #1A446F;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.6);
         z-index: 5;
         letter-spacing: 0.5px;
     }
@@ -64,14 +67,16 @@ st.markdown("""
     .node-bot-left  { bottom: 5px; left: 5px; }
     .node-bot-right { bottom: 5px; right: 5px; }
     
+    /* Indicador de SLA Ampliado */
     .pct-badge {
         position: absolute;
-        top: 15px; right: -65px;
-        color: #00D2FF; font-size: 22px; font-weight: 900;
+        top: 15px; right: -75px;
+        color: #00D2FF; font-size: 26px; font-weight: 900;
         text-align: left; line-height: 1.1;
     }
-    .pct-badge span { font-size: 12px; color: #8AB4F8; font-weight: bold; letter-spacing: 1px; }
+    .pct-badge span { font-size: 14px; color: #8AB4F8; font-weight: bold; letter-spacing: 1px; }
 
+    /* Linhas Conectoras Reforçadas */
     .network-lines {
         position: absolute;
         top: 0; left: 0;
@@ -79,17 +84,19 @@ st.markdown("""
         z-index: 1;
     }
     
-    .dt-title { font-size: 16px; letter-spacing: 3px; color: #8AB4F8; margin-bottom: 8px; font-weight: bold; }
-    .main-brand { font-size: 54px; font-weight: 900; color: #FFFFFF; margin-bottom: 15px; line-height: 1; letter-spacing: 1px; }
-    .sub-brand { font-size: 14px; letter-spacing: 3px; color: #00D2FF; font-weight: bold; margin-bottom: 25px; }
-    .slogan { font-style: italic; color: #D1E2F4; font-size: 16px; margin-bottom: 35px; font-weight: 500; }
+    /* 2. TEXTOS DO PAINEL ESQUERDO TOTALMENTE AMPLIADOS */
+    .dt-title { font-size: 20px; letter-spacing: 3px; color: #8AB4F8; margin-bottom: 10px; font-weight: bold; }
+    .main-brand { font-size: 64px; font-weight: 950; color: #FFFFFF; margin-bottom: 15px; line-height: 1; letter-spacing: 1px; }
+    .sub-brand { font-size: 16px; letter-spacing: 4px; color: #00D2FF; font-weight: bold; margin-bottom: 30px; }
+    .slogan { font-style: italic; color: #D1E2F4; font-size: 19px; margin-bottom: 40px; font-weight: 500; }
     
+    /* Letras de rodapé perfeitamente legíveis */
     .tags-footer {
-        font-size: 13px !important;
-        color: #6C8EB4 !important;
+        font-size: 16px !important;
+        color: #8AB4F8 !important;
         letter-spacing: 1px !important;
-        font-weight: 600 !important;
-        margin-top: 20px;
+        font-weight: 700 !important;
+        margin-top: 25px;
     }
     
     .login-card { 
@@ -146,11 +153,12 @@ col_esquerda, col_direita = st.columns([1.1, 1.0], gap="large")
 with col_esquerda:
     st.markdown('<div class="left-panel">', unsafe_allow_html=True)
     
+    # --- RENDERIZAÇÃO DA REDE TOTALMENTE EXPANDIDA ---
     st.markdown("""
         <div class="network-container">
             <svg class="network-lines">
-                <line x1="37" y1="37" x2="283" y2="223" style="stroke:#1A446F; stroke-width:2.5" />
-                <line x1="283" y1="37" x2="37" y2="223" style="stroke:#1A446F; stroke-width:2.5" />
+                <line x1="45" y1="45" x2="335" y2="255" style="stroke:#1A446F; stroke-width:3.5" />
+                <line x1="335" y1="45" x2="45" y2="255" style="stroke:#1A446F; stroke-width:3.5" />
             </svg>
             <div class="node-sat node-top-left">BIM</div>
             <div class="node-sat node-top-right">IA</div>
@@ -213,10 +221,3 @@ with col_direita:
             with col_b1:
                 if st.form_submit_button("Voltar", use_container_width=True):
                     st.session_state.login_step = 1
-                    st.rerun()
-            with col_b2:
-                if st.form_submit_button("Confirmar", use_container_width=True):
-                    user_info = lista_usuarios[st.session_state.usuario_validado]
-                    if codigo == user_info["token"]:
-                        st.success("Acesso autorizado!")
-                        time.sleep(0.5)
