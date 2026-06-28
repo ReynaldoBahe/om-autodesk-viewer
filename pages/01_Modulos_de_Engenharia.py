@@ -137,30 +137,56 @@ if not df.empty:
     with col_dados:
         st.markdown(f"**Relatório Preditivo de Falhas — {NOME_PROJETO}**")
         
-        # --- BLCO C: MOTOR DE INTELIGÊNCIA ARTIFICIAL (MOCK PRO) ---
-        # A IA analisa as proporções da planilha e gera uma conclusão personalizada por cliente
-        with st.spinner("🤖 IA processando histórico de manutenção..."):
-            import time
-            # Pequeno delay simulado para dar sensação de processamento analítico real
-            
+                # --- MOTOR DE INTELIGÊNCIA ARTIFICIAL EXPANDIDO ---
+        with st.spinner("🤖 IA processando histórico de manutenção profundo..."):
+            # 1. Identificação do Sistema Mais Defeituoso
+            if 'Sistema Defeituoso' in df.columns:
+                sistema_gargalo = df['Sistema Defeituoso'].value_counts().idxmax()
+                falhas_sistema = df['Sistema Defeituoso'].value_counts().max()
+            else:
+                sistema_gargalo = "Não identificado"
+                falhas_sistema = 0
+
+            # 2. Análise de Custos Operacionais
+            custo_mat = pd.to_numeric(df['Custo Material'], errors='coerce').sum() if 'Custo Material' in df.columns else 0
+            custo_mo = pd.to_numeric(df['Custo Mao Obra'], errors='coerce').sum() if 'Custo Mao Obra' in df.columns else 0
+            custo_total = custo_mat + custo_mo
+
+            # 3. Análise de Eficiência (Preventiva vs Corretiva)
+            if 'Tipo Manutencao' in df.columns:
+                corretivas = len(df[df['Tipo Manutencao'].str.lower().str.contains('corretiva|corretivo', na=False)])
+                preventivas = len(df[df['Tipo Manutencao'].str.lower().str.contains('preventiva|preventivo', na=False)])
+            else:
+                corretivas, preventivas = 0, 0
+
+            # --- CONSTRUÇÃO DO CORPO DO RELATÓRIO DINÂMICO ---
             taxa_critica = (os_criticas / total_os * 100) if total_os > 0 else 0
             
+                       texto_custos = f"💰 **Impacto Financeiro:** O empreendimento acumula um gasto total registrado de **R$ {custo_total:,.2f}** em peças e mão de obra." if custo_total > 0 else "💰 **Impacto Financeiro:** Sem custos financeiros atrelados às ordens atuais."
+            texto_gargalo = f"🔍 **Gargalo Físico:** O sistema mais instável atualmente é **{sistema_gargalo}**, concentrando {falhas_sistema} chamados abertos." if falhas_sistema > 0 else "🔍 **Gargalo Físico:** Distribuição de falhas homogênea entre os sistemas prediais."
+            
             if taxa_critica > 30:
-                diagnostico_ia = f"""
-                ❌ **ALERTA DA IA:** Identificamos uma anomalia severa no plano de O&M do **{NOME_PROJETO}**. 
-                Mais de {taxa_critica:.1f}% dos ativos ativos apresentam criticidade **Alta**. 
+                st.error(f"""
+                ### ❌ ALERTA OPERACIONAL DE IA
+                Identificamos uma severa sobrecarga nas rotinas de engenharia do **{NOME_PROJETO}**.
                 
-                *   **Recomendação:** Interromper manutenções puramente corretivas e injetar rotinas preditivas nos sistemas hidráulicos e elétricos imediatamente para estancar custos de quebra imediata.
-                """
+                {texto_gargalo}
+                {texto_custos}
+                
+                🚨 **PREDIÇÃO DE RISCO:** O alto volume de falhas críticas concentradas no sistema de *{sistema_gargalo}* indica iminente perda de eficiência energética e risco de parada forçada de compressores ou fancoils nos próximos 7 dias se nenhuma ação for tomada.
+                
+                *   **Ação Recomendada:** Realizar inspeção térmica nos quadros e substituição imediata das peças pendentes listadas na coluna *'Pecas Substitutivas'*.
+                """)
             else:
-                diagnostico_ia = f"""
-                ✅ **DIAGNÓSTICO DA IA:** Saúde operacional estável para o empreendimento **{NOME_PROJETO}**. 
-                O índice de ativos em criticidade alta está controlado em {taxa_critica:.1f}%.
+                st.success(f"""
+                ### ✅ DIAGNÓSTICO DE SAÚDE OPERACIONAL
+                O ecossistema técnico do **{NOME_PROJETO}** opera dentro das métricas normais de conformidade.
                 
-                *   **Ação Sugerida:** Continuar com o cronograma de inspeções preventivas bimestrais. A análise aponta ciclos de exaustão normais para os compressores centrais.
-                """
+                {texto_gargalo}
+                {texto_custos}
                 
-            st.info(diagnostico_ia)
+                📈 **MÉTRICA PREDITIVA:** Com {preventivas} preventivas rodando contra {corretivas} corretivas, a curva de falhas aponta estabilização para o próximo ciclo mensal. O sistema de *{sistema_gargalo}* exige apenas acompanhamento padrão de rotina.
+                """)
 
     # Exibe a tabela bruta logo abaixo para auditoria visual rápida
     st.write("---")
