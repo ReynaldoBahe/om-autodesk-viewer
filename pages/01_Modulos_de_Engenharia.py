@@ -120,7 +120,7 @@ if not df.empty:
     with m1:
         st.metric(label="Total de Ordens de Serviço", value=total_os)
     with m2:
-        st.metric(label="🚨 Ativos em State Crítico", value=os_criticas, delta="-2 este mês" if os_criticas > 0 else "Estável")
+        st.metric(label="🚨 Ativos em Estado Crítico", value=os_criticas, delta="-2 este mês" if os_criticas > 0 else "Estável")
     with m3:
         st.metric(label="🛠️ OS Pendentes (Ação Imediata)", value=os_abertas)
         
@@ -154,7 +154,7 @@ if not df.empty:
 
         # 1. Identificação do Setor (Climatização/Elétrica/Mecânica)
         col_setor = [c for c in df.columns if 'setor' in c.lower() or 'sistema' in c.lower()]
-        if col_setor and not df[col_setor[0]].empty:
+        if col_setor and not df[col_setor].empty:
             v_counts = df[col_setor[0]].value_counts()
             if not v_counts.empty:
                 sistema_gargalo = str(v_counts.idxmax())
@@ -164,15 +164,16 @@ if not df.empty:
         col_custo_mat = [c for c in df.columns if 'material' in c.lower()]
         col_custo_mo = [c for c in df.columns if 'obra' in c.lower() or 'mao' in c.lower()]
         
-        def limpar_moeda_safe(serie_alvo):
-            s_str = serie_alvo.astype(str).str.replace('R$', '', regex=False)
+        def limpar_moeda_safe(df_ref, lista_cols):
+            if not lista_cols: return 0.0
+            s_str = df_ref[lista_cols[0]].astype(str).str.replace('R$', '', regex=False)
             s_str = s_str.str.replace('.', '', regex=False).str.replace(',', '.', regex=False).str.strip()
             return pd.to_numeric(s_str, errors='coerce').sum()
             
         if col_custo_mat:
-            custo_total += limpar_moeda_safe(df[col_custo_mat[0]])
+            custo_total += limpar_moeda_safe(df, col_custo_mat)
         if col_custo_mo:
-            custo_total += limpar_moeda_safe(df[col_custo_mo[0]])
+            custo_total += limpar_moeda_safe(df, col_custo_mo)
 
         # 3. Mapeamento da Eficiência de O&M
         col_tipo = [c for c in df.columns if 'tipo' in c.lower()]
@@ -182,7 +183,7 @@ if not df.empty:
 
         taxa_critica = (os_criticas / total_os * 100) if total_os > 0 else 0
         texto_gargalo = f"🔍 **Gargalo Físico:** O setor com mais chamados é **{sistema_gargalo}**, concentrando {falhas_sistema} registros." if falhas_sistema > 0 else "🔍 **Gargalo Físico:** Distribuição equilibrada entre setores."
-        texto_custos = f"💰 **Impacto Financeiro:** Gasto acumulado de **R$ {custo_total:,.2f}** registrado em insumos e MO." if custo_total > 0 else "💰 **Impacto Financeiro:** Sem despesas financeiras extras atreladas nesta amostragem."
+        texto_custos = f"💰 **Impacto Financeiro:** Gasto acumulado de **R$ {custo_total:,.2f}** registrado em insumos e MO." if custo_total > 0 else "💰 **Impacto Financeiro:** Sem registros de despesas financeiras atreladas nesta amostragem."
         
         if taxa_critica > 30:
             st.error(f"""
@@ -200,5 +201,3 @@ if not df.empty:
             st.success(f"""
             ### ✅ DIAGNÓSTICO DE SAÚDE OPERACIONAL
             O ecossistema técnico de **{NOME_PROJETO}** opera em conformidade.
-            
-            {texto_gargalo}  
