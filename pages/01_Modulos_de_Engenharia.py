@@ -116,13 +116,54 @@ st.components.v1.html(f'<iframe src="{speckle_base_url}" width="100%" height="60
 st.markdown('<div class="card-home"><div class="card-home-title">📊 Centro de Diagnóstico Avançado (IA)</div></div>', unsafe_allow_html=True)
 
 if not df.empty:
+    # --- NOVO: SELETOR INDIVIDUAL DE OS ---
+    col_id_os = [c for c in df.columns if 'numero da os' in c.lower() or 'id' in c.lower()]
+    
+    st.markdown("### 🎯 Foco da Análise")
+    opcoes_os = ["Todas as Ordens (Análise Geral)"]
+    if col_id_os:
+        opcoes_os.extend(df[col_id_os[0]].dropna().astype(str).unique().tolist())
+    
+    os_selecionada = st.selectbox("Selecione uma OS específica para auditoria da IA:", opcoes_os)
+    
+    # Aplica o filtro de OS selecionada antes de calcular as métricas da IA
+    df_analise = df.copy()
+    analise_individual = False
+    
+    if os_selecionada != "Todas as Ordens (Análise Geral)" and col_id_os:
+        df_analise = df[df[col_id_os[0]].astype(str) == os_selecionada]
+        analise_individual = True
+
+    # --- MÉTRICAS DINÂMICAS BASEADAS NA SELEÇÃO ---
+    total_os = len(df_analise)
+    os_criticas = 0
+    os_abertas = 0
+
+    col_status = [c for c in df_analise.columns if 'status' in c.lower()]
+    col_criticidade = [c for c in df_analise.columns if 'criticidade' in c.lower()]
+    
+    if col_criticidade:
+        os_criticas = len(df_analise[df_analise[col_criticidade[0]].astype(str).str.lower().str.contains('alta', na=False)])
+        
+    if col_status:
+        os_abertas = len(df_analise[df_analise[col_status[0]].astype(str).str.lower().str.contains('aberta|em andamento|andamento', na=False)])
+
+    # Renderização dos cartões numéricos dinâmicos
     m1, m2, m3 = st.columns(3)
     with m1:
         st.metric(label="Total de Ordens de Serviço", value=total_os)
     with m2:
-        st.metric(label="🚨 Ativos em Estado Crítico", value=os_criticas, delta="-2 este mês" if os_criticas > 0 else "Estável")
+        if analise_individual:
+            criticidade_atual = df_analise[col_criticidade[0]].iloc[0] if col_criticidade else "Não informada"
+            st.metric(label="🚨 Grau de Criticidade", value=criticidade_atual)
+        else:
+            st.metric(label="🚨 Ativos em Estado Crítico", value=os_criticas, delta="-2 este mês" if os_criticas > 0 else "Estável")
     with m3:
-        st.metric(label="🛠️ OS Pendentes (Ação Imediata)", value=os_abertas)
+        if analise_individual:
+            status_atual = df_analise[col_status[0]].iloc[0] if col_status else "Não informado"
+            st.metric(label="🛠️ Status Atual", value=status_atual)
+        else:
+            st.metric(label="🛠️ OS Pendentes (Ação Imediata)", value=os_abertas)
         
     st.write("<br>", unsafe_allow_html=True)
     
@@ -130,39 +171,33 @@ if not df.empty:
     
     with col_grafico:
         st.markdown("**Distribuição de Ordens por Criticidade e Status**")
-        col_s = [c for c in df.columns if 'status' in c.lower()]
-        col_c = [c for c in df.columns if 'criticidade' in c.lower()]
-        
-        if col_s and col_c:
-            chart = alt.Chart(df).mark_bar().encode(
-                x=alt.X(f'{col_s[0]}:N', title='Status da OS'),
+        if col_status and col_criticidade:
+            chart = alt.Chart(df_analise).mark_bar().encode(
+                x=alt.X(f'{col_status[0]}:N', title='Status da OS'),
                 y=alt.Y('count():Q', title='Quantidade de Ativos'),
-                color=alt.Color(f'{col_c[0]}:N', scale=alt.Scale(domain=['Alta', 'Média', 'Baixa'], range=['#DC2626', '#F59E0B', '#10B981']))
+                color=alt.Color(f'{col_criticidade[0]}:N', scale=alt.Scale(domain=['Alta', 'Média', 'Baixa'], range=['#DC2626', '#F59E0B', '#10B981']))
             ).properties(height=300)
             st.altair_chart(chart, use_container_width=True)
         else:
             st.info("Colunas de Status ou Criticidade não localizadas para o gráfico.")
             
     with col_dados:
-        st.markdown(f"**Relatório Preditivo de Falhas — {NOME_PROJETO}**")
-        
+        # Extração de dados da seleção atual
         sistema_gargalo = "Não identificado"
         falhas_sistema = 0
         preventivas = 0
         corretivas = 0
         custo_total = 0.0
 
-        # 1. Identificação do Setor (Climatização/Elétrica/Mecânica)
-        col_setor = [c for c in df.columns if 'setor' in c.lower() or 'sistema' in c.lower()]
-        if col_setor and not df[col_setor].empty:
-            v_counts = df[col_setor[0]].value_counts()
+        col_setor = [c for c in df_analise.columns if 'setor' in c.lower() or 'sistema' in c.lower()]
+        if col_setor and not df_analise[col_setor].empty:
+            v_counts = df_analise[col_setor[0]].value_counts()
             if not v_counts.empty:
                 sistema_gargalo = str(v_counts.idxmax())
                 falhas_sistema = int(v_counts.max())
 
-        # 2. Conversão segura de moedas e soma de custos
-        col_custo_mat = [c for c in df.columns if 'material' in c.lower()]
-        col_custo_mo = [c for c in df.columns if 'obra' in c.lower() or 'mao' in c.lower()]
+        col_custo_mat = [c for c in df_analise.columns if 'material' in c.lower()]
+        col_custo_mo = [c for c in df_analise.columns if 'obra' in c.lower() or 'mao' in c.lower()]
         
         def limpar_moeda_safe(df_ref, lista_cols):
             if not lista_cols: return 0.0
@@ -170,46 +205,74 @@ if not df.empty:
             s_str = s_str.str.replace('.', '', regex=False).str.replace(',', '.', regex=False).str.strip()
             return pd.to_numeric(s_str, errors='coerce').sum()
             
-        if col_custo_mat:
-            custo_total += limpar_moeda_safe(df, col_custo_mat)
-        if col_custo_mo:
-            custo_total += limpar_moeda_safe(df, col_custo_mo)
+        if col_custo_mat: custo_total += limpar_moeda_safe(df_analise, col_custo_mat)
+        if col_custo_mo: custo_total += limpar_moeda_safe(df_analise, col_custo_mo)
 
-        # 3. Mapeamento da Eficiência de O&M
-        col_tipo = [c for c in df.columns if 'tipo' in c.lower()]
+        col_tipo = [c for c in df_analise.columns if 'tipo' in c.lower()]
         if col_tipo:
-            corretivas = len(df[df[col_tipo[0]].astype(str).str.lower().str.contains('corretiva|corretivo', na=False)])
-            preventivas = len(df[df[col_tipo[0]].astype(str).str.lower().str.contains('preventiva|preventivo', na=False)])
+            corretivas = len(df_analise[df_analise[col_tipo[0]].astype(str).str.lower().str.contains('corretiva|corretivo', na=False)])
+            preventivas = len(df_analise[df_analise[col_tipo[0]].astype(str).str.lower().str.contains('preventiva|preventivo', na=False)])
 
-        taxa_critica = (os_criticas / total_os * 100) if total_os > 0 else 0
-        texto_gargalo = f"🔍 **Gargalo Físico:** O setor com mais chamados é **{sistema_gargalo}**, concentrando {falhas_sistema} registros." if falhas_sistema > 0 else "🔍 **Gargalo Físico:** Distribuição equilibrada entre setores."
-        texto_custos = f"💰 **Impacto Financeiro:** Gasto acumulado de **R$ {custo_total:,.2f}** registrado em insumos e MO." if custo_total > 0 else "💰 **Impacto Financeiro:** Sem registros de despesas financeiras atreladas nesta amostragem."
-        
-        if taxa_critica > 30:
-            st.error(f"""
-            ### ❌ ALERTA OPERACIONAL DE IA
-            Sobrecarga identificada nas rotinas de engenharia de **{NOME_PROJETO}**.
+        # --- DIAGNÓSTICOS DIFERENCIADOS DA IA ---
+        if analise_individual:
+            st.markdown(f"**Laudo de Auditoria Técnica — OS {os_selecionada}**")
             
-            {texto_gargalo}  
-            {texto_custos}
-            
-            🚨 **PREDIÇÃO:** O volume de falhas críticas em *{sistema_gargalo}* aponta risco iminente de parada forçada ou perda severa de eficiência operacional nos próximos 7 dias.
-            
-            *   **Ação:** Direcionar equipe técnica focada para mitigar as quebras desse setor e providenciar as peças necessárias.
-            """)
+            # Identifica descrição do problema se houver coluna de 'descricao' ou 'detalhe'
+            col_desc = [c for c in df_analise.columns if 'desc' in c.lower() or 'resumo' in c.lower()]
+            detalhe_os = f"vinculada ao setor de **{sistema_gargalo}**"
+            if col_desc and not df_analise[col_desc].empty:
+                detalhe_os = f"({df_analise[col_desc[0]].iloc[0]}) no sistema de **{sistema_gargalo}**"
+
+            if col_criticidade and df_analise[col_criticidade[0]].astype(str).str.lower().str.contains('alta', na=False).iloc[0]:
+                st.error(f"""
+                ### 🚨 PARECER TÉCNICO: CRÍTICO
+                Esta ordem de serviço exige atenção emergencial da engenharia do **{NOME_PROJETO}**.
+                
+                * **Ativo Afetado:** O chamado está alocado em **{sistema_gargalo}**.
+                * **Impacto Econômico:** Esta intervenção isolada já acumula um custo de **R$ {custo_total:,.2f}**.
+                
+                ⚠️ **RECOMENDAÇÃO:** Se esta OS ainda estiver aberta/pendente, despache a equipe imediatamente para evitar efeito cascata em ativos adjacentes.
+                """)
+            else:
+                st.success(f"""
+                ### ✅ PARECER TÉCNICO: MONITORAMENTO
+                A Ordem de Serviço **{os_selecionada}** apresenta parâmetros sob controle.
+                
+                * **Contexto:** Chamado de rotina {detalhe_os}.
+                * **Custo Registrado:** Despesa de **R$ {custo_total:,.2f}**.
+                
+                👍 **Orientação:** Seguir com o fluxo padrão de encerramento e validação de O&M sem necessidade de mobilização prioritária.
+                """)
         else:
-            st.success(f"""
-            ### ✅ DIAGNÓSTICO DE SAÚDE OPERACIONAL
-            O ecossistema técnico de **{NOME_PROJETO}** opera em conformidade.
+            # Mantém o relatório macro original se nenhuma OS estiver selecionada
+            st.markdown(f"**Relatório Preditivo de Falhas — {NOME_PROJETO}**")
+            taxa_critica = (os_criticas / total_os * 100) if total_os > 0 else 0
+            texto_gargalo = f"🔍 **Gargalo Físico:** O setor com mais chamados é **{sistema_gargalo}**, concentrando {falhas_sistema} registros." if falhas_sistema > 0 else "🔍 **Gargalo Físico:** Distribuição equilibrada entre setores."
+            texto_custos = f"💰 **Impacto Financeiro:** Gasto acumulado de **R$ {custo_total:,.2f}** registrado em insumos e MO." if custo_total > 0 else "💰 **Impacto Financeiro:** Sem despesas financeiras mapeadas."
             
-            {texto_gargalo}  
-            {texto_custos}
-            
-            🔮 **MÉTRICA PREDITIVA:** Com **{preventivas}** rotinas preventivas contra **{corretivas}** intervenções corretivas, os indicadores apontam tendência de estabilização estrutural para o próximo ciclo mensal de O&M.
-            """)
+            if taxa_critica > 30:
+                st.error(f"""
+                ### ❌ ALERTA OPERACIONAL DE IA
+                Sobrecarga identificada nas rotinas de engenharia de **{NOME_PROJETO}**.
+                
+                {texto_gargalo}  
+                {texto_custos}
+                
+                🚨 **PREDIÇÃO:** O volume de falhas críticas em *{sistema_gargalo}* aponta risco iminente de parada forçada nos próximos 7 dias.
+                """)
+            else:
+                st.success(f"""
+                ### ✅ DIAGNÓSTICO DE SAÚDE OPERACIONAL
+                O ecossistema técnico de **{NOME_PROJETO}** opera em conformidade.
+                
+                {texto_gargalo}  
+                {texto_custos}
+                
+                🔮 **MÉTRICA PREDITIVA:** Com **{preventivas}** rotinas preventivas contra **{corretivas}** intervenções corretivas, os indicadores apontam tendência de estabilização estrutural.
+                """)
 
     st.write("---")
     st.markdown("### Visualização Completa do Banco de Dados Filtrado")
-    st.dataframe(df, use_container_width=True)
+    st.dataframe(df_analise, use_container_width=True) # Mostra o DF filtrado dinamicamente
 else:
     st.info("Nenhum dado cadastrado para exibição analítica de tabelas neste empreendimento.")
