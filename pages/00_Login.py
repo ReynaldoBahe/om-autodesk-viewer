@@ -34,6 +34,7 @@ st.markdown(
         color: #00ffff !important;
         font-size: 18px !important;
         font-weight: bold !important;
+        background-color: transparent !important;
     }
     div[data-testid="stCheckbox"] input[type="checkbox"]:checked + div {
         background-color: #00ffff !important;
@@ -62,14 +63,15 @@ with aba_login:
         conn.close()
 
         if usuario_valido:
-            # Garante que o app.py original valide o login com sucesso
+            # 1. Libera o acesso para a raiz do app.py
             st.session_state.logged_in = True
             
-            # Alinha todas as variações de variáveis que os módulos usam para filtrar as planilhas
+            # 2. Injeta o e-mail que o cabeçalho dos seus módulos exibe
+            st.session_state["user_email"] = username
             st.session_state["username"] = username
-            st.session_state["user"] = username
-            st.session_state["usuario"] = username
-            st.session_state["usuario_logado"] = username
+            
+            # 3. UNIFICAÇÃO CRÍTICA: Todo mundo que logar acessa o Resort Boa Viagem
+            st.session_state["cliente_ativo"] = "Resort Boa Viagem"
             
             st.success("Login realizado com sucesso! Carregando painel...")
             st.rerun()
