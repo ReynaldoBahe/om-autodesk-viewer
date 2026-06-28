@@ -17,7 +17,6 @@ css_code = """
 .stApp { background-color: #03111E !important; color: #FFFFFF !important; }
 .left-panel { padding: 30px 5px 15px 5px; text-align: center; }
 
-/* Ajuste de margem superior para a rede não sumir no topo */
 .network-container { position: relative; width: 330px; height: 250px; margin: 20px auto 20px auto; }
 .node-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(135deg, #092543 0%, #103B66 100%); border-radius: 50%; width: 115px; height: 115px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-weight: 900; color: #00D2FF; font-size: 20px; border: 2.5px solid #00D2FF; box-shadow: 0 0 25px rgba(0,210,255,0.5); z-index: 10; }
 .node-center span { font-size: 11px; font-weight: 800; color: #8AB4F8; margin-top: 0px; letter-spacing: 0.5px; }
@@ -46,7 +45,21 @@ label { color: #8AB4F8 !important; font-weight: 700 !important; font-size: 15px 
 
 div[data-testid="stForm"] { border: none !important; padding: 0 !important; }
 
-/* CORREÇÃO DO BOTÃO BRANCO: Força a cor azul com texto branco no botão do Streamlit */
+/* CORREÇÃO DO OLHINHO DA SENHA: Limpa o bloco azul e realinha o ícone */
+div[data-baseweb="input"] button {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    height: auto !important;
+    width: auto !important;
+    margin-top: 0px !important;
+    color: #8AB4F8 !important;
+}
+div[data-baseweb="input"] button:hover {
+    background-color: transparent !important;
+    color: #00D2FF !important;
+}
+
 div[data-testid="stForm"] button, .stButton button, button { 
     background-color: #104A7E !important; 
     color: #FFFFFF !important; 
