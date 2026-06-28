@@ -66,8 +66,8 @@ with aba_login:
             st.success("Login realizado com sucesso! Redirecionando...")
             st.session_state["usuario_logado"] = username
             
-            # ---> LINHA DO REDIRECIONAMENTO (Mude "app.py" se o seu portal tiver outro nome)
-            st.switch_page("app.py") 
+            # Ajustado para usar o redirecionamento relativo correto no Streamlit Navigation
+            st.switch_page("pages/00_Login.py") # Força o recarregamento na navegação do app.py
         else:
             st.error("Usuário ou senha incorretos.")
 
