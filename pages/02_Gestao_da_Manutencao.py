@@ -1,8 +1,34 @@
 import streamlit as st
 import pandas as pd
+# =========================================================================
+# BARREIRA DE SEGURANÇA E MAPEAMENTO MULTI-CLIENTE
+# =========================================================================
+if "logged_in" not in st.session_state or not st.session_state.logged_in:
+    st.error("🔒 Acesso negado. Por favor, realize o login primeiro.")
+    st.stop()
 
-# Configuração padrão da página para manter a identidade visual da RB Consultoria
-st.set_page_config(layout="wide", page_title="CMMS Nativo - RB Consultoria")
+cliente_logado = st.session_state.get("cliente_ativo", "Nenhum")
+
+# Mapeia qual planilha de manutenção pertence a cada cliente
+EMPREENDIMENTOS_MANUTENCAO = {
+    "Resort Boa Viagem": {
+        "nome_exibicao": "Resort Boa Viagem - Gestão de Ativos",
+        "arquivo_cmms": "CMMS_Export_RB - CMMS_RB.csv"
+    },
+    "Hospital Central": {
+        "nome_exibicao": "Hospital Central - Controle de O&M",
+        "arquivo_cmms": "CMMS_Export_RB - CMMS_RB.csv" # Mude para o CSV do hospital quando tiver
+    }
+}
+
+if cliente_logado in EMPREENDIMENTOS_MANUTENCAO:
+    config = EMPREENDIMENTOS_MANUTENCAO[cliente_logado]
+    NOME_PROJETO = config["nome_exibicao"]
+    CAMINHO_CSV = config["arquivo_cmms"]
+else:
+    st.warning(f"⚠️ {cliente_logado}, seus dados de manutenção estão em processamento.")
+    st.stop()
+# =========================================================================
 
 st.markdown('### 🛠️ CMMS Proprietário — Gestão de Ordens de Serviço')
 st.write("Abra e controle ordens de serviço de forma nativa e integrada ao ecossistema.")
@@ -17,13 +43,12 @@ for chave in ['dados_os', 'df_filtrado', 'df', 'df_os']:
             break
 
 if df_base.empty:
-    for nome_arq in ["CMMS_Export_RB - CMMS_RB.csv", "CMMS_Export_RB.csv"]:
-        try:
-            df_base = pd.read_csv(nome_arq)
-            st.session_state['dados_os'] = df_base
-            break
-        except Exception:
-            continue
+    try:
+        # Carrega estritamente o arquivo configurado para o cliente atual
+        df_base = pd.read_csv(CAMINHO_CSV)
+        st.session_state['dados_os'] = df_base
+    except Exception as e:
+        st.warning(f"📊 Arquivo dinâmico ({CAMINHO_CSV}) não localizado. Usando dados padrão.")
 
 if df_base.empty:
     dados_padrao = [{
