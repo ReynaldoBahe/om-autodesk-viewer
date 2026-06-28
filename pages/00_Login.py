@@ -1,584 +1,121 @@
 import streamlit as st
 import time
-import random
-import string
 
-# ─────────────────────────────────────────
-# CONFIGURAÇÃO DA PÁGINA
-# ─────────────────────────────────────────
-st.set_page_config(
-    page_title="DT Facilities O&M",
-    page_icon="🔗",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
+if "login_step" not in st.session_state:
+    st.session_state.login_step = 1
+if "usuario_validado" not in st.session_state:
+    st.session_state.usuario_validado = ""
 
-# ─────────────────────────────────────────
-# BANCO DE USUÁRIOS (substitua por banco real)
-# ─────────────────────────────────────────
-USUARIOS = {
-    "admin@resortoceano.com": {
-        "senha": "dt2026",
-        "empreendimento": "Resort Oceano Azul",
-        "iniciais": "RO",
-        "ultimo_acesso": "27/06/2026 às 09:14"
-    },
-    "admin@hospitalsl.com": {
-        "senha": "dt2026",
-        "empreendimento": "Complexo Hospitalar São Lucas",
-        "iniciais": "SL",
-        "ultimo_acesso": "28/06/2026 às 07:30"
-    },
-    "admin@resortboaviagem.com": {
-        "senha": "dt2026",
-        "empreendimento": "Resort Boa Viagem",
-        "iniciais": "RV",
-        "ultimo_acesso": "28/06/2026 às 08:45"
-    },
-}
+try:
+    lista_usuarios = st.secrets["users"]
+except KeyError:
+    lista_usuarios = {
+        "gerente.om@resortboaviagem.com": {"password": "SenhaResort123", "token": "852369", "cliente": "Resort Boa Viagem"}
+    }
 
-# ─────────────────────────────────────────
-# CSS GLOBAL
-# ─────────────────────────────────────────
-st.markdown("""
-<style>
-/* Remove padding padrão do Streamlit */
-[data-testid="stAppViewContainer"] {
-    padding: 0 !important;
-}
-[data-testid="stHeader"] {
-    display: none;
-}
-[data-testid="stSidebar"] {
-    display: none;
-}
-.block-container {
-    padding: 0 !important;
-    max-width: 100% !important;
-}
-
-/* Layout principal */
-.login-wrapper {
-    display: flex;
-    min-height: 100vh;
-    width: 100%;
-    font-family: 'Inter', sans-serif;
-}
-
-/* Lado esquerdo */
-.login-left {
-    flex: 1;
-    background: #021628;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px;
-    position: relative;
-    overflow: hidden;
-}
-
-.grid-bg {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-image:
-        linear-gradient(rgba(24,95,165,0.15) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(24,95,165,0.15) 1px, transparent 1px);
-    background-size: 60px 60px;
-}
-
-.overlay {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(2,22,40,0.6);
-}
-
-.left-content {
-    position: relative;
-    z-index: 10;
-    text-align: center;
-}
-
-/* Ícone rede de ativos */
-.network-icon {
-    margin: 0 auto 32px;
-}
-
-/* Textos lado esquerdo */
-.product-label {
-    font-size: 11px;
-    letter-spacing: 3px;
-    color: #85B7EB;
-    margin-bottom: 4px;
-}
-.product-name {
-    font-size: 36px;
-    font-weight: 800;
-    color: white;
-    letter-spacing: 2px;
-    margin: 0;
-    line-height: 1.1;
-}
-.product-divider {
-    width: 200px;
-    height: 1px;
-    background: #185FA5;
-    margin: 12px auto;
-}
-.product-subtitle {
-    font-size: 10px;
-    letter-spacing: 2px;
-    color: #85B7EB;
-    margin-bottom: 20px;
-}
-.product-tagline {
-    font-size: 13px;
-    color: #378ADD;
-    font-style: italic;
-    line-height: 1.6;
-    margin-bottom: 28px;
-}
-.segments {
-    font-size: 10px;
-    color: #185FA5;
-    letter-spacing: 1px;
-}
-
-/* Lado direito */
-.login-right {
-    width: 440px;
-    min-width: 380px;
-    background: #042C53;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 32px;
-}
-
-/* Badge boas-vindas */
-.welcome-badge {
-    width: 100%;
-    background: #031525;
-    border: 0.5px solid #0C447C;
-    border-radius: 10px;
-    padding: 10px 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 20px;
-}
-.welcome-avatar {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    background: #185FA5;
-    color: white;
-    font-size: 13px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-.welcome-text small {
-    font-size: 10px;
-    color: #85B7EB;
-    display: block;
-}
-.welcome-text strong {
-    font-size: 13px;
-    color: white;
-    display: block;
-}
-.welcome-text span {
-    font-size: 9px;
-    color: #378ADD;
-}
-
-/* Card login */
-.login-card {
-    width: 100%;
-    background: #031525;
-    border: 0.5px solid #0C447C;
-    border-radius: 16px;
-    padding: 32px 28px;
-}
-.card-title {
-    font-size: 20px;
-    font-weight: 700;
-    color: white;
-    text-align: center;
-    margin-bottom: 4px;
-}
-.card-subtitle {
-    font-size: 11px;
-    color: #85B7EB;
-    text-align: center;
-    margin-bottom: 24px;
-}
-.card-divider {
-    height: 0.5px;
-    background: #0C447C;
-    margin-bottom: 24px;
-}
-
-/* Campos */
-.field-label {
-    font-size: 11px;
-    color: #B5D4F4;
-    margin-bottom: 6px;
-    display: block;
-}
-
-/* 2FA info */
-.twofa-info {
-    background: #042C53;
-    border: 0.5px solid #185FA5;
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-size: 10px;
-    color: #85B7EB;
-    margin-top: 8px;
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-/* Botão */
-.btn-entrar {
-    width: 100%;
-    background: #185FA5;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    padding: 14px;
-    font-size: 15px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background 0.2s;
-    margin-bottom: 12px;
-}
-.btn-entrar:hover {
-    background: #0C447C;
-}
-
-/* Links */
-.link-esqueci {
-    text-align: center;
-    font-size: 10px;
-    color: #378ADD;
-    cursor: pointer;
-    margin-bottom: 20px;
-}
-
-/* SSL rodapé */
-.ssl-badge {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 8px;
-}
-.ssl-info {
-    font-size: 9px;
-    color: #85B7EB;
-    background: #042C53;
-    border: 0.5px solid #0C447C;
-    border-radius: 5px;
-    padding: 4px 10px;
-}
-.copyright {
-    font-size: 8px;
-    color: #185FA5;
-}
-
-/* Campo 2FA */
-.twofa-input {
-    letter-spacing: 8px;
-    font-size: 20px;
-    text-align: center;
-}
-
-/* Streamlit overrides */
-div[data-testid="stTextInput"] input {
-    background: #0C447C !important;
-    border: 0.5px solid #185FA5 !important;
-    border-radius: 8px !important;
-    color: #E6F1FB !important;
-    font-size: 13px !important;
-}
-div[data-testid="stTextInput"] input::placeholder {
-    color: #378ADD !important;
-}
-div[data-testid="stTextInput"] label {
-    color: #B5D4F4 !important;
-    font-size: 11px !important;
-}
-
-/* Erro */
-.msg-erro {
-    background: #3d0f0f;
-    border: 0.5px solid #A32D2D;
-    border-radius: 8px;
-    color: #F09595;
-    font-size: 11px;
-    padding: 10px 14px;
-    margin-bottom: 12px;
-    text-align: center;
-}
-.msg-sucesso {
-    background: #0a2b14;
-    border: 0.5px solid #3B6D11;
-    border-radius: 8px;
-    color: #97C459;
-    font-size: 11px;
-    padding: 10px 14px;
-    margin-bottom: 12px;
-    text-align: center;
-}
-
-@media (max-width: 768px) {
-    .login-wrapper { flex-direction: column; }
-    .login-left { min-height: 300px; padding: 24px; }
-    .login-right { width: 100%; min-width: unset; padding: 24px 16px; }
-}
-</style>
-""", unsafe_allow_html=True)
-
-# ─────────────────────────────────────────
-# SVG DO ÍCONE REDE DE ATIVOS (animado)
-# ─────────────────────────────────────────
-ICONE_REDE = """
-<svg width="180" height="180" viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
-  <style>
-    .pulse1{animation:pulse 2s ease-in-out infinite}
-    .pulse2{animation:pulse 2s ease-in-out infinite .4s}
-    .pulse3{animation:pulse 2s ease-in-out infinite .8s}
-    .pulse4{animation:pulse 2s ease-in-out infinite 1.2s}
-    .pulse5{animation:pulse 2s ease-in-out infinite 1.6s}
-    .la{animation:la 2s ease-in-out infinite}
-    @keyframes pulse{0%,100%{opacity:.7}50%{opacity:1}}
-    @keyframes la{0%,100%{opacity:.3}50%{opacity:.9}}
-  </style>
-  <!-- Nó central -->
-  <circle cx="90" cy="90" r="28" fill="#185FA5" stroke="#378ADD" stroke-width="2" class="pulse1"/>
-  <text x="90" y="86" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="700" fill="white">DT</text>
-  <text x="90" y="100" text-anchor="middle" font-family="sans-serif" font-size="8" fill="#B5D4F4">Facilities</text>
-  <!-- Linhas -->
-  <line x1="90" y1="90" x2="35" y2="38" stroke="#85B7EB" stroke-width="1.5" class="la"/>
-  <line x1="90" y1="90" x2="145" y2="38" stroke="#85B7EB" stroke-width="1.5" class="la"/>
-  <line x1="90" y1="90" x2="35" y2="142" stroke="#85B7EB" stroke-width="1.5" class="la"/>
-  <line x1="90" y1="90" x2="145" y2="142" stroke="#85B7EB" stroke-width="1.5" class="la"/>
-  <!-- Pontos animados nas linhas -->
-  <circle cx="62" cy="64" r="3.5" fill="#378ADD" class="pulse2"/>
-  <circle cx="117" cy="64" r="3.5" fill="#378ADD" class="pulse3"/>
-  <circle cx="62" cy="116" r="3.5" fill="#378ADD" class="pulse4"/>
-  <circle cx="117" cy="116" r="3.5" fill="#378ADD" class="pulse5"/>
-  <!-- Nós satélite -->
-  <circle cx="35" cy="38" r="20" fill="#0C447C" stroke="#378ADD" stroke-width="1.2" class="pulse2"/>
-  <text x="35" y="42" text-anchor="middle" font-family="sans-serif" font-size="10" font-weight="700" fill="white">BIM</text>
-  <circle cx="145" cy="38" r="20" fill="#0C447C" stroke="#378ADD" stroke-width="1.2" class="pulse3"/>
-  <text x="145" y="42" text-anchor="middle" font-family="sans-serif" font-size="10" font-weight="700" fill="white">IA</text>
-  <circle cx="35" cy="142" r="20" fill="#0C447C" stroke="#378ADD" stroke-width="1.2" class="pulse4"/>
-  <text x="35" y="146" text-anchor="middle" font-family="sans-serif" font-size="10" font-weight="700" fill="white">IoT</text>
-  <circle cx="145" cy="142" r="20" fill="#0C447C" stroke="#378ADD" stroke-width="1.2" class="pulse5"/>
-  <text x="145" y="146" text-anchor="middle" font-family="sans-serif" font-size="9" font-weight="700" fill="white">O&amp;M</text>
-</svg>
+css_code = """
+.stApp { background-color: #03111E !important; color: #FFFFFF !important; }
+.left-panel { padding: 10px; text-align: center; }
+.network-container { position: relative; width: 380px; height: 300px; margin: 0 auto 30px auto; }
+.node-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(135deg, #092543 0%, #103B66 100%); border-radius: 50%; width: 140px; height: 140px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-weight: 900; color: #00D2FF; font-size: 28px; border: 3.5px solid #00D2FF; box-shadow: 0 0 30px rgba(0,210,255,0.6); z-index: 10; }
+.node-center span { font-size: 14px; font-weight: 800; color: #8AB4F8; margin-top: 0px; letter-spacing: 0.5px; }
+.node-sat { position: absolute; background-color: #06182B; border-radius: 50%; width: 80px; height: 80px; display: flex; justify-content: center; align-items: center; font-size: 18px; font-weight: 900; color: #FFFFFF; border: 2.5px solid #1A446F; box-shadow: 0 8px 20px rgba(0,0,0,0.6); z-index: 5; letter-spacing: 0.5px; }
+.node-top-left { top: 5px; left: 5px; }
+.node-top-right { top: 5px; right: 5px; }
+.node-bot-left { bottom: 5px; left: 5px; }
+.node-bot-right { bottom: 5px; right: 5px; }
+.pct-badge { position: absolute; top: 15px; right: -75px; color: #00D2FF; font-size: 26px; font-weight: 900; text-align: left; line-height: 1.1; }
+.pct-badge span { font-size: 14px; color: #8AB4F8; font-weight: bold; letter-spacing: 1px; }
+.network-lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+.dt-title { font-size: 20px; letter-spacing: 3px; color: #8AB4F8; margin-bottom: 10px; font-weight: bold; }
+.main-brand { font-size: 64px; font-weight: 950; color: #FFFFFF; margin-bottom: 15px; line-height: 1; letter-spacing: 1px; }
+.sub-brand { font-size: 16px; letter-spacing: 4px; color: #00D2FF; font-weight: bold; margin-bottom: 30px; }
+.slogan { font-style: italic; color: #D1E2F4; font-size: 19px; margin-bottom: 40px; font-weight: 500; }
+.tags-footer { font-size: 16px !important; color: #8AB4F8 !important; letter-spacing: 1px !important; font-weight: 700 !important; margin-top: 25px; }
+.right-wrapper { max-width: 440px; margin: 0 auto; padding-top: 20px; }
+.login-card { background-color: #06182B !important; padding: 40px 35px !important; border-radius: 16px !important; border: 1px solid #103154 !important; box-shadow: 0 12px 40px rgba(0,0,0,0.6) !important; }
+.login-title { font-size: 28px; font-weight: bold; color: #FFFFFF; text-align: center; margin-bottom: 5px; }
+.login-subtitle { font-size: 14px; color: #8AB4F8; text-align: center; margin-bottom: 35px; }
+div[data-baseweb="input"], div[data-baseweb="input"] > div { background-color: #0C233C !important; border: 1px solid #1A446F !important; border-radius: 12px !important; height: 50px !important; }
+input[data-testid="stTextInputRootElement"], input { background-color: transparent !important; color: #FFFFFF !important; font-weight: 500 !important; font-size: 16px !important; }
+input::placeholder { color: #5F82A8 !important; }
+label { color: #8AB4F8 !important; font-weight: 600 !important; font-size: 15px !important; margin-bottom: 6px !important; }
+div[data-testid="stForm"] { border: none !important; padding: 0 !important; }
+button[data-testid="baseButton-secondaryFormSubmit"], button[data-testid="baseButton-secondary"] { background-color: #104A7E !important; color: white !important; border-radius: 12px !important; border: 1px solid #1A62A3 !important; font-weight: bold !important; font-size: 16px !important; height: 52px !important; margin-top: 15px !important; box-shadow: 0 4px 15px rgba(16,74,126,0.4) !important; }
+div[data-testid="stNotification"] { background-color: #0C233C !important; border: 1px solid #1A446F !important; color: #FFFFFF !important; border-radius: 12px !important; }
+.top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+.resort-badge { background: #0A1E33; padding: 8px 16px; border-radius: 12px; font-weight: bold; font-size: 13px; border: 1px solid #143A63; color: #FFFFFF; }
+.verified-badge { background: rgba(0,210,255,0.08); color: #00D2FF; padding: 8px 16px; border-radius: 12px; font-size: 12px; border: 1px solid rgba(0,210,255,0.2); font-weight: 600; }
+.ssl-footer { color: #5F82A8; font-size: 12px; margin-top: 25px; display: flex; align-items: center; gap: 6px; justify-content: center; }
 """
 
-# ─────────────────────────────────────────
-# ESTADO DE SESSÃO
-# ─────────────────────────────────────────
-if "etapa" not in st.session_state:
-    st.session_state.etapa = "login"       # login | verificar_2fa | logado
-if "usuario_temp" not in st.session_state:
-    st.session_state.usuario_temp = None
-if "codigo_2fa" not in st.session_state:
-    st.session_state.codigo_2fa = None
-if "logado" not in st.session_state:
-    st.session_state.logado = False
+st.markdown(f"<style>{css_code}</style>", unsafe_allow_html=True)
 
+col_esquerda, col_direita = st.columns([1.1, 1.0], gap="large")
 
-def gerar_codigo():
-    return "".join(random.choices(string.digits, k=6))
+with col_esquerda:
+    st.markdown('<div class="left-panel">', unsafe_allow_html=True)
+    html_net = '<div class="network-container"><svg class="network-lines"><line x1="45" y1="45" x2="335" y2="255" style="stroke:#1A446F; stroke-width:3.5" /><line x1="335" y1="45" x2="45" y2="255" style="stroke:#1A446F; stroke-width:3.5" /></svg><div class="node-sat node-top-left">BIM</div><div class="node-sat node-top-right">IA</div><div class="node-sat node-bot-left">IoT</div><div class="node-sat node-bot-right">O&M</div><div class="pct-badge">88%<br><span>SLA</span></div><div class="node-center">DT<br><span>Facilities</span></div></div>'
+    st.markdown(html_net, unsafe_allow_html=True)
+    st.markdown('<div class="dt-title">DT FACILITIES</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-brand">O&M</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-brand">GESTÃO INTELIGENTE DE ATIVOS</div>', unsafe_allow_html=True)
+    st.markdown('<div class="slogan">"Seu patrimônio sob controle, onde você estiver."</div>', unsafe_allow_html=True)
+    st.markdown('<div class="tags-footer">Hospital &nbsp;•&nbsp; Resort &nbsp;•&nbsp; Supermercado &nbsp;•&nbsp; Facilities</div>', unsafe_allow_html=True)
+    st.markdown('<div class="ssl-footer" style="justify-content:flex-start; margin-top:50px;">🔒 Conexão segura SSL</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-
-def fazer_logout():
-    st.session_state.etapa = "login"
-    st.session_state.usuario_temp = None
-    st.session_state.codigo_2fa = None
-    st.session_state.logado = False
-
-
-# ─────────────────────────────────────────
-# SE JÁ LOGADO — redireciona para o app
-# ─────────────────────────────────────────
-if st.session_state.logado:
-    usuario = USUARIOS[st.session_state.usuario_temp]
-    st.markdown(f"""
-    <div style="background:#021d38;min-height:100vh;display:flex;
-        flex-direction:column;align-items:center;justify-content:center;padding:40px;">
-        <div style="background:#031525;border:0.5px solid #0C447C;border-radius:16px;
-            padding:40px;text-align:center;max-width:480px;width:100%;">
-            <div style="font-size:48px;margin-bottom:16px;">✅</div>
-            <h2 style="color:white;margin:0 0 8px;">Login realizado com sucesso!</h2>
-            <p style="color:#85B7EB;font-size:13px;margin-bottom:24px;">
-                Bem-vindo ao <strong style="color:white;">{usuario['empreendimento']}</strong>
-            </p>
-            <p style="color:#378ADD;font-size:11px;">
-                Redirecionando para o Portal de Engenharia & Gestão de Ativos...
-            </p>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    with st.spinner("Carregando o sistema..."):
-        time.sleep(2)
-
-    if st.button("🚪 Sair", on_click=fazer_logout):
-        st.rerun()
-    st.stop()
-
-
-# ─────────────────────────────────────────
-# LADO ESQUERDO — identidade visual
-# ─────────────────────────────────────────
-col_esq, col_dir = st.columns([1.1, 0.9])
-
-with col_esq:
-    st.markdown(f"""
-    <div class="login-left" style="min-height:100vh;background:#021628;
-        display:flex;flex-direction:column;align-items:center;
-        justify-content:center;padding:48px;position:relative;overflow:hidden;">
-        <div class="grid-bg"></div>
-        <div class="overlay"></div>
-        <div class="left-content">
-            <div class="network-icon">{ICONE_REDE}</div>
-            <p class="product-label">DT &nbsp; FACILITIES</p>
-            <h1 class="product-name">O&M</h1>
-            <div class="product-divider"></div>
-            <p class="product-subtitle">GESTÃO INTELIGENTE DE ATIVOS</p>
-            <p class="product-tagline">
-                "Seu patrimônio sob controle,<br>onde você estiver."
-            </p>
-            <p class="segments">Hospital &nbsp;·&nbsp; Resort &nbsp;·&nbsp; Hipermercado &nbsp;·&nbsp; Facilities</p>
-        </div>
-        <div style="position:absolute;bottom:20px;left:0;right:0;text-align:center;">
-            <span class="ssl-info">🔒 Conexão segura SSL</span>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-
-# ─────────────────────────────────────────
-# LADO DIREITO — formulário de login
-# ─────────────────────────────────────────
-with col_dir:
-    st.markdown("""
-    <div style="background:#042C53;min-height:100vh;display:flex;
-        flex-direction:column;align-items:center;justify-content:center;padding:32px;">
-    """, unsafe_allow_html=True)
-
-    # ── ETAPA 1: LOGIN ──
-    if st.session_state.etapa == "login":
-
-        st.markdown("""
-        <div class="login-card">
-            <p class="card-title">Acesse sua conta</p>
-            <p class="card-subtitle">Entre com seu e-mail e senha</p>
-            <div class="card-divider"></div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        with st.container():
-            email = st.text_input("E-mail", placeholder="seu@email.com", key="email_input")
-            senha = st.text_input("Senha", placeholder="••••••••", type="password", key="senha_input")
-
-            st.markdown("""
-            <div class="twofa-info">
-                🔐 &nbsp; Verificação em 2 etapas ativa &nbsp;—&nbsp;
-                um código será enviado ao seu e-mail após login
-            </div>
-            """, unsafe_allow_html=True)
-
-            erro = st.empty()
-            entrar = st.button("Entrar →", use_container_width=True, key="btn_entrar")
-
-            st.markdown("""
-            <p class="link-esqueci">Esqueci minha senha</p>
-            """, unsafe_allow_html=True)
-
-            if entrar:
-                if not email or not senha:
-                    erro.markdown('<div class="msg-erro">⚠️ Preencha e-mail e senha.</div>', unsafe_allow_html=True)
-                elif email not in USUARIOS:
-                    erro.markdown('<div class="msg-erro">❌ E-mail não cadastrado.</div>', unsafe_allow_html=True)
-                elif USUARIOS[email]["senha"] != senha:
-                    erro.markdown('<div class="msg-erro">❌ Senha incorreta. Tente novamente.</div>', unsafe_allow_html=True)
-                else:
-                    codigo = gerar_codigo()
-                    st.session_state.codigo_2fa = codigo
-                    st.session_state.usuario_temp = email
-                    st.session_state.etapa = "verificar_2fa"
-                    # Em produção: enviar código por e-mail real
-                    st.info(f"🔐 Código 2FA (simulado): **{codigo}**")
-                    time.sleep(1)
-                    st.rerun()
-
-    # ── ETAPA 2: VERIFICAÇÃO 2FA ──
-    elif st.session_state.etapa == "verificar_2fa":
-        usuario = USUARIOS[st.session_state.usuario_temp]
-
-        st.markdown(f"""
-        <div class="welcome-badge">
-            <div class="welcome-avatar">{usuario['iniciais']}</div>
-            <div class="welcome-text">
-                <small>Verificando acesso para</small>
-                <strong>{usuario['empreendimento']}</strong>
-                <span>Último acesso: {usuario['ultimo_acesso']}</span>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        st.markdown("""
-        <div class="login-card">
-            <p class="card-title">Verificação em 2 etapas</p>
-            <p class="card-subtitle">Digite o código de 6 dígitos enviado ao seu e-mail</p>
-            <div class="card-divider"></div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        codigo_digitado = st.text_input(
-            "Código de verificação",
-            placeholder="_ _ _ _ _ _",
-            max_chars=6,
-            key="codigo_2fa_input"
-        )
-
-        erro2 = st.empty()
-
-        col_v1, col_v2 = st.columns(2)
-        with col_v1:
-            if st.button("← Voltar", use_container_width=True):
-                st.session_state.etapa = "login"
-                st.rerun()
-        with col_v2:
-            if st.button("Verificar ✓", use_container_width=True, type="primary"):
-                if codigo_digitado == st.session_state.codigo_2fa:
-                    st.session_state.logado = True
+with col_direita:
+    st.markdown('<div class="right-wrapper">', unsafe_allow_html=True)
+    nome_cliente = "Acesso Uniforme"
+    if st.session_state.login_step == 2 and st.session_state.usuario_validado in lista_usuarios:
+        nome_cliente = lista_usuarios[st.session_state.usuario_validado]["cliente"]
+    st.markdown('<div class="top-header">', unsafe_allow_html=True)
+    st.markdown(f'<div class="resort-badge">🏢 {nome_cliente}</div>', unsafe_allow_html=True)
+    st.markdown('<div class="verified-badge">✓ Cliente verificado</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('<div class="login-card">', unsafe_allow_html=True)
+    
+    if st.session_state.login_step == 1:
+        st.markdown('<div class="login-title">Acesse sua conta</div>', unsafe_allow_html=True)
+        st.markdown('<div class="login-subtitle">Entre com seu e-mail e senha</div>', unsafe_allow_html=True)
+        with st.form("form_etapa_1", clear_on_submit=False):
+            email = st.text_input("E-mail", placeholder="seu.email@email.com")
+            senha = st.text_input("Senha", type="password", placeholder="••••••••")
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.info("🔵 Verificação em 2 etapas: Um código será enviado ao seu e-mail.")
+            if st.form_submit_button("Entrar", use_container_width=True):
+                if email in lista_usuarios and senha == lista_usuarios[email]["password"]:
+                    st.session_state.usuario_validado = email
+                    st.session_state.login_step = 2
                     st.rerun()
                 else:
-                    erro2.markdown('<div class="msg-erro">❌ Código incorreto. Tente novamente.</div>', unsafe_allow_html=True)
+                    st.error("Credenciais inválidas para o ecossistema multi-cliente.")
 
-        st.markdown("""
-        <p class="link-esqueci">Não recebi o código — reenviar</p>
-        """, unsafe_allow_html=True)
-
-    st.markdown("""
-    <div class="ssl-badge" style="margin-top:24px;">
-        <span class="ssl-info">🔒 Conexão segura SSL</span>
-        <span class="copyright">© 2026 DT Facilities O&M</span>
-    </div>
-    </div>
-    """, unsafe_allow_html=True)
+    elif st.session_state.login_step == 2:
+        st.markdown('<div class="login-title">Verificação</div>', unsafe_allow_html=True)
+        st.markdown('<div class="login-subtitle">Insira o código de segurança</div>', unsafe_allow_html=True)
+        with st.form("form_etapa_2", clear_on_submit=False):
+            codigo = st.text_input("Código de 6 dígitos", max_chars=6, placeholder="000000")
+            col_b1, col_b2 = st.columns(2)
+            with col_b1:
+                if st.form_submit_button("Voltar", use_container_width=True):
+                    st.session_state.login_step = 1
+                    st.rerun()
+            with col_b2:
+                if st.form_submit_button("Confirmar", use_container_width=True):
+                    user_info = lista_usuarios[st.session_state.usuario_validado]
+                    if codigo == user_info["token"]:
+                        st.success("Acesso autorizado!")
+                        time.sleep(0.5)
+                        st.session_state.logged_in = True
+                        st.session_state.cliente_ativo = user_info["cliente"]
+                        st.session_state.user_email = st.session_state.usuario_validado
+                        st.session_state.login_step = 1
+                        st.rerun()
+                    else:
+                        st.error("Código incorreto.")
+                        
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('<div class="ssl-footer">🔒 Conexão segura SSL <span style="color:#537BAB; margin-left:20px;">© 2026 DT Facilities O&M</span></div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
