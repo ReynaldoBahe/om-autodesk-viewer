@@ -1,11 +1,32 @@
 import streamlit as st
+import sqlite3
+import os
 
 st.set_page_config(page_title="Acesso", page_icon="🔐", layout="centered")
 
-# Inicializa um banco de dados temporário na memória da sessão
-if "usuarios_db" not in st.session_state:
-    st.session_state["usuarios_db"] = {"admin": "1234"}  # Usuário padrão
+# --- CONFIGURAÇÃO DO BANCO DE DADOS REAL (PERMANENTE) ---
+DB_FILE = "usuarios.db"
 
+def inicializar_banco():
+    # Cria o arquivo de banco de dados se ele não existir
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS usuarios (
+            usuario TEXT PRIMARY KEY,
+            senha TEXT
+        )
+    """)
+    # Cria um usuário admin padrão se o banco estiver vazio
+    cursor.execute("SELECT * FROM usuarios WHERE usuario = 'admin'")
+    if not cursor.fetchone():
+        cursor.execute("INSERT INTO usuarios (usuario, senha) VALUES ('admin', '1234')")
+    conn.commit()
+    conn.close()
+
+inicializar_banco()
+
+# --- INTERFACE ---
 st.title("Acesso ao Sistema")
 
 # Estilização do checkbox ciano
@@ -28,7 +49,7 @@ st.markdown(
 
 aba_login, aba_cadastro = st.tabs(["🔒 Entrar na Conta", "📝 Criar Nova Conta"])
 
-# --- CONTEÚDO DA ABA 1: LOGIN ---
+# --- ABA 1: LOGIN ---
 with aba_login:
     with st.form(key="login_form"):
         username = st.text_input("Usuário", placeholder="Digite seu usuário", key="login_user")
@@ -37,13 +58,18 @@ with aba_login:
         submit_button = st.form_submit_button(label="Entrar")
 
     if submit_button:
-        # Valida contra o banco de dados temporário da sessão
-        if username in st.session_state["usuarios_db"] and st.session_state["usuarios_db"][username] == password:
+        conn = sqlite3.connect(DB_FILE)
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM usuarios WHERE usuario = ? AND senha = ?", (username, password))
+        usuario_valido = cursor.fetchone()
+        conn.close()
+
+        if usuario_valido:
             st.success(f"Login realizado com sucesso! Bem-vindo, {username}.")
         else:
             st.error("Usuário ou senha incorretos.")
 
-# --- CONTEÚDO DA ABA 2: CADASTRO ---
+# --- ABA 2: CADASTRO PERMANENTE ---
 with aba_cadastro:
     st.subheader("Cadastro de Novo Usuário")
     with st.form(key="register_form", clear_on_submit=True):
@@ -57,9 +83,18 @@ with aba_cadastro:
             st.error("Preencha todos os campos.")
         elif nova_senha != confirma_senha:
             st.error("As senhas não coincidem.")
-        elif novo_usuario in st.session_state["usuarios_db"]:
-            st.warning("Este usuário já está cadastrado.")
         else:
-            # Salva o novo usuário na memória de forma segura
-            st.session_state["usuarios_db"][novo_usuario] = nova_senha
-            st.success("Conta criada com sucesso! Agora você já pode mudar para a aba 'Entrar na Conta'.")
+            conn = sqlite3.connect(DB_FILE)
+            cursor = conn.cursor()
+            
+            # Verifica se já existe
+            cursor.execute("SELECT * FROM usuarios WHERE usuario = ?", (novo_usuario,))
+            if cursor.fetchone():
+                st.warning("Este usuário já está cadastrado.")
+            else:
+                # Salva permanentemente no banco de dados
+                cursor.execute("INSERT INTO usuarios (usuario, senha) VALUES (?, ?)", (novo_usuario, nova_senha))
+                conn.commit()
+                st.success("Conta criada e salva com sucesso! Pode mudar de aba e fazer o login.")
+            
+            conn.close()
