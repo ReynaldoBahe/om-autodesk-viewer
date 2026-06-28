@@ -201,3 +201,15 @@ if not df.empty:
             st.success(f"""
             ### ✅ DIAGNÓSTICO DE SAÚDE OPERACIONAL
             O ecossistema técnico de **{NOME_PROJETO}** opera em conformidade.
+            
+            {texto_gargalo}  
+            {texto_custos}
+            
+            🔮 **MÉTRICA PREDITIVA:** Com **{preventivas}** rotinas preventivas contra **{corretivas}** intervenções corretivas, os indicadores apontam tendência de estabilização estrutural para o próximo ciclo mensal de O&M.
+            """)
+
+    st.write("---")
+    st.markdown("### Visualização Completa do Banco de Dados Filtrado")
+    st.dataframe(df, use_container_width=True)
+else:
+    st.info("Nenhum dado cadastrado para exibição analítica de tabelas neste empreendimento.")
