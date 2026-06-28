@@ -113,25 +113,27 @@ st.components.v1.html(f'<iframe src="{speckle_base_url}" width="100%" height="60
 # =========================================================================
 # 6. CENTRO DE DIAGNÓSTICO E ANALYTICS (IA MULTI-CLIENTE)
 # =========================================================================
-st.markdown('<div class="card-home"><div class="card-home-title">📊 Centro de Diagnóstico Avançado (IA)</div></div>', unsafe_allow_html=True)
-
+# 6.1. CONFIGURAÇÃO DO SELETOR EXCLUSIVO DE OS NA BARRA LATERAL (PAINEL DE CONTROLE)
 if not df.empty:
-    # --- NOVO: SELETOR INDIVIDUAL DE OS ---
-    col_id_os = [c for c in df.columns if 'numero da os' in c.lower() or 'id' in c.lower()]
+    # Garante a busca exata pela coluna 'Os' para evitar as hashes longas de ID
+    col_id_os = [c for c in df.columns if c.lower() == 'os']
+    if not col_id_os:
+        col_id_os = [c for c in df.columns if 'os' in c.lower() or 'numero' in c.lower()]
     
-    st.markdown("### 🎯 Foco da Análise")
+    st.sidebar.write("---")
+    st.sidebar.markdown("### 🎯 Foco da Análise (IA)")
     opcoes_os = ["Todas as Ordens (Análise Geral)"]
     if col_id_os:
-        opcoes_os.extend(df[col_id_os[0]].dropna().astype(str).unique().tolist())
+        opcoes_os.extend(df[col_id_os].dropna().astype(str).unique().tolist())
     
-    os_selecionada = st.selectbox("Selecione uma OS específica para auditoria da IA:", opcoes_os)
+    os_selecionada = st.sidebar.selectbox("Selecione uma OS específica para auditoria:", opcoes_os)
     
     # Aplica o filtro de OS selecionada antes de calcular as métricas da IA
     df_analise = df.copy()
     analise_individual = False
     
     if os_selecionada != "Todas as Ordens (Análise Geral)" and col_id_os:
-        df_analise = df[df[col_id_os[0]].astype(str) == os_selecionada]
+        df_analise = df[df[col_id_os].astype(str) == os_selecionada]
         analise_individual = True
 
     # --- MÉTRICAS DINÂMICAS BASEADAS NA SELEÇÃO ---
@@ -148,19 +150,23 @@ if not df.empty:
     if col_status:
         os_abertas = len(df_analise[df_analise[col_status[0]].astype(str).str.lower().str.contains('aberta|em andamento|andamento', na=False)])
 
-    # Renderização dos cartões numéricos dinâmicos
+# 6.2. INTERFACE PRINCIPAL DO CENTRO DE DIAGNÓSTICO
+st.markdown('<div class="card-home"><div class="card-home-title">📊 Centro de Diagnóstico Avançado (IA)</div></div>', unsafe_allow_html=True)
+
+if not df.empty:
+    # Renderização dos cartões numéricos desafogados e limpos
     m1, m2, m3 = st.columns(3)
     with m1:
         st.metric(label="Total de Ordens de Serviço", value=total_os)
     with m2:
         if analise_individual:
-            criticidade_atual = df_analise[col_criticidade[0]].iloc[0] if col_criticidade else "Não informada"
+            criticidade_atual = str(df_analise[col_criticidade[0]].iloc[0]) if col_criticidade else "Não informada"
             st.metric(label="🚨 Grau de Criticidade", value=criticidade_atual)
         else:
             st.metric(label="🚨 Ativos em Estado Crítico", value=os_criticas, delta="-2 este mês" if os_criticas > 0 else "Estável")
     with m3:
         if analise_individual:
-            status_atual = df_analise[col_status[0]].iloc[0] if col_status else "Não informado"
+            status_atual = str(df_analise[col_status[0]].iloc[0]) if col_status else "Não informado"
             st.metric(label="🛠️ Status Atual", value=status_atual)
         else:
             st.metric(label="🛠️ OS Pendentes (Ação Imediata)", value=os_abertas)
@@ -217,7 +223,6 @@ if not df.empty:
         if analise_individual:
             st.markdown(f"**Laudo de Auditoria Técnica — OS {os_selecionada}**")
             
-            # Identifica descrição do problema se houver coluna de 'descricao' ou 'detalhe'
             col_desc = [c for c in df_analise.columns if 'desc' in c.lower() or 'resumo' in c.lower()]
             detalhe_os = f"vinculada ao setor de **{sistema_gargalo}**"
             if col_desc and not df_analise[col_desc].empty:
@@ -273,6 +278,6 @@ if not df.empty:
 
     st.write("---")
     st.markdown("### Visualização Completa do Banco de Dados Filtrado")
-    st.dataframe(df_analise, use_container_width=True) # Mostra o DF filtrado dinamicamente
+    st.dataframe(df_analise, use_container_width=True)
 else:
     st.info("Nenhum dado cadastrado para exibição analítica de tabelas neste empreendimento.")
