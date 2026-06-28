@@ -15,7 +15,7 @@ except KeyError:
         "gerente.om@resortboaviagem.com": {"password": "SenhaResort123", "token": "852369", "cliente": "Resort Boa Viagem"}
     }
 
-# --- INJEÇÃO DE CSS DE ALTO IMPACTO (DARK MODE INTEGRADO) ---
+# --- INJEÇÃO DE CSS DE ALTO IMPACTO (REDE DE ATIVOS + DARK MODE INTEGRADO) ---
 st.markdown("""
     <style>
         /* 1. CORREÇÃO GLOBAL DE FUNDO */
@@ -24,39 +24,82 @@ st.markdown("""
             color: #FFFFFF !important; 
         }
         
-        .left-panel { padding: 40px 20px; text-align: center; }
+        .left-panel { padding: 20px; text-align: center; }
         
-        /* 2. CORREÇÃO E DESTAQUE DA LOGOMARCA (Fundo mais claro com contorno brilhante) */
-        .dt-badge { 
-            background: linear-gradient(135deg, #092543 0%, #103B66 100%) !important; 
-            border-radius: 50% !important; 
-            width: 110px !important; 
-            height: 110px !important; 
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: center !important;
-            align-items: center !important;
-            margin: 0 auto 25px auto !important; 
-            font-weight: 800 !important; 
-            color: #00D2FF !important; 
-            font-size: 24px !important;
-            box-shadow: 0 0 25px rgba(0,210,255,0.3) !important; 
-            border: 2px solid #00D2FF !important;
+        /* 2. ESTRUTURAÇÃO DA LOGO EM REDE (5 CÍRCULOS CONECTADOS) */
+        .network-container {
+            position: relative;
+            width: 280px;
+            height: 240px;
+            margin: 0 auto 30px auto;
         }
-        .dt-badge span {
+        
+        /* Círculo Central */
+        .node-center {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #092543 0%, #103B66 100%);
+            border-radius: 50%;
+            width: 90px; height: 90px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            font-weight: 800; color: #00D2FF; font-size: 18px;
+            border: 2px solid #00D2FF;
+            box-shadow: 0 0 20px rgba(0,210,255,0.4);
+            z-index: 10;
+        }
+        .node-center span { font-size: 9px; font-weight: 400; color: #8AB4F8; margin-top: -2px; }
+        
+        /* Círculos Satélites */
+        .node-sat {
+            position: absolute;
+            background-color: #06182B;
+            border-radius: 50%;
+            width: 50px; height: 50px;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 12px; font-weight: bold; color: #8AB4F8;
+            border: 1px solid #1A446F;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+            z-index: 5;
+        }
+        .node-top-left  { top: 10px; left: 10px; }
+        .node-top-right { top: 10px; right: 10px; }
+        .node-bot-left  { bottom: 10px; left: 10px; }
+        .node-bot-right { bottom: 10px; right: 10px; }
+        
+        /* Indicador de Percentual Flutuante */
+        .pct-badge {
+            position: absolute;
+            top: 20px; right: -50px;
+            color: #00D2FF; font-size: 18px; font-weight: bold;
+            text-align: left; line-height: 1.1;
+        }
+        .pct-badge span { font-size: 10px; color: #5F82A8; font-weight: normal; }
+
+        /* Linhas Conectoras em X (SVG de fundo) */
+        .network-lines {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 1;
+        }
+        
+        /* TEXTOS DO PAINEL ESQUERDO */
+        .dt-title { font-size: 13px; letter-spacing: 2px; color: #5F82A8; margin-bottom: 5px; font-weight: bold; }
+        .main-brand { font-size: 46px; font-weight: 900; color: #FFFFFF; margin-bottom: 15px; line-height: 1; }
+        .sub-brand { font-size: 12px; letter-spacing: 3px; color: #00D2FF; font-weight: bold; margin-bottom: 25px; }
+        .slogan { font-style: italic; color: #9EBBDE; font-size: 15px; margin-bottom: 35px; }
+        
+        /* Letras pequenas e organizadas abaixo */
+        .tags-footer {
             font-size: 11px !important;
-            font-weight: 400 !important;
-            color: #8AB4F8 !important;
+            color: #496E96 !important;
             letter-spacing: 1px !important;
-            margin-top: -4px !important;
+            font-weight: 500 !important;
+            margin-top: 15px;
         }
         
-        .dt-title { font-size: 14px; letter-spacing: 2px; color: #8AB4F8; margin-bottom: 5px; font-weight: 600; }
-        .main-brand { font-size: 42px; font-weight: 900; color: #FFFFFF; margin-bottom: 20px; line-height: 1; }
-        .sub-brand { font-size: 13px; letter-spacing: 3px; color: #00D2FF; font-weight: bold; margin-bottom: 25px; }
-        .slogan { font-style: italic; color: #9EBBDE; font-size: 15px; margin-bottom: 30px; }
-        
-        /* 3. CARD DE LOGIN EM BLOCO ESCURO REGULAR */
+        /* 3. CARD DE LOGIN EM BLOCO ESCURO INTEGRADO */
         .login-card { 
             background-color: #06182B !important; 
             padding: 35px !important; 
@@ -68,24 +111,22 @@ st.markdown("""
         .login-title { font-size: 28px; font-weight: bold; color: #FFFFFF; text-align: center; margin-bottom: 5px; }
         .login-subtitle { font-size: 14px; color: #8AB4F8; text-align: center; margin-bottom: 30px; }
         
-        /* 4. BLINDAGEM OPERACIONAL DOS INPUTS (Arranca o fundo branco forçado do Streamlit) */
+        /* 4. BLINDAGEM DOS INPUTS (Força o fundo integrado) */
         div[data-baseweb="input"], div[data-baseweb="input"] > div { 
             background-color: #0C233C !important; 
             border: 1px solid #1A446F !important; 
             border-radius: 12px !important; 
         }
         
-        /* Ajusta o texto digitado e o cursor para branco */
         input[data-testid="stTextInputRootElement"], input { 
             background-color: transparent !important;
             color: #FFFFFF !important; 
             font-weight: 500 !important; 
         }
         input::placeholder { color: #5F82A8 !important; }
-        
         label { color: #8AB4F8 !important; font-weight: 600 !important; font-size: 14px !important; }
         
-        /* 5. BOTÃO INTEGRADO COM CANTOS ARREDONDADOS COINCIDENTES */
+        /* 5. BOTÃO INTEGRADO */
         button[data-testid="baseButton-secondaryFormSubmit"], button[data-testid="baseButton-secondary"] {
             background-color: #104A7E !important;
             color: white !important;
@@ -93,10 +134,8 @@ st.markdown("""
             border: 1px solid #1A62A3 !important;
             font-weight: bold !important;
             padding: 12px 0 !important;
-            box-shadow: 0 4px 12px rgba(16,74,126,0.3) !important;
         }
         
-        /* Estilização das caixas de alertas internos */
         div[data-testid="stNotification"] {
             background-color: #0C233C !important;
             border: 1px solid #1A446F !important;
@@ -116,14 +155,35 @@ col_esquerda, col_direita = st.columns([1.1, 1.0], gap="large")
 
 with col_esquerda:
     st.markdown('<div class="left-panel">', unsafe_allow_html=True)
-    # Correção interna da renderização da marca e do texto secundário em bloco único
-    st.markdown('<div class="dt-badge">DT<br><span>Facilities</span></div>', unsafe_allow_html=True)
+    
+    # --- RENDERIZAÇÃO DA REDE CONECTADA (5 CÍRCULOS ATIVOS) ---
+    st.markdown("""
+        <div class="network-container">
+            <!-- Linhas Cruzadas em SVG -->
+            <svg class="network-lines">
+                <line x1="35" y1="35" x2="245" y2="205" style="stroke:#1A446F; stroke-width:1.5" />
+                <line x1="245" y1="35" x2="35" y2="205" style="stroke:#1A446F; stroke-width:1.5" />
+            </svg>
+            <!-- Nós Periféricos -->
+            <div class="node-sat node-top-left">BIM</div>
+            <div class="node-sat node-top-right">IA</div>
+            <div class="node-sat node-bot-left">IoT</div>
+            <div class="node-sat node-bot-right">O&M</div>
+            <!-- Indicador de Eficiência Lateral -->
+            <div class="pct-badge">88%<br><span>SLA</span></div>
+            <!-- Nó Central Principal -->
+            <div class="node-center">DT<br><span>Facilities</span></div>
+        </div>
+    """, unsafe_allow_html=True)
+    
     st.markdown('<div class="dt-title">DT FACILITIES</div>', unsafe_allow_html=True)
     st.markdown('<div class="main-brand">O&M</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-brand">GESTÃO INTELIGENTE DE ATIVOS</div>', unsafe_allow_html=True)
     st.markdown('<div class="slogan">"Seu patrimônio sob controle, onde você estiver."</div>', unsafe_allow_html=True)
-    st.markdown('<p style="font-size:12px; color:#5F82A8; word-spacing: 10px; font-weight:500;">Hospital • Resort • Supermercado • Facilities</p>', unsafe_allow_html=True)
-    st.markdown('<div class="ssl-footer" style="justify-content:flex-start; margin-top:60px;">🔒 Conexão segura SSL</div>', unsafe_allow_html=True)
+    
+    # Letras pequenas reorganizadas de forma visível e elegante
+    st.markdown('<div class="tags-footer">Hospital &nbsp;•&nbsp; Resort &nbsp;•&nbsp; Supermercado &nbsp;•&nbsp; Facilities</div>', unsafe_allow_html=True)
+    st.markdown('<div class="ssl-footer" style="justify-content:flex-start; margin-top:50px;">🔒 Conexão segura SSL</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
 with col_direita:
@@ -154,38 +214,3 @@ with col_direita:
                 if email in lista_usuarios and senha == lista_usuarios[email]["password"]:
                     st.session_state.usuario_validado = email
                     st.session_state.login_step = 2
-                    st.rerun()
-                else:
-                    st.error("Credenciais inválidas para o ecossistema multi-cliente.")
-
-    # --- ETAPA 2: TOKEN DE SEGURANÇA ---
-    elif st.session_state.login_step == 2:
-        st.markdown('<div class="login-title">Verificação</div>', unsafe_allow_html=True)
-        st.markdown('<div class="login-subtitle">Insira o código de segurança</div>', unsafe_allow_html=True)
-        
-        with st.form("form_etapa_2", clear_on_submit=False):
-            codigo = st.text_input("Código de 6 dígitos", max_chars=6, placeholder="000000")
-            
-            col_b1, col_b2 = st.columns(2)
-            with col_b1:
-                if st.form_submit_button("Voltar", use_container_width=True):
-                    st.session_state.login_step = 1
-                    st.rerun()
-            with col_b2:
-                if st.form_submit_button("Confirmar", use_container_width=True):
-                    user_info = lista_usuarios[st.session_state.usuario_validado]
-                    if codigo == user_info["token"]:
-                        st.success("Acesso autorizado!")
-                        time.sleep(0.5)
-                        
-                        st.session_state.logged_in = True
-                        st.session_state.cliente_ativo = user_info["cliente"]
-                        st.session_state.user_email = st.session_state.usuario_validado
-                        
-                        st.session_state.login_step = 1
-                        st.rerun()
-                    else:
-                        st.error("Código incorreto.")
-                        
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('<div class="ssl-footer">🔒 Conexão segura SSL <span style="color:#537BAB; margin-left:20px;">© 2026 DT Facilities O&M</span></div>', unsafe_allow_html=True)
