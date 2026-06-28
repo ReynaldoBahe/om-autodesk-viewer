@@ -39,21 +39,15 @@ footer { visibility: hidden !important; }
 .tags-footer { font-size: 14px !important; color: #8AB4F8 !important; letter-spacing: 1px !important; font-weight: 700 !important; margin-top: 20px; }
 .right-wrapper { max-width: 420px; margin: 0 auto; padding-top: 30px; }
 .login-card { background-color: #06182B !important; padding: 35px 30px !important; border-radius: 16px !important; border: 1px solid #103154 !important; box-shadow: 0 12px 40px rgba(0,0,0,0.6) !important; }
-
 div[data-baseweb="input"], div[data-baseweb="input"] > div { background-color: #0C233C !important; border: 1px solid #1A446F !important; border-radius: 12px !important; height: 52px !important; }
 input { background-color: transparent !important; color: #FFFFFF !important; font-weight: 600 !important; font-size: 17px !important; }
 input::placeholder { color: #5F82A8 !important; font-size: 15px !important; }
 label { color: #8AB4F8 !important; font-weight: 700 !important; font-size: 15px !important; margin-bottom: 6px !important; display: block !important; }
 div[data-testid="stForm"] { border: none !important; padding: 0 !important; }
-
-.mask-password input {
-    -webkit-text-security: disc !important;
-    text-security: disc !important;
-}
-
+.mask-password input { -webkit-text-security: disc !important; text-security: disc !important; }
 div[data-testid="stTextInputAdornment"] { display: none !important; width: 0px !important; visibility: hidden !important; }
 
-/* FORÇA O TEXTO DO CHECKBOX A FICAR GRANDE, ACESO E VISÍVEL */
+/* FORÇA O CONTRASTE DO TEXTO DO CHECKBOX PARA FICAR CIANO GRANDE */
 div[data-testid="stCheckbox"] label span p {
     color: #00D2FF !important;
     font-size: 15px !important;
@@ -100,11 +94,10 @@ with col_direita:
     if st.session_state.login_step == 1:
         st.markdown('<div class="login-title">Acesse sua conta</div>', unsafe_allow_html=True)
         st.markdown('<div class="login-subtitle">Entre com seu e-mail e senha</div>', unsafe_allow_html=True)
-        
         with st.form("form_etapa_1", clear_on_submit=False):
             email = st.text_input("E-mail", placeholder="seu.email@email.com")
             
-            # 1. RENDEREÇÃO DA CAIXA DE SENHA PRIMEIRO
+            # Execução linear e blindada: A caixa da senha renderiza PRIMEIRO
             if st.session_state.ver_senha:
                 senha = st.text_input("Senha", placeholder="Sua senha secreta")
             else:
@@ -112,8 +105,7 @@ with col_direita:
                 senha = st.text_input("Senha", placeholder="••••••••")
                 st.markdown('</div>', unsafe_allow_html=True)
             
-            # 2. RENDEREÇÃO DO CHECKBOX LOGO ABAIXO DA SENHA
-            # O truque está em usar o st.checkbox puro apontado para a session_state
+            # O Checkbox renderiza SEGUNDO, ficando fisicamente EMBAIXO da caixa de senha
             revelar = st.checkbox("👁️ Mostrar caracteres digitados", value=st.session_state.ver_senha)
             if revelar != st.session_state.ver_senha:
                 st.session_state.ver_senha = revelar
@@ -121,7 +113,6 @@ with col_direita:
                 
             st.markdown("<br>", unsafe_allow_html=True)
             st.info("🔵 Verificação em 2 etapas: Um código será enviado ao seu e-mail.")
-            
             if st.form_submit_button("Entrar", use_container_width=True):
                 if email in lista_usuarios and senha == lista_usuarios[email]["password"]:
                     st.session_state.usuario_validado = email
@@ -137,3 +128,4 @@ with col_direita:
             codigo = st.text_input("Código de 6 dígitos", max_chars=6, placeholder="000000")
             col_b1, col_b2 = st.columns(2)
             with col_b1:
+                if st.form_submit_button("Voltar", use_container_width=True):
