@@ -76,37 +76,40 @@ om_abertas_backlog = 0
 taxa_cumprimento_prev = 100.0
 df_pcm = df.copy() if not df.empty else pd.DataFrame()
 
-col_status = []
-col_tipo = []
-col_setor = []
+col_status_name = ""
+col_tipo_name = ""
+col_setor_name = ""
 
 if not df.empty:
-    # Padronização limpa das colunas
+    # Padronização das colunas
     df.columns = [str(c).strip().replace('_', ' ').title() for c in df.columns]
     
-    # Identificação dinâmica de colunas chave
+    # Identificação dinâmica com extração segura do primeiro item da lista
     col_status = [c for c in df.columns if 'status' in c.lower()]
     col_tipo = [c for c in df.columns if 'tipo' in c.lower()]
     col_setor = [c for c in df.columns if 'setor' in c.lower() or 'sistema' in c.lower()]
-    col_id_os = [c for c in df.columns if c.lower() == 'os' or 'numero' in c.lower()]
+    
+    col_status_name = col_status[0] if col_status else ""
+    col_tipo_name = col_tipo[0] if col_tipo else ""
+    col_setor_name = col_setor[0] if col_setor else ""
 
     # Aplica filtro interativo por tipo se selecionado na sidebar
-    if col_tipo and filtro_tipo_manut != "Todos":
-        df_pcm = df[df[col_tipo].astype(str).str.lower().str.contains(filtro_tipo_manut.lower()[:4], na=False)].copy()
+    if col_tipo_name and filtro_tipo_manut != "Todos":
+        df_pcm = df[df[col_tipo_name].astype(str).str.lower().str.contains(filtro_tipo_manut.lower()[:4], na=False)].copy()
     else:
         df_pcm = df.copy()
 
-    # --- MÉTRICAS DE PCM ---
+    # --- MÉTRICAS DE PCM BLINDADAS ---
     total_om = len(df_pcm)
     
-    if col_status:
-        om_abertas_backlog = len(df_pcm[df_pcm[col_status].astype(str).str.lower().str.contains('aberta|em andamento|andamento', na=False)])
+    if col_status_name:
+        om_abertas_backlog = len(df_pcm[df_pcm[col_status_name].astype(str).str.lower().str.contains('aberta|em andamento|andamento', na=False)])
     
-    if col_tipo and col_status:
-        total_preventivas = len(df_pcm[df_pcm[col_tipo].astype(str).str.lower().str.contains('prev', na=False)])
+    if col_tipo_name and col_status_name:
+        total_preventivas = len(df_pcm[df_pcm[col_tipo_name].astype(str).str.lower().str.contains('prev', na=False)])
         preventivas_concluidas = len(df_pcm[
-            (df_pcm[col_tipo].astype(str).str.lower().str.contains('prev', na=False)) & 
-            (df_pcm[col_status].astype(str).str.lower().str.contains('fechado|concluido|encerrado', na=False))
+            (df_pcm[col_tipo_name].astype(str).str.lower().str.contains('prev', na=False)) & 
+            (df_pcm[col_status_name].astype(str).str.lower().str.contains('fechado|concluido|encerrado', na=False))
         ])
         taxa_cumprimento_prev = (preventivas_concluidas / total_preventivas * 100) if total_preventivas > 0 else 100.0
 
@@ -116,7 +119,6 @@ if not df.empty:
 st.markdown('<div class="card-home"><div class="card-home-title">📋 Painel de Controle de Ordens e Backlog</div></div>', unsafe_allow_html=True)
 
 if not df_pcm.empty:
-    # Cartões de Métricas Operacionais de PCM
     m1, m2, m3 = st.columns(3)
     with m1:
         st.metric(label="📋 Volume de Ordens no Escopo", value=total_om)
@@ -133,11 +135,11 @@ if not df_pcm.empty:
         
         with tab_setor:
             st.markdown("**Ordens de Serviço por Setor Técnico**")
-            if col_setor and col_status:
+            if col_setor_name and col_status_name:
                 chart_setor = alt.Chart(df_pcm).mark_bar().encode(
                     x=alt.X('count():Q', title='Quantidade de Ordens'),
-                    y=alt.Y(f'{col_setor}:N', title='Setor / Sistema', sort='-x'),
-                    color=alt.Color(f'{col_status}:N', title='Status')
+                    y=alt.Y(f'{col_setor_name}:N', title='Setor / Sistema', sort='-x'),
+                    color=alt.Color(f'{col_status_name}:N', title='Status')
                 ).properties(height=250)
                 st.altair_chart(chart_setor, use_container_width=True)
             else:
@@ -145,9 +147,9 @@ if not df_pcm.empty:
                 
         with tab_tipo:
             st.markdown("**Proporção de Atividades no Período (Mix de O&M)**")
-            if col_tipo:
+            if col_tipo_name:
                 chart_mix = alt.Chart(df_pcm).mark_bar(color='#10B981').encode(
-                    x=alt.X(f'{col_tipo}:N', title='Estratégia Técnico-Operacional'),
+                    x=alt.X(f'{col_tipo_name}:N', title='Estratégia Técnico-Operacional'),
                     y=alt.Y('count():Q', title='Volume de Chamados')
                 ).properties(height=250)
                 st.altair_chart(chart_mix, use_container_width=True)
@@ -157,23 +159,21 @@ if not df_pcm.empty:
     with col_dados:
         st.markdown(f"**Parecer da IA sobre o Plano de PCM — {NOME_PROJETO}**")
         
-        # Extração de gargalos operacionais para laudo preditivo
         sistema_gargalo = "Não identificado"
-        if col_setor and not df_pcm[col_setor].empty:
-            v_counts = df_pcm[col_setor].value_counts()
+        if col_setor_name and not df_pcm[col_setor_name].empty:
+            v_counts = df_pcm[col_setor_name].value_counts()
             if not v_counts.empty:
                 sistema_gargalo = str(v_counts.idxmax())
 
-        # Análise lógica do mix operacional
         if taxa_cumprimento_prev < 90.0:
             st.error(f"""
             ### ❌ ALERTA DE FLUXO DE PCM
             Plano de manutenção preventiva comprometido em **{NOME_PROJETO}**.
             
-            *   **Diagnóstico:** A taxa de execução de preventivas está em **{taxa_cumprimento_prev:.1f}%**, ficando abaixo da meta de conformidade regulatória (Meta >= 90%). 
-            *   **Impacto Real:** A equipe está consumindo energia resolvendo quebras no setor de **{sistema_gargalo}** e deixando o plano de vistorias preventivas acumular no Backlog.
+            *   **Diagnóstico:** A taxa de execução de preventivas está em **{taxa_cumprimento_prev:.1f}%**, ficando abaixo da meta regulatória (Meta >= 90%). 
+            *   **Impacto Real:** A equipe está consumindo energia resolvendo quebras no setor de **{sistema_gargalo}** e deixando as vistorias preventivas acumularem.
             
-            🚨 **Ação Sugerida:** Pausar novas ordens de melhoria estética e priorizar o fechamento do lote de preventivas em atraso na próxima semana.
+            🚨 **Ação Sugerida:** Pausar ordens estéticas e focar no fechamento de preventivas em atraso na próxima semana.
             """)
         else:
             st.success(f"""
@@ -181,7 +181,7 @@ if not df_pcm.empty:
             A rotina de PCM demonstra alto índice de maturidade operacional.
             
             *   **Diagnóstico:** Execução estável com **{taxa_cumprimento_prev:.1f}%** das preventivas cumpridas dentro do prazo de O&M.
-            *   **Gestão de Carga:** O volume de **{om_abertas_backlog} ordens em aberto** está pulverizado de forma saudável e o sistema **{sistema_gargalo}** segue com monitoramento sob controle.
+            *   **Gestão de Carga:** O volume de **{om_abertas_backlog} ordens em aberto** está pulverizado de forma saudável e o sistema **{sistema_gargalo}** segue monitorado.
             
             👍 **Orientação:** Manter o balanceamento atual de homens-hora sem necessidade de horas extras na equipe.
             """)
