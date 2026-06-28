@@ -91,10 +91,10 @@ if not df.empty:
     col_setor = [c for c in df.columns if 'setor' in c.lower() or 'sistema' in c.lower()]
     col_abertura = [c for c in df.columns if 'abertura' in c.lower() or 'inicio' in c.lower()]
     
-    col_status_name = col_status if col_status else ""
-    col_tipo_name = col_tipo if col_tipo else ""
-    col_setor_name = col_setor if col_setor else ""
-    col_abertura_name = col_abertura if col_abertura else ""
+    col_status_name = col_status[0] if col_status else ""
+    col_tipo_name = col_tipo[0] if col_tipo else ""
+    col_setor_name = col_setor[0] if col_setor else ""
+    col_abertura_name = col_abertura[0] if col_abertura else ""
 
     # Aplica filtro interativo por tipo se selecionado na sidebar
     if col_tipo_name and filtro_tipo_manut != "Todos":
@@ -119,7 +119,6 @@ if not df.empty:
     # --- PROCESSAMENTO TEMPORAL PARA TENDÊNCIA ---
     if col_abertura_name:
         df_pcm['Data_Abertura_Convertida'] = pd.to_datetime(df_pcm[col_abertura_name], errors='coerce')
-        # Cria um formato de ordenação string de ano e mês (Ex: 2026-06)
         df_pcm['Mes_Ano'] = df_pcm['Data_Abertura_Convertida'].dt.to_period('M').astype(str)
 
 # =========================================================================
@@ -140,7 +139,6 @@ if not df_pcm.empty:
     col_grafico, col_dados = st.columns([1.2, 1.0])
     
     with col_grafico:
-        # INCLUSÃO DA NOVA ABA DE TENDÊNCIA AQUI
         tab_setor, tab_tipo, tab_tendencia = st.tabs(["📊 Carga por Setor", "🔄 Mix de Manutenção", "📈 Tendência Temporal"])
         
         with tab_setor:
@@ -169,7 +167,6 @@ if not df_pcm.empty:
         with tab_tendencia:
             st.markdown("**Evolução Mensal na Geração de Novas Ordens de Serviço**")
             if col_abertura_name and 'Mes_Ano' in df_pcm.columns:
-                # Agrupa a quantidade total de chamados abertos mês a mês
                 df_tendencia_pcm = df_pcm.groupby('Mes_Ano').size().reset_index(name='Volume_Ordens')
                 
                 chart_tendencia_linha = alt.Chart(df_tendencia_pcm).mark_line(color='#1E3A8A', point=True).encode(
@@ -196,3 +193,5 @@ if not df_pcm.empty:
             Plano de manutenção preventiva comprometido em **{NOME_PROJETO}**.
             
             *   **Diagnóstico:** A taxa de execução de preventivas está em **{taxa_cumprimento_prev:.1f}%**, ficando abaixo da meta regulatória (Meta >= 90%). 
+            *   **Impacto Real:** A equipe está consumindo energia resolvendo quebras no setor de **{sistema_gargalo}** e deixando as vistorias preventivas acumularem.
+            
