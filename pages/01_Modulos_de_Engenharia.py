@@ -2,14 +2,37 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 
-# ==========================================
-# 1. CONFIGURAÇÃO DA PÁGINA
-# ==========================================
-st.set_page_config(
-    page_title="Portal de Engenharia & Produtividade",
-    page_icon="🏗️",
-    layout="wide"
-)
+# =========================================================================
+# BARREIRA DE SEGURANÇA E MAPEAMENTO MULTI-CLIENTE
+# =========================================================================
+if "logged_in" not in st.session_state or not st.session_state.logged_in:
+    st.error("🔒 Acesso negado. Por favor, realize o login primeiro.")
+    st.stop()
+
+cliente_logado = st.session_state.get("cliente_ativo", "Nenhum")
+
+EMPREENDIMENTOS = {
+    "Resort Boa Viagem": {
+        "speckle_id": "INSIRA_AQUI_O_ID_DO_RESORT",
+        "nome_exibicao": "Resort Boa Viagem - Complexo Hoteleiro",
+        "arquivo_cmms": "CMMS_Export_RB - CMMS_RB.csv"
+    },
+    "Hospital Central": {
+        "speckle_id": "INSIRA_AQUI_O_ID_DO_HOSPITAL",
+        "nome_exibicao": "Hospital Central - Centro Médico Operacional",
+        "arquivo_cmms": "CMMS_Export_RB - CMMS_RB.csv" # Mude se tiver um CSV próprio depois
+    }
+}
+
+if cliente_logado in EMPREENDIMENTOS:
+    config = EMPREENDIMENTOS[cliente_logado]
+    SPECKLE_STREAM_ID = config["speckle_id"]
+    NOME_PROJETO = config["nome_exibicao"]
+    CAMINHO_CSV = config["arquivo_cmms"]
+else:
+    st.warning(f"⚠️ {cliente_logado}, os dados do seu empreendimento estão em processamento.")
+    st.stop()
+# =========================================================================
 
 # ==========================================
 # 2. DESIGN E ESTILIZAÇÃO CUSTOMIZADA (CSS)
@@ -43,10 +66,9 @@ st.sidebar.write("---")
 arquivo_upload = st.sidebar.file_uploader("📂 Importar dados/OM", type=["csv", "xlsx"])
 
 # URL base do Speckle original aprovado
-speckle_base_url = "https://app.speckle.systems/projects/a649da7292/models/815af390c7?embedToken=5fc6fc722186f65bfe3c4be3286713af5a1ab94df3"
+speckle_base_url = f"https://speckle.systems{SPECKLE_STREAM_ID}"
 
-# Lógica de carregamento de dados segura
-df = pd.DataFrame()
+# Lógica de carregamento de dados segura e isolada
 if arquivo_upload is not None:
     try:
         if arquivo_upload.name.endswith('.csv'):
@@ -54,7 +76,12 @@ if arquivo_upload is not None:
         else:
             df = pd.read_excel(arquivo_upload)
     except Exception as e:
-        st.error(f"Erro ao ler o arquivo: {e}")
+        st.error(f"Erro ao ler arquivo enviado: {e}")
+        df = pd.read_csv(CAMINHO_CSV)
+else:
+    # Se o cliente não subiu nenhum arquivo manual, abre o CSV isolado dele!
+    df = pd.read_csv(CAMINHO_CSV)
+
 
 # INJEÇÃO DO PAINEL DE SLA (RODAPÉ DA BARRA CINZA LATERAL)
 st.sidebar.write("---")
