@@ -13,7 +13,7 @@ cliente_logado = st.session_state.get("cliente_ativo", "Nenhum")
 
 EMPREENDIMENTOS = {
     "Resort Boa Viagem": {
-        "speckle_id": "https://speckle.systems...",
+        "speckle_id": "<iframe title="Speckle" src="https://app.speckle.systems/projects/68bf6c4cd9/models/8246528aa7?embedToken=bd064e8cc90f32b229839ab765738ade4e8e7fef33#embed=%7B%22isEnabled%22%3Atrue%7D" width="600" height="400" frameborder="0"></iframe>",
         "nome_exibicao": "Resort Boa Viagem - Complexo Hoteleiro",
         "arquivo_cmms": "CMMS_Export_RB - CMMS_RB.csv"
     },
