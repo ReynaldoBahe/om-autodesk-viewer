@@ -84,7 +84,7 @@ if not df.empty:
 
     df_pcm = df.copy()
 
-    # Cálculo simplificado e linear de Aging
+    # Cálculo de Aging
     if c_abertura:
         df_pcm['Data_Abertura_Conv'] = pd.to_datetime(df_pcm[c_abertura], errors='coerce')
         
