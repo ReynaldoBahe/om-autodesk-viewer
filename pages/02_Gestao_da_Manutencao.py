@@ -85,7 +85,7 @@ if not df.empty:
     # Padronização das colunas
     df.columns = [str(c).strip().replace('_', ' ').title() for c in df.columns]
     
-    # Identificação dinâmica com extração segura do primeiro item da lista
+    # Identificação dinâmica garantindo strings puras com [0]
     col_status = [c for c in df.columns if 'status' in c.lower()]
     col_tipo = [c for c in df.columns if 'tipo' in c.lower()]
     col_setor = [c for c in df.columns if 'setor' in c.lower() or 'sistema' in c.lower()]
