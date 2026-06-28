@@ -17,7 +17,7 @@ EMPREENDIMENTOS_MANUTENCAO = {
     },
     "Hospital Central": {
         "nome_exibicao": "Hospital Central - Controle de O&M",
-        "arquivo_cmms": "CMMS_Export_RB - CMMS_RB.csv" # Mude para o CSV do hospital quando tiver
+               "arquivo_cmms": "CMMS_Export_Hospital.csv - CMMS_RB.csv"
     }
 }
 
