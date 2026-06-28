@@ -155,12 +155,19 @@ if not df.empty:
         st.markdown(f"**Relatório Preditivo de Falhas — {NOME_PROJETO}**")
         
         with st.spinner("🤖 IA processando histórico de manutenção profundo..."):
-            colunas_minusculo = [str(c).lower().strip() for c in df.columns]
+                        # 2. Rastreamento e Conversão de Custos Financeiros (Tratamento Pro para Moeda Brasileira)
+            col_custo_mat = [df.columns[i] for i, c in enumerate(colunas_minusculo) if 'custo material' in c or 'material' in c]
+            col_custo_mo = [df.columns[i] for i, c in enumerate(colunas_minusculo) if 'custo mao' in c or 'obra' in c]
             
-            # 1. Identificação do Sistema com Maior Volume de Falhas
-            col_sistema = [df.columns[i] for i, c in enumerate(colunas_minusculo) if 'sistema' in c]
-            if col_sistema:
-                v_counts = df[col_sistema[0]].value_counts()
+            def limpar_moeda(serie):
+                if serie.empty: return 0
+                s_limpa = serie.astype(str).str.replace('R$', '', regex=False).str.replace('.', '', regex=False).str.replace(',', '.', regex=False).str.strip()
+                return pd.to_numeric(s_limpa, errors='coerce').sum()
+
+            custo_mat = limpar_moeda(df[col_custo_mat].iloc[:, 0]) if col_custo_mat and isinstance(df[col_custo_mat], pd.DataFrame) else (limpar_moeda(df[col_custo_mat]) if col_custo_mat else 0)
+            custo_mo = limpar_moeda(df[col_custo_mo].iloc[:, 0]) if col_custo_mo and isinstance(df[col_custo_mo], pd.DataFrame) else (limpar_moeda(df[col_custo_mo]) if col_custo_mo else 0)
+            custo_total = custo_mat + custo_mo
+
                 if not v_counts.empty:
                     sistema_gargalo = str(v_counts.idxmax())
                     falhas_sistema = v_counts.max()
@@ -171,12 +178,17 @@ if not df.empty:
                 sistema_gargalo = "Não identificado"
                 falhas_sistema = 0
 
-            # 2. Rastreamento e Conversão de Custos Financeiros
+                       # # 2. Rastreamento e Conversão de Custos Financeiros (Tratamento Pro para Moeda Brasileira)
             col_custo_mat = [df.columns[i] for i, c in enumerate(colunas_minusculo) if 'custo material' in c or 'material' in c]
             col_custo_mo = [df.columns[i] for i, c in enumerate(colunas_minusculo) if 'custo mao' in c or 'obra' in c]
             
-            custo_mat = pd.to_numeric(df[col_custo_mat[0]], errors='coerce').sum() if col_custo_mat else 0
-            custo_mo = pd.to_numeric(df[col_custo_mo[0]], errors='coerce').sum() if col_custo_mo else 0
+            def limpar_moeda(serie):
+                if serie.empty: return 0
+                s_limpa = serie.astype(str).str.replace('R$', '', regex=False).str.replace('.', '', regex=False).str.replace(',', '.', regex=False).str.strip()
+                return pd.to_numeric(s_limpa, errors='coerce').sum()
+
+            custo_mat = limpar_moeda(df[col_custo_mat].iloc[:, 0]) if col_custo_mat and isinstance(df[col_custo_mat], pd.DataFrame) else (limpar_moeda(df[col_custo_mat]) if col_custo_mat else 0)
+            custo_mo = limpar_moeda(df[col_custo_mo].iloc[:, 0]) if col_custo_mo and isinstance(df[col_custo_mo], pd.DataFrame) else (limpar_moeda(df[col_custo_mo]) if col_custo_mo else 0)
             custo_total = custo_mat + custo_mo
 
             # 3. Mapeamento da Eficiência de O&M
