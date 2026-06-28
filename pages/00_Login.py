@@ -15,7 +15,7 @@ except KeyError:
         "gerente.om@resortboaviagem.com": {"password": "SenhaResort123", "token": "852369", "cliente": "Resort Boa Viagem"}
     }
 
-# --- INJEÇÃO DE CSS DE ALTO IMPACTO (REDE DE ATIVOS + DARK MODE INTEGRADO) ---
+# --- INJEÇÃO DE CSS DE ALTO IMPACTO (FONTES AMPLIADAS E REDE ROBUSTA) ---
 st.markdown("""
     <style>
         /* 1. CORREÇÃO GLOBAL DE FUNDO */
@@ -26,57 +26,58 @@ st.markdown("""
         
         .left-panel { padding: 20px; text-align: center; }
         
-        /* 2. ESTRUTURAÇÃO DA LOGO EM REDE (5 CÍRCULOS CONECTADOS) */
+        /* 2. ESTRUTURAÇÃO DA LOGO EM REDE COMPACTA E ROBUSTA */
         .network-container {
             position: relative;
-            width: 280px;
-            height: 240px;
-            margin: 0 auto 30px auto;
+            width: 320px;
+            height: 260px;
+            margin: 0 auto 25px auto;
         }
         
-        /* Círculo Central */
+        /* Círculo Central Ampliado */
         .node-center {
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             background: linear-gradient(135deg, #092543 0%, #103B66 100%);
             border-radius: 50%;
-            width: 90px; height: 90px;
+            width: 110px; height: 110px;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            font-weight: 800; color: #00D2FF; font-size: 18px;
-            border: 2px solid #00D2FF;
-            box-shadow: 0 0 20px rgba(0,210,255,0.4);
+            font-weight: 800; color: #00D2FF; font-size: 22px;
+            border: 2.5px solid #00D2FF;
+            box-shadow: 0 0 25px rgba(0,210,255,0.5);
             z-index: 10;
         }
-        .node-center span { font-size: 9px; font-weight: 400; color: #8AB4F8; margin-top: -2px; }
+        .node-center span { font-size: 11px; font-weight: bold; color: #8AB4F8; margin-top: -1px; letter-spacing: 0.5px; }
         
-        /* Círculos Satélites */
+        /* Círculos Satélites Ampliados com Letras Maiores */
         .node-sat {
             position: absolute;
             background-color: #06182B;
             border-radius: 50%;
-            width: 50px; height: 50px;
+            width: 65px; height: 65px;
             display: flex; justify-content: center; align-items: center;
-            font-size: 12px; font-weight: bold; color: #8AB4F8;
-            border: 1px solid #1A446F;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+            font-size: 15px; font-weight: 800; color: #FFFFFF;
+            border: 2px solid #1A446F;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.5);
             z-index: 5;
+            letter-spacing: 0.5px;
         }
-        .node-top-left  { top: 10px; left: 10px; }
-        .node-top-right { top: 10px; right: 10px; }
-        .node-bot-left  { bottom: 10px; left: 10px; }
-        .node-bot-right { bottom: 10px; right: 10px; }
+        .node-top-left  { top: 5px; left: 5px; }
+        .node-top-right { top: 5px; right: 5px; }
+        .node-bot-left  { bottom: 5px; left: 5px; }
+        .node-bot-right { bottom: 5px; right: 5px; }
         
-        /* Indicador de Percentual Flutuante */
+        /* Indicador de Percentual Flutuante Ampliado */
         .pct-badge {
             position: absolute;
-            top: 20px; right: -50px;
-            color: #00D2FF; font-size: 18px; font-weight: bold;
+            top: 15px; right: -65px;
+            color: #00D2FF; font-size: 22px; font-weight: 900;
             text-align: left; line-height: 1.1;
         }
-        .pct-badge span { font-size: 10px; color: #5F82A8; font-weight: normal; }
+        .pct-badge span { font-size: 12px; color: #8AB4F8; font-weight: bold; letter-spacing: 1px; }
 
-        /* Linhas Conectoras em X (SVG de fundo) */
+        /* Linhas Conectoras mais Grossas */
         .network-lines {
             position: absolute;
             top: 0; left: 0;
@@ -84,19 +85,19 @@ st.markdown("""
             z-index: 1;
         }
         
-        /* TEXTOS DO PAINEL ESQUERDO */
-        .dt-title { font-size: 13px; letter-spacing: 2px; color: #5F82A8; margin-bottom: 5px; font-weight: bold; }
-        .main-brand { font-size: 46px; font-weight: 900; color: #FFFFFF; margin-bottom: 15px; line-height: 1; }
-        .sub-brand { font-size: 12px; letter-spacing: 3px; color: #00D2FF; font-weight: bold; margin-bottom: 25px; }
-        .slogan { font-style: italic; color: #9EBBDE; font-size: 15px; margin-bottom: 35px; }
+        /* TEXTOS DO PAINEL ESQUERDO AMPLIADOS */
+        .dt-title { font-size: 16px; letter-spacing: 3px; color: #8AB4F8; margin-bottom: 8px; font-weight: bold; }
+        .main-brand { font-size: 54px; font-weight: 900; color: #FFFFFF; margin-bottom: 15px; line-height: 1; letter-spacing: 1px; }
+        .sub-brand { font-size: 14px; letter-spacing: 3px; color: #00D2FF; font-weight: bold; margin-bottom: 25px; }
+        .slogan { font-style: italic; color: #D1E2F4; font-size: 16px; margin-bottom: 35px; font-weight: 500; }
         
-        /* Letras pequenas e organizadas abaixo */
+        /* Letras inferiores reajustadas para leitura nítida */
         .tags-footer {
-            font-size: 11px !important;
-            color: #496E96 !important;
+            font-size: 13px !important;
+            color: #6C8EB4 !important;
             letter-spacing: 1px !important;
-            font-weight: 500 !important;
-            margin-top: 15px;
+            font-weight: 600 !important;
+            margin-top: 20px;
         }
         
         /* 3. CARD DE LOGIN EM BLOCO ESCURO INTEGRADO */
@@ -111,7 +112,7 @@ st.markdown("""
         .login-title { font-size: 28px; font-weight: bold; color: #FFFFFF; text-align: center; margin-bottom: 5px; }
         .login-subtitle { font-size: 14px; color: #8AB4F8; text-align: center; margin-bottom: 30px; }
         
-        /* 4. BLINDAGEM DOS INPUTS (Força o fundo integrado) */
+        /* 4. BLINDAGEM DOS INPUTS */
         div[data-baseweb="input"], div[data-baseweb="input"] > div { 
             background-color: #0C233C !important; 
             border: 1px solid #1A446F !important; 
@@ -156,22 +157,22 @@ col_esquerda, col_direita = st.columns([1.1, 1.0], gap="large")
 with col_esquerda:
     st.markdown('<div class="left-panel">', unsafe_allow_html=True)
     
-    # --- RENDERIZAÇÃO DA REDE CONECTADA (5 CÍRCULOS ATIVOS) ---
+    # --- RENDERIZAÇÃO DA REDE AMPLIADA E AJUSTADA ---
     st.markdown("""
         <div class="network-container">
-            <!-- Linhas Cruzadas em SVG -->
+            <!-- Linhas Cruzadas em SVG mais robustas -->
             <svg class="network-lines">
-                <line x1="35" y1="35" x2="245" y2="205" style="stroke:#1A446F; stroke-width:1.5" />
-                <line x1="245" y1="35" x2="35" y2="205" style="stroke:#1A446F; stroke-width:1.5" />
+                <line x1="37" y1="37" x2="283" y2="223" style="stroke:#1A446F; stroke-width:2.5" />
+                <line x1="283" y1="37" x2="37" y2="223" style="stroke:#1A446F; stroke-width:2.5" />
             </svg>
-            <!-- Nós Periféricos -->
+            <!-- Nós Periféricos com Fontes Grandes -->
             <div class="node-sat node-top-left">BIM</div>
             <div class="node-sat node-top-right">IA</div>
             <div class="node-sat node-bot-left">IoT</div>
             <div class="node-sat node-bot-right">O&M</div>
-            <!-- Indicador de Eficiência Lateral -->
+            <!-- Indicador de SLA Ampliado -->
             <div class="pct-badge">88%<br><span>SLA</span></div>
-            <!-- Nó Central Principal -->
+            <!-- Nó Central Principal Ampliado -->
             <div class="node-center">DT<br><span>Facilities</span></div>
         </div>
     """, unsafe_allow_html=True)
@@ -181,7 +182,7 @@ with col_esquerda:
     st.markdown('<div class="sub-brand">GESTÃO INTELIGENTE DE ATIVOS</div>', unsafe_allow_html=True)
     st.markdown('<div class="slogan">"Seu patrimônio sob controle, onde você estiver."</div>', unsafe_allow_html=True)
     
-    # Letras pequenas reorganizadas de forma visível e elegante
+    # Letras de rodapé ampliadas e com cor mais clara para contraste
     st.markdown('<div class="tags-footer">Hospital &nbsp;•&nbsp; Resort &nbsp;•&nbsp; Supermercado &nbsp;•&nbsp; Facilities</div>', unsafe_allow_html=True)
     st.markdown('<div class="ssl-footer" style="justify-content:flex-start; margin-top:50px;">🔒 Conexão segura SSL</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
@@ -211,6 +212,3 @@ with col_direita:
             st.info("🔵 Verificação em 2 etapas: Um código será enviado ao seu e-mail.")
             
             if st.form_submit_button("Entrar", use_container_width=True):
-                if email in lista_usuarios and senha == lista_usuarios[email]["password"]:
-                    st.session_state.usuario_validado = email
-                    st.session_state.login_step = 2
