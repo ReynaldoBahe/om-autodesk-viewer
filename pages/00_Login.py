@@ -15,100 +15,98 @@ except KeyError:
         "gerente.om@resortboaviagem.com": {"password": "SenhaResort123", "token": "852369", "cliente": "Resort Boa Viagem"}
     }
 
-# --- INJEÇÃO DE CSS (ESTILO INTEGRADO DARK CORPORATIVO) ---
+# --- INJEÇÃO DE CSS DE ALTO IMPACTO (DARK MODE INTEGRADO) ---
 st.markdown("""
     <style>
-        /* Fundo escuro uniforme e elegante */
+        /* 1. CORREÇÃO GLOBAL DE FUNDO */
         .stApp { 
             background-color: #03111E !important; 
-            color: #FFFFFF; 
+            color: #FFFFFF !important; 
         }
         
         .left-panel { padding: 40px 20px; text-align: center; }
         
-        /* Badge redondo com brilho neon azul */
+        /* 2. CORREÇÃO E DESTAQUE DA LOGOMARCA (Fundo mais claro com contorno brilhante) */
         .dt-badge { 
-            background-color: #0A1E33; 
-            border-radius: 50%; 
-            width: 100px; 
-            height: 100px; 
-            line-height: 100px; 
-            margin: 0 auto 20px auto; 
-            font-weight: bold; 
-            color: #00D2FF; 
-            box-shadow: 0 0 20px rgba(0,210,255,0.25); 
-            border: 1px solid #10385F;
+            background: linear-gradient(135deg, #092543 0%, #103B66 100%) !important; 
+            border-radius: 50% !important; 
+            width: 110px !important; 
+            height: 110px !important; 
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
+            margin: 0 auto 25px auto !important; 
+            font-weight: 800 !important; 
+            color: #00D2FF !important; 
+            font-size: 24px !important;
+            box-shadow: 0 0 25px rgba(0,210,255,0.3) !important; 
+            border: 2px solid #00D2FF !important;
+        }
+        .dt-badge span {
+            font-size: 11px !important;
+            font-weight: 400 !important;
+            color: #8AB4F8 !important;
+            letter-spacing: 1px !important;
+            margin-top: -4px !important;
         }
         
-        .dt-title { font-size: 14px; letter-spacing: 2px; color: #8AB4F8; margin-bottom: 5px; }
+        .dt-title { font-size: 14px; letter-spacing: 2px; color: #8AB4F8; margin-bottom: 5px; font-weight: 600; }
         .main-brand { font-size: 42px; font-weight: 900; color: #FFFFFF; margin-bottom: 20px; line-height: 1; }
-        .sub-brand { font-size: 13px; letter-spacing: 3px; color: #8AB4F8; font-weight: bold; margin-bottom: 25px; }
+        .sub-brand { font-size: 13px; letter-spacing: 3px; color: #00D2FF; font-weight: bold; margin-bottom: 25px; }
         .slogan { font-style: italic; color: #9EBBDE; font-size: 15px; margin-bottom: 30px; }
         
-        /* Card de login em bloco azul marinho fechado */
+        /* 3. CARD DE LOGIN EM BLOCO ESCURO REGULAR */
         .login-card { 
-            background-color: #06182B; 
-            padding: 35px; 
-            border-radius: 16px; 
-            border: 1px solid #103154; 
-            box-shadow: 0 12px 40px rgba(0,0,0,0.6); 
+            background-color: #06182B !important; 
+            padding: 35px !important; 
+            border-radius: 16px !important; 
+            border: 1px solid #103154 !important; 
+            box-shadow: 0 12px 40px rgba(0,0,0,0.6) !important; 
         }
         
         .login-title { font-size: 28px; font-weight: bold; color: #FFFFFF; text-align: center; margin-bottom: 5px; }
         .login-subtitle { font-size: 14px; color: #8AB4F8; text-align: center; margin-bottom: 30px; }
         
-        /* Inputs azuis perfeitamente integrados com cantos arredondados */
-        div[data-baseweb="input"] { 
+        /* 4. BLINDAGEM OPERACIONAL DOS INPUTS (Arranca o fundo branco forçado do Streamlit) */
+        div[data-baseweb="input"], div[data-baseweb="input"] > div { 
             background-color: #0C233C !important; 
             border: 1px solid #1A446F !important; 
             border-radius: 12px !important; 
-            padding: 4px 8px !important;
         }
         
-        /* Cor do texto interno e do placeholder no dark mode */
-        input { color: #FFFFFF !important; font-weight: 500 !important; }
+        /* Ajusta o texto digitado e o cursor para branco */
+        input[data-testid="stTextInputRootElement"], input { 
+            background-color: transparent !important;
+            color: #FFFFFF !important; 
+            font-weight: 500 !important; 
+        }
         input::placeholder { color: #5F82A8 !important; }
         
         label { color: #8AB4F8 !important; font-weight: 600 !important; font-size: 14px !important; }
         
-        /* Botão estilizado em azul de destaque */
-        button[data-testid="baseButton-secondary"] {
+        /* 5. BOTÃO INTEGRADO COM CANTOS ARREDONDADOS COINCIDENTES */
+        button[data-testid="baseButton-secondaryFormSubmit"], button[data-testid="baseButton-secondary"] {
             background-color: #104A7E !important;
             color: white !important;
             border-radius: 12px !important;
             border: 1px solid #1A62A3 !important;
             font-weight: bold !important;
-            padding: 10px 0 !important;
+            padding: 12px 0 !important;
             box-shadow: 0 4px 12px rgba(16,74,126,0.3) !important;
         }
-        button[data-testid="baseButton-secondary"]:hover {
-            background-color: #165B99 !important;
-            border-color: #2076C2 !important;
+        
+        /* Estilização das caixas de alertas internos */
+        div[data-testid="stNotification"] {
+            background-color: #0C233C !important;
+            border: 1px solid #1A446F !important;
+            color: #FFFFFF !important;
+            border-radius: 12px !important;
         }
         
-        /* Cabeçalho superior moderno */
         .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        
-        .resort-badge { 
-            background: #0A1E33; 
-            padding: 8px 16px; 
-            border-radius: 12px; 
-            font-weight: bold; 
-            font-size: 13px; 
-            border: 1px solid #143A63; 
-            color: #FFFFFF;
-        }
-        
-        .verified-badge { 
-            background: rgba(0,210,255,0.08); 
-            color: #00D2FF; 
-            padding: 8px 16px; 
-            border-radius: 12px; 
-            font-size: 12px; 
-            border: 1px solid rgba(0,210,255,0.2); 
-            font-weight: 600;
-        }
-        
+        .resort-badge { background: #0A1E33; padding: 8px 16px; border-radius: 12px; font-weight: bold; font-size: 13px; border: 1px solid #143A63; color: #FFFFFF; }
+        .verified-badge { background: rgba(0,210,255,0.08); color: #00D2FF; padding: 8px 16px; border-radius: 12px; font-size: 12px; border: 1px solid rgba(0,210,255,0.2); font-weight: 600; }
         .ssl-footer { color: #5F82A8; font-size: 12px; margin-top: 20px; display: flex; align-items: center; gap: 6px; justify-content: center; }
     </style>
 """, unsafe_allow_html=True)
@@ -118,7 +116,8 @@ col_esquerda, col_direita = st.columns([1.1, 1.0], gap="large")
 
 with col_esquerda:
     st.markdown('<div class="left-panel">', unsafe_allow_html=True)
-    st.markdown('<div class="dt-badge">DT<br><span style="font-size:10px;">Facilities</span></div>', unsafe_allow_html=True)
+    # Correção interna da renderização da marca e do texto secundário em bloco único
+    st.markdown('<div class="dt-badge">DT<br><span>Facilities</span></div>', unsafe_allow_html=True)
     st.markdown('<div class="dt-title">DT FACILITIES</div>', unsafe_allow_html=True)
     st.markdown('<div class="main-brand">O&M</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-brand">GESTÃO INTELIGENTE DE ATIVOS</div>', unsafe_allow_html=True)
@@ -149,7 +148,7 @@ with col_direita:
             senha = st.text_input("Senha", type="password", placeholder="••••••••")
             
             st.markdown("<br>", unsafe_allow_html=True)
-            st.info("🔵 **Verificação em 2 etapas:** Um código será enviado ao seu e-mail.")
+            st.info("🔵 Verificação em 2 etapas: Um código será enviado ao seu e-mail.")
             
             if st.form_submit_button("Entrar", use_container_width=True):
                 if email in lista_usuarios and senha == lista_usuarios[email]["password"]:
