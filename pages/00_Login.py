@@ -111,7 +111,28 @@ input { background-color: transparent !important; color: #FFFFFF !important; fon
 input::placeholder { color: #5F82A8 !important; font-size: 14px !important; }
 label { color: #8AB4F8 !important; font-weight: 700 !important; font-size: 13px !important; margin-bottom: 4px !important; display: block !important; }
 div[data-testid="stForm"] { border: none !important; padding: 0 !important; }
-div[data-testid="stTextInputAdornment"] { display: none !important; width: 0px !important; visibility: hidden !important; }
+/* Remove completamente o adornment/olho nativo do Streamlit */
+div[data-testid="stTextInputAdornment"] {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    max-width: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+}
+div[data-baseweb="input"] > div:not(:first-child) {
+    display: none !important;
+}
+/* Garante campo senha ocupa largura total */
+div[data-baseweb="input"] input[type="password"],
+div[data-baseweb="input"] input[type="text"] {
+    width: 100% !important;
+}
+input::-ms-reveal, input::-ms-clear {
+    display: none !important;
+}
 
 /* Checkbox olho senha */
 div[data-testid="stCheckbox"] { margin-top: -4px !important; margin-bottom: 8px !important; }
