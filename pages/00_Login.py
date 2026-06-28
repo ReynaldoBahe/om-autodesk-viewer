@@ -151,9 +151,19 @@ div[data-baseweb="input"] > div:last-child:not(:first-child) {
     overflow: hidden !important;
 }
 
-/* Checkbox olho senha */
+/* Checkbox olho senha — cor azul */
 div[data-testid="stCheckbox"] { margin-top: -4px !important; margin-bottom: 8px !important; }
 div[data-testid="stCheckbox"] label p { color: #5F82A8 !important; font-size: 11px !important; font-weight: 500 !important; }
+div[data-testid="stCheckbox"] input[type="checkbox"] { accent-color: #185FA5 !important; }
+
+/* Remove espaço em branco acima do card */
+div[data-testid="stForm"] > div:first-child { margin-top: 0 !important; padding-top: 0 !important; }
+.login-card { margin-top: 0 !important; }
+
+/* Badges compactos lado a lado */
+.top-header { display: flex !important; flex-direction: row !important; gap: 8px !important; margin-bottom: 10px !important; }
+.resort-badge { flex: 1 !important; text-align: left !important; }
+.verified-badge { flex-shrink: 0 !important; }
 
 div[data-testid="stForm"] button, .stButton button {
     background-color: #104A7E !important; color: #FFFFFF !important;
