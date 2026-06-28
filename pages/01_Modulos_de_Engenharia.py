@@ -136,7 +136,6 @@ if not df.empty:
     with col_grafico:
         st.markdown("**Distribuição de Ordens por Criticidade e Status**")
         
-        # Recupera as colunas reais tratadas para o gráfico do Altair
         colunas_minusculo = [str(c).lower().strip() for c in df.columns]
         idx_s = [df.columns[i] for i, c in enumerate(colunas_minusculo) if 'status' in c]
         idx_c = [df.columns[i] for i, c in enumerate(colunas_minusculo) if 'criticidade' in c]
@@ -155,19 +154,12 @@ if not df.empty:
         st.markdown(f"**Relatório Preditivo de Falhas — {NOME_PROJETO}**")
         
         with st.spinner("🤖 IA processando histórico de manutenção profundo..."):
-                        # 2. Rastreamento e Conversão de Custos Financeiros (Tratamento Pro para Moeda Brasileira)
-            col_custo_mat = [df.columns[i] for i, c in enumerate(colunas_minusculo) if 'custo material' in c or 'material' in c]
-            col_custo_mo = [df.columns[i] for i, c in enumerate(colunas_minusculo) if 'custo mao' in c or 'obra' in c]
+            colunas_minusculo = [str(c).lower().strip() for c in df.columns]
             
-            def limpar_moeda(serie):
-                if serie.empty: return 0
-                s_limpa = serie.astype(str).str.replace('R$', '', regex=False).str.replace('.', '', regex=False).str.replace(',', '.', regex=False).str.strip()
-                return pd.to_numeric(s_limpa, errors='coerce').sum()
-
-            custo_mat = limpar_moeda(df[col_custo_mat].iloc[:, 0]) if col_custo_mat and isinstance(df[col_custo_mat], pd.DataFrame) else (limpar_moeda(df[col_custo_mat]) if col_custo_mat else 0)
-            custo_mo = limpar_moeda(df[col_custo_mo].iloc[:, 0]) if col_custo_mo and isinstance(df[col_custo_mo], pd.DataFrame) else (limpar_moeda(df[col_custo_mo]) if col_custo_mo else 0)
-            custo_total = custo_mat + custo_mo
-
+            # 1. Identificação do Sistema com Maior Volume de Falhas
+            col_sistema = [df.columns[i] for i, c in enumerate(colunas_minusculo) if 'sistema' in c]
+            if col_sistema:
+                v_counts = df[col_sistema[0]].value_counts()
                 if not v_counts.empty:
                     sistema_gargalo = str(v_counts.idxmax())
                     falhas_sistema = v_counts.max()
@@ -178,29 +170,28 @@ if not df.empty:
                 sistema_gargalo = "Não identificado"
                 falhas_sistema = 0
 
-                       # # 2. Rastreamento e Conversão de Custos Financeiros (Tratamento Pro para Moeda Brasileira)
+            # 2. Rastreamento e Conversão de Custos Financeiros (Moeda Brasileira)
             col_custo_mat = [df.columns[i] for i, c in enumerate(colunas_minusculo) if 'custo material' in c or 'material' in c]
             col_custo_mo = [df.columns[i] for i, c in enumerate(colunas_minusculo) if 'custo mao' in c or 'obra' in c]
             
-            def limpar_moeda(serie):
-                if serie.empty: return 0
-                s_limpa = serie.astype(str).str.replace('R$', '', regex=False).str.replace('.', '', regex=False).str.replace(',', '.', regex=False).str.strip()
+            def limpar_e_somar(df_alvo, lista_cols):
+                if not lista_cols: return 0
+                sub_df = df_alvo[lista_cols[0]]
+                s_limpa = sub_df.astype(str).str.replace('R$', '', regex=False).str.replace('.', '', regex=False).str.replace(',', '.', regex=False).str.strip()
                 return pd.to_numeric(s_limpa, errors='coerce').sum()
 
-            custo_mat = limpar_moeda(df[col_custo_mat].iloc[:, 0]) if col_custo_mat and isinstance(df[col_custo_mat], pd.DataFrame) else (limpar_moeda(df[col_custo_mat]) if col_custo_mat else 0)
-            custo_mo = limpar_moeda(df[col_custo_mo].iloc[:, 0]) if col_custo_mo and isinstance(df[col_custo_mo], pd.DataFrame) else (limpar_moeda(df[col_custo_mo]) if col_custo_mo else 0)
+            custo_mat = limpar_e_somar(df, col_custo_mat)
+            custo_mo = limpar_e_somar(df, col_custo_mo)
             custo_total = custo_mat + custo_mo
 
             # 3. Mapeamento da Eficiência de O&M
             col_tipo = [df.columns[i] for i, c in enumerate(colunas_minusculo) if 'tipo' in c]
             if col_tipo:
-                corretivas = len(df[df[col_tipo[0]].astype(str).str.lower().str.contains('corretiva|corretivo', na=False)])
-                preventivas = len(df[df[col_tipo[0]].astype(str).str.lower().str.contains('preventiva|preventivo', na=False)])
+                corretivas = len(df[df[col_tipo[0]] .astype(str).str.lower().str.contains('corretiva|corretivo', na=False)])
+                preventivas = len(df[df[col_tipo[0]] .astype(str).str.lower().str.contains('preventiva|preventivo', na=False)])
             else:
                 corretivas, preventivas = 0, 0
 
             taxa_critica = (os_criticas / total_os * 100) if total_os > 0 else 0
             
             texto_custos = f"💰 **Impacto Financeiro:** Gasto total registrado de **R$ {custo_total:,.2f}** em materiais e MO." if custo_total > 0 else "💰 **Impacto Financeiro:** Sem custos financeiros vinculados no período."
-            texto_gargalo = f"🔍 **Gargalo Físico:** O sistema mais instável é **{sistema_gargalo}**, concentrando {falhas_sistema} chamados abertos." if falhas_sistema > 0 else "🔍 **Gargalo Físico:** Distribuição homogênea entre os sistemas prediais."
-            
