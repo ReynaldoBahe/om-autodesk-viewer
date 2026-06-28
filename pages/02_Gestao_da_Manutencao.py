@@ -43,7 +43,6 @@ st.markdown(f"**Sessão segura:** {st.session_state.get('user_email')}")
 st.sidebar.header("Painel de Controle de PCM")
 filtro_tipo_manut = st.sidebar.selectbox("Filtrar por Tipo:", ["Todos", "Preventiva", "Corretiva"])
 
-# --- NOVO FILTRO DE CUSTÓMIA POR GRUPO DE TEMPO (AGING) ---
 opcoes_aging = ["Todas as Faixas", "01. 0 a 7 dias", "02. 7 a 15 dias", "03. 15 a 30 dias", "04. Mais de 30 dias (Crônico)"]
 filtro_aging = st.sidebar.selectbox("Filtrar por Faixa de Aging:", opcoes_aging)
 
@@ -83,10 +82,9 @@ if not df.empty:
     c_abertura = col_abertura[0] if col_abertura else ""
     c_fechamento = col_fechamento[0] if col_fechamento else ""
 
-    # Criação da base de análise
     df_pcm = df.copy()
 
-    # --- CÁLCULO SEGURO E LINEAR DE AGING (GERAL) ---
+    # Cálculo simplificado e linear de Aging
     if c_abertura:
         df_pcm['Data_Abertura_Conv'] = pd.to_datetime(df_pcm[c_abertura], errors='coerce')
         
@@ -99,7 +97,7 @@ if not df.empty:
         df_pcm['Dias_No_Backlog'] = (df_pcm['Data_Final_Calculo'] - df_pcm['Data_Abertura_Conv']).dt.total_seconds() / 86400.0
         df_pcm['Dias_No_Backlog'] = df_pcm['Dias_No_Backlog'].fillna(0.0).clip(lower=0.0)
 
-        # Categorização direta via condições lógicas do Pandas
+        # Categorização por Faixas
         df_pcm['Faixa_Aging'] = "01. 0 a 7 dias"
         df_pcm.loc[df_pcm['Dias_No_Backlog'] > 7, 'Faixa_Aging'] = "02. 7 a 15 dias"
         df_pcm.loc[df_pcm['Dias_No_Backlog'] > 15, 'Faixa_Aging'] = "03. 15 a 30 dias"
@@ -107,18 +105,21 @@ if not df.empty:
         
         df_pcm['Mes_Ano'] = df_pcm['Data_Abertura_Conv'].dt.to_period('M').astype(str)
 
-    # --- APLICAÇÃO DOS FILTROS INTERATIVOS DA SIDEBAR ---
+    # Aplicação de filtros sequenciais da barra lateral
     if c_tipo and filtro_tipo_manut != "Todos":
         df_pcm = df_pcm[df_pcm[c_tipo].astype(str).str.lower().str.contains(filtro_tipo_manut.lower()[:4], na=False)]
 
     if 'Faixa_Aging' in df_pcm.columns and filtro_aging != "Todas as Faixas":
         df_pcm = df_pcm[df_pcm['Faixa_Aging'] == filtro_aging]
 
-    # Contagens básicas e taxas de preventivas calculadas após os filtros
+    # Consolidação das Métricas Finais
     total_om = len(df_pcm)
     om_abertas = 0
     taxa_prev = 100.0
-    tempo_medio_backlog_dias = float(df_pcm['Dias_No_Backlog'].mean()) if not df_pcm.empty and 'Dias_No_Backlog' in df_pcm.columns else 0.0
+    tempo_medio_backlog_dias = 0.0
+    
+    if not df_pcm.empty and 'Dias_No_Backlog' in df_pcm.columns:
+        tempo_medio_backlog_dias = float(df_pcm['Dias_No_Backlog'].mean())
     
     if c_status:
         om_abertas = len(df_pcm[df_pcm[c_status].astype(str).str.lower().str.contains('aberta|em andamento|andamento', na=False)])
@@ -128,7 +129,7 @@ if not df.empty:
         concl_p = len(df_pcm[(df_pcm[c_tipo].astype(str).str.lower().str.contains('prev', na=False)) & (df_pcm[c_status].astype(str).str.lower().str.contains('fechado|concluido|encerrado', na=False))])
         taxa_prev = (concl_p / tot_p * 100) if tot_p > 0 else 100.0
 
-    # Quatro Cartões de Métricas Alinhados no Topo
+    # Layout de Métricas no Topo
     m1, m2, m3, m4 = st.columns(4)
     with m1:
         st.metric(label="📋 Volume de Ordens", value=total_om)
@@ -137,10 +138,9 @@ if not df.empty:
     with m3:
         st.metric(label="🎯 Cumprimento Preventivas", value=f"{taxa_prev:.1f} %")
     with m4:
-        st.metric(label="⏱ Vinculo de Tempo Médio", value=f"{tempo_medio_backlog_dias:.1f} dias")
+        st.metric(label="⏱️ Tempo Médio Backlog", value=f"{tempo_medio_backlog_dias:.1f} dias")
 
     st.write("---")
-    
     col_grafico, col_dados = st.columns([1.2, 1.0])
     
     with col_grafico:
@@ -184,23 +184,28 @@ if not df.empty:
             if not v_counts.empty:
                 sistema_gargalo = str(v_counts.idxmax())
 
-        # Relatório Inteligente Dinâmico
         if filtro_aging != "Todas as Faixas":
             st.info(f"""
             ### 🎯 AUDITORIA DETALHADA DE AGING
-            Você isolou o painel para analisar a faixa: **{filtro_aging}**.
+            Foco na janela operacional: **{filtro_aging}**.
             
-            * **Foco:** A tabela abaixo e os gráficos acima agora refletem **apenas as {total_om} ordens** que pertencem a esta janela temporal de atraso.
-            * **Gargalo Local:** O sistema com mais ocorrências retidas neste grupo é **{sistema_gargalo}**.
+            * **Escopo:** A tabela e os gráficos refletem apenas as **{total_om} ordens** retidas nesta faixa de tempo.
+            * **Concentração:** O maior volume de chamados deste grupo está em **{sistema_gargalo}**.
             """)
         else:
             if tempo_medio_backlog_dias > 15.0:
                 st.error(f"""
                 ### ❌ ALERTA DE ENVELHECIMENTO CRÔNICO
-                As ordens estão retidas por muito tempo na fila de espera.
-                
-                * **Diagnóstico:** O tempo de backlog médio de **{tempo_medio_backlog_dias:.1f} dias** indica lentidão no fluxo de liquidação.
-                * **Gargalo:** O setor de **{sistema_gargalo}** concentra o maior volume.
+                * **Diagnóstico:** O tempo de backlog médio de **{tempo_medio_backlog_dias:.1f} dias** indica lentidão no fluxo.
+                * **Gargalo:** O setor de **{sistema_gargalo}** concentra o represamento.
                 """)
             else:
                 st.success(f"""
+                ### ✅ FLUXO DE LIQUIDAÇÃO VELOZ
+                * **Diagnóstico:** Tempo médio de residência controlado em **{tempo_medio_backlog_dias:.1f} dias**. Os chamados estão rodando sem retenção crônica.
+                """)
+
+    st.write("---")
+    st.markdown("### Quadro de Ordens Filtrado por Escopo de PCM")
+    st.dataframe(df_pcm, use_container_width=True)
+else:
