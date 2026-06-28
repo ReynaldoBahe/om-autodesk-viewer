@@ -38,29 +38,22 @@ footer { visibility: hidden !important; }
 .right-wrapper { max-width: 420px; margin: 0 auto; padding-top: 30px; }
 .login-card { background-color: #06182B !important; padding: 35px 30px !important; border-radius: 16px !important; border: 1px solid #103154 !important; box-shadow: 0 12px 40px rgba(0,0,0,0.6) !important; }
 
+/* Configuração dos campos de entrada */
 div[data-baseweb="input"], div[data-baseweb="input"] > div { background-color: #0C233C !important; border: 1px solid #1A446F !important; border-radius: 12px !important; height: 52px !important; }
-input { background-color: transparent !important; color: #FFFFFF !important; font-weight: 600 !important; font-size: 17px !important; width: 100% !important; }
+input { background-color: transparent !important; color: #FFFFFF !important; font-weight: 600 !important; font-size: 17px !important; }
 input::placeholder { color: #5F82A8 !important; font-size: 15px !important; }
 label { color: #8AB4F8 !important; font-weight: 700 !important; font-size: 15px !important; margin-bottom: 6px !important; display: block !important; }
 div[data-testid="stForm"] { border: none !important; padding: 0 !important; }
 
-/* 🛠️ REMOÇÃO TOTAL DA AREA DO OLHO E DA TARJA INTERNA */
-div[data-testid="stTextInputAdornment"], 
-div[data-testid="stTextInputAdornment"] *,
-div[data-baseweb="input"] button { 
-    display: none !important; 
-    width: 0px !important; 
-    height: 0px !important; 
-    visibility: hidden !important; 
+/* 🛠️ A MÁGICA VISUAL COMENTADA: Transforma a digitação do segundo campo em bolinhas de senha no navegador e anula adornments */
+div[data-testid="stForm"] div:nth-of-type(2) input {
+    -webkit-text-security: disc !important;
+    text-security: disc !important;
 }
+div[data-testid="stTextInputAdornment"] { display: none !important; width: 0px !important; visibility: hidden !important; }
 
-/* Garante o preenchimento total e alinhamento do texto da senha */
-div[data-baseweb="input"] > div:first-child { 
-    width: 100% !important; 
-    padding-right: 14px !important; 
-}
-
-div[data-testid="stForm"] button, .stButton button, button { background-color: #104A7E !important; color: #FFFFFF !important; border-radius: 12px !important; border: 1px solid #1A62A3 !important; font-weight: 800 !important; font-size: 17px !important; height: 52px !important; width: 100% !important; margin-top: 15px !important; box-shadow: 0 4px 15px rgba(16,74,126,0.4) !important; }
+/* Botões do formulário */
+div[data-testid="stForm"] button, .stButton button { background-color: #104A7E !important; color: #FFFFFF !important; border-radius: 12px !important; border: 1px solid #1A62A3 !important; font-weight: 800 !important; font-size: 17px !important; height: 52px !important; width: 100% !important; margin-top: 15px !important; box-shadow: 0 4px 15px rgba(16,74,126,0.4) !important; }
 div[data-testid="stForm"] button:hover { background-color: #165CA1 !important; }
 div[data-testid="stNotification"] { background-color: #0C233C !important; border: 1px solid #1A446F !important; color: #FFFFFF !important; border-radius: 12px !important; }
 .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
@@ -101,7 +94,8 @@ with col_direita:
         st.markdown('<div class="login-subtitle">Entre com seu e-mail e senha</div>', unsafe_allow_html=True)
         with st.form("form_etapa_1", clear_on_submit=False):
             email = st.text_input("E-mail", placeholder="seu.email@email.com")
-            senha = st.text_input("Senha", type="password", placeholder="••••••••")
+            # 🛠️ REMOVIDO type="password" para o Framework não desenhar o bloco azul esticado
+            senha = st.text_input("Senha", placeholder="••••••••")
             st.markdown("<br>", unsafe_allow_html=True)
             st.info("🔵 Verificação em 2 etapas: Um código será enviado ao seu e-mail.")
             if st.form_submit_button("Entrar", use_container_width=True):
