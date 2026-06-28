@@ -5,6 +5,8 @@ if "login_step" not in st.session_state:
     st.session_state.login_step = 1
 if "usuario_validado" not in st.session_state:
     st.session_state.usuario_validado = ""
+if "ver_senha" not in st.session_state:
+    st.session_state.ver_senha = False
 
 try:
     lista_usuarios = st.secrets["users"]
@@ -51,11 +53,11 @@ div[data-testid="stForm"] { border: none !important; padding: 0 !important; }
 
 div[data-testid="stTextInputAdornment"] { display: none !important; width: 0px !important; visibility: hidden !important; }
 
-/* CORREÇÃO DO TEXTO DO TOGGLE: Força a cor azul-claro com alto contraste para leitura perfeita */
-div[data-testid="stCheckboxToggle"] label p { 
-    color: #8AB4F8 !important; 
-    font-size: 14px !important; 
-    font-weight: 600 !important; 
+/* FORÇA O TEXTO DO CHECKBOX A FICAR GRANDE, ACESO E VISÍVEL */
+div[data-testid="stCheckbox"] label span p {
+    color: #00D2FF !important;
+    font-size: 15px !important;
+    font-weight: bold !important;
 }
 
 div[data-testid="stForm"] button, .stButton button { background-color: #104A7E !important; color: #FFFFFF !important; border-radius: 12px !important; border: 1px solid #1A62A3 !important; font-weight: 800 !important; font-size: 17px !important; height: 52px !important; width: 100% !important; margin-top: 15px !important; box-shadow: 0 4px 15px rgba(16,74,126,0.4) !important; }
@@ -102,17 +104,20 @@ with col_direita:
         with st.form("form_etapa_1", clear_on_submit=False):
             email = st.text_input("E-mail", placeholder="seu.email@email.com")
             
-            # 1. Primeiro criamos a chave para capturar o estado dela fora da renderização do input
-            # Mudei a chave para st.checkbox para herdar o alinhamento perfeito embaixo do campo
-            revelar_caracteres = st.checkbox("👁️ Mostrar caracteres digitados", value=False)
-            
-            # 2. O campo de Senha lê se a chave acima está ativa para ocultar ou exibir
-            if revelar_caracteres:
+            # 1. RENDEREÇÃO DA CAIXA DE SENHA PRIMEIRO
+            if st.session_state.ver_senha:
                 senha = st.text_input("Senha", placeholder="Sua senha secreta")
             else:
                 st.markdown('<div class="mask-password">', unsafe_allow_html=True)
                 senha = st.text_input("Senha", placeholder="••••••••")
                 st.markdown('</div>', unsafe_allow_html=True)
+            
+            # 2. RENDEREÇÃO DO CHECKBOX LOGO ABAIXO DA SENHA
+            # O truque está em usar o st.checkbox puro apontado para a session_state
+            revelar = st.checkbox("👁️ Mostrar caracteres digitados", value=st.session_state.ver_senha)
+            if revelar != st.session_state.ver_senha:
+                st.session_state.ver_senha = revelar
+                st.rerun()
                 
             st.markdown("<br>", unsafe_allow_html=True)
             st.info("🔵 Verificação em 2 etapas: Um código será enviado ao seu e-mail.")
@@ -132,5 +137,3 @@ with col_direita:
             codigo = st.text_input("Código de 6 dígitos", max_chars=6, placeholder="000000")
             col_b1, col_b2 = st.columns(2)
             with col_b1:
-                if st.form_submit_button("Voltar", use_container_width=True):
-                    st.session_state.login_step = 1
