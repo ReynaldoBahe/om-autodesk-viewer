@@ -32,21 +32,35 @@ css_code = """
 .sub-brand { font-size: 16px; letter-spacing: 4px; color: #00D2FF; font-weight: bold; margin-bottom: 30px; }
 .slogan { font-style: italic; color: #D1E2F4; font-size: 19px; margin-bottom: 40px; font-weight: 500; }
 .tags-footer { font-size: 16px !important; color: #8AB4F8 !important; letter-spacing: 1px !important; font-weight: 700 !important; margin-top: 25px; }
-.right-wrapper { max-width: 440px; margin: 0 auto; padding-top: 20px; }
-.login-card { background-color: #06182B !important; padding: 40px 35px !important; border-radius: 16px !important; border: 1px solid #103154 !important; box-shadow: 0 12px 40px rgba(0,0,0,0.6) !important; }
-.login-title { font-size: 28px; font-weight: bold; color: #FFFFFF; text-align: center; margin-bottom: 5px; }
-.login-subtitle { font-size: 14px; color: #8AB4F8; text-align: center; margin-bottom: 35px; }
-div[data-baseweb="input"], div[data-baseweb="input"] > div { background-color: #0C233C !important; border: 1px solid #1A446F !important; border-radius: 12px !important; height: 50px !important; }
-input[data-testid="stTextInputRootElement"], input { background-color: transparent !important; color: #FFFFFF !important; font-weight: 500 !important; font-size: 16px !important; }
-input::placeholder { color: #5F82A8 !important; }
-label { color: #8AB4F8 !important; font-weight: 600 !important; font-size: 15px !important; margin-bottom: 6px !important; }
+
+/* REFORÇO NO LADO DIREITO: Força o contêiner nativo do Streamlit a compactar a largura e subir as fontes */
+div[data-testid="stColumn"]:nth-of-type(2) > div {
+    max-width: 440px !important;
+    margin: 0 auto !important;
+}
+
+.login-card { background-color: #06182B !important; padding: 45px 40px !important; border-radius: 16px !important; border: 1px solid #103154 !important; box-shadow: 0 12px 40px rgba(0,0,0,0.6) !important; width: 100% !important; }
+.login-title { font-size: 32px !important; font-weight: 800 !important; color: #FFFFFF !important; text-align: center !important; margin-bottom: 8px !important; }
+.login-subtitle { font-size: 16px !important; color: #8AB4F8 !important; text-align: center !important; margin-bottom: 35px !important; }
+
+/* Amplia as caixas de input e aumenta o tamanho do texto interno de digitação */
+div[data-baseweb="input"], div[data-baseweb="input"] > div { background-color: #0C233C !important; border: 1px solid #1A446F !important; border-radius: 12px !important; height: 56px !important; }
+input[data-testid="stTextInputRootElement"], input { background-color: transparent !important; color: #FFFFFF !important; font-weight: 600 !important; font-size: 18px !important; }
+input::placeholder { color: #5F82A8 !important; font-size: 16px !important; }
+
+/* Aumenta o tamanho dos labels (E-mail, Senha) */
+label { color: #8AB4F8 !important; font-weight: 700 !important; font-size: 17px !important; margin-bottom: 8px !important; display: block !important; }
+
 div[data-testid="stForm"] { border: none !important; padding: 0 !important; }
-button[data-testid="baseButton-secondaryFormSubmit"], button[data-testid="baseButton-secondary"] { background-color: #104A7E !important; color: white !important; border-radius: 12px !important; border: 1px solid #1A62A3 !important; font-weight: bold !important; font-size: 16px !important; height: 52px !important; margin-top: 15px !important; box-shadow: 0 4px 15px rgba(16,74,126,0.4) !important; }
+
+/* Amplia e encorpa o botão de envio técnico */
+button[data-testid="baseButton-secondaryFormSubmit"], button[data-testid="baseButton-secondary"] { background-color: #104A7E !important; color: white !important; border-radius: 12px !important; border: 1px solid #1A62A3 !important; font-weight: 800 !important; font-size: 18px !important; height: 56px !important; margin-top: 20px !important; box-shadow: 0 4px 15px rgba(16,74,126,0.4) !important; }
+
 div[data-testid="stNotification"] { background-color: #0C233C !important; border: 1px solid #1A446F !important; color: #FFFFFF !important; border-radius: 12px !important; }
 .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-.resort-badge { background: #0A1E33; padding: 8px 16px; border-radius: 12px; font-weight: bold; font-size: 13px; border: 1px solid #143A63; color: #FFFFFF; }
-.verified-badge { background: rgba(0,210,255,0.08); color: #00D2FF; padding: 8px 16px; border-radius: 12px; font-size: 12px; border: 1px solid rgba(0,210,255,0.2); font-weight: 600; }
-.ssl-footer { color: #5F82A8; font-size: 12px; margin-top: 25px; display: flex; align-items: center; gap: 6px; justify-content: center; }
+.resort-badge { background: #0A1E33; padding: 8px 16px; border-radius: 12px; font-weight: bold; font-size: 14px; border: 1px solid #143A63; color: #FFFFFF; }
+.verified-badge { background: rgba(0,210,255,0.08); color: #00D2FF; padding: 8px 16px; border-radius: 12px; font-size: 13px; border: 1px solid rgba(0,210,255,0.2); font-weight: 600; }
+.ssl-footer { color: #5F82A8; font-size: 13px; margin-top: 25px; display: flex; align-items: center; gap: 6px; justify-content: center; }
 """
 
 st.markdown(f"<style>{css_code}</style>", unsafe_allow_html=True)
@@ -66,9 +80,8 @@ with col_esquerda:
     st.markdown('</div>', unsafe_allow_html=True)
 
 with col_direita:
-    st.markdown('<div class="right-wrapper">', unsafe_allow_html=True)
     nome_cliente = "Acesso Uniforme"
-    if st.session_state.login_step == 2 and st.session_state.usuario_validado in lista_usuarios:
+    if st.session_state.logged_in == False and st.session_state.usuario_validado in lista_usuarios:
         nome_cliente = lista_usuarios[st.session_state.usuario_validado]["cliente"]
     st.markdown('<div class="top-header">', unsafe_allow_html=True)
     st.markdown(f'<div class="resort-badge">🏢 {nome_cliente}</div>', unsafe_allow_html=True)
@@ -115,7 +128,3 @@ with col_direita:
                         st.rerun()
                     else:
                         st.error("Código incorreto.")
-                        
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('<div class="ssl-footer">🔒 Conexão segura SSL <span style="color:#537BAB; margin-left:20px;">© 2026 DT Facilities O&M</span></div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
