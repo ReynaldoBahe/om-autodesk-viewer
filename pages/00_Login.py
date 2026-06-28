@@ -154,7 +154,15 @@ div[data-baseweb="input"] > div:last-child:not(:first-child) {
 /* Checkbox olho senha — cor azul */
 div[data-testid="stCheckbox"] { margin-top: -4px !important; margin-bottom: 8px !important; }
 div[data-testid="stCheckbox"] label p { color: #5F82A8 !important; font-size: 11px !important; font-weight: 500 !important; }
+/* Força cor azul no checkbox — múltiplos seletores para garantir */
 div[data-testid="stCheckbox"] input[type="checkbox"] { accent-color: #185FA5 !important; }
+input[type="checkbox"] { accent-color: #185FA5 !important; }
+.st-emotion-cache-1pbsqtx, .st-emotion-cache-taue2i { accent-color: #185FA5 !important; }
+
+/* Remove retângulo vazio acima do card */
+div[data-testid="stVerticalBlock"] > div:empty { display: none !important; height: 0 !important; }
+div.element-container:empty { display: none !important; }
+div[data-testid="stVerticalBlock"] > div > div:empty { display: none !important; }
 
 /* Remove espaço em branco acima do card */
 div[data-testid="stForm"] > div:first-child { margin-top: 0 !important; padding-top: 0 !important; }
