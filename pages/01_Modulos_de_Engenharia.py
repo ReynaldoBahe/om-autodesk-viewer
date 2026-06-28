@@ -13,12 +13,12 @@ cliente_logado = st.session_state.get("cliente_ativo", "Nenhum")
 
 EMPREENDIMENTOS = {
     "Resort Boa Viagem": {
-        "speckle_url": r"https://app.speckle.systems/projects/68bf6c4cd9/models/8246528aa7?embedToken=d8bb03135c8a1b0bde90b7d8ca6c44274647140862",
+        "speckle_url": r"https://speckle.systems",
         "nome_exibicao": "Resort Boa Viagem - Complexo Hoteleiro",
         "arquivo_cmms": "CMMS_Export_RB - CMMS_RB.csv"
     },
     "Hospital Central": {
-        "speckle_url": r"https://app.speckle.systems/projects/a649da7292/models/815af390c7?embedToken=321a020df03b0bbba22db866f80f69124d5b4e26ea",
+        "speckle_url": r"https://speckle.systems",
         "nome_exibicao": "Hospital Central - Centro Médico Operacional",
         "arquivo_cmms": "CMMS_Export_Hospital.csv - CMMS_RB.csv"
     }
@@ -77,6 +77,11 @@ else:
     except Exception:
         df = pd.DataFrame(columns=["Status", "Criticidade"])
 
+total_os = len(df)
+os_criticas = len(df[df['Status'].str.lower() == 'alta']) if 'Status' in df.columns else 0
+if 'Criticidade' in df.columns:
+    os_criticas = len(df[df['Criticidade'].str.lower() == 'alta'])
+
 if not df.empty and 'Status' in df.columns:
     if filtro_status != "Todos":
         df = df[df['Status'] == filtro_status]
@@ -97,17 +102,13 @@ st.components.v1.html(f'<iframe src="{speckle_base_url}" width="100%" height="60
 st.markdown('<div class="card-home"><div class="card-home-title">📊 Centro de Diagnóstico Avançado (IA)</div></div>', unsafe_allow_html=True)
 
 if not df.empty:
-    # --- BLOCO A: METRICAS E METAS EM TEMPO REAL ---
-    # Normaliza os nomes das colunas para evitar erros de maiúsculas/minúsculas
+    # Padroniza nomes das colunas
     df.columns = [c.strip().title() for c in df.columns]
     
     total_os = len(df)
-    
-    # Cálculos dinâmicos baseados no CSV individual de cada cliente
     os_criticas = len(df[df['Criticidade'].str.lower() == 'alta']) if 'Criticidade' in df.columns else 0
     os_abertas = len(df[df['Status'].str.lower().isin(['aberta', 'em andamento'])]) if 'Status' in df.columns else 0
     
-    # Exibição dos KPIs em formato de cartões de destaque
     m1, m2, m3 = st.columns(3)
     with m1:
         st.metric(label="Total de Ordens de Serviço", value=total_os)
@@ -118,13 +119,11 @@ if not df.empty:
         
     st.write("<br>", unsafe_allow_html=True)
     
-    # --- BLOCO B: ANÁLISE GRÁFICA INTERATIVA COMPARTILHADA ---
     col_grafico, col_dados = st.columns([1.2, 1.0])
     
     with col_grafico:
         st.markdown("**Distribuição de Ordens por Criticidade e Status**")
         if 'Status' in df.columns and 'Criticidade' in df.columns:
-            # Agrupa os dados dinamicamente usando Altair
             chart = alt.Chart(df).mark_bar().encode(
                 x=alt.X('Status:N', title='Status da OS'),
                 y=alt.Y('count():Q', title='Quantidade de Ativos'),
@@ -137,9 +136,7 @@ if not df.empty:
     with col_dados:
         st.markdown(f"**Relatório Preditivo de Falhas — {NOME_PROJETO}**")
         
-                # --- MOTOR DE INTELIGÊNCIA ARTIFICIAL EXPANDIDO ---
         with st.spinner("🤖 IA processando histórico de manutenção profundo..."):
-            # 1. Identificação do Sistema Mais Defeituoso
             if 'Sistema Defeituoso' in df.columns:
                 sistema_gargalo = df['Sistema Defeituoso'].value_counts().idxmax()
                 falhas_sistema = df['Sistema Defeituoso'].value_counts().max()
@@ -147,51 +144,46 @@ if not df.empty:
                 sistema_gargalo = "Não identificado"
                 falhas_sistema = 0
 
-            # 2. Análise de Custos Operacionais
             custo_mat = pd.to_numeric(df['Custo Material'], errors='coerce').sum() if 'Custo Material' in df.columns else 0
             custo_mo = pd.to_numeric(df['Custo Mao Obra'], errors='coerce').sum() if 'Custo Mao Obra' in df.columns else 0
             custo_total = custo_mat + custo_mo
 
-            # 3. Análise de Eficiência (Preventiva vs Corretiva)
             if 'Tipo Manutencao' in df.columns:
                 corretivas = len(df[df['Tipo Manutencao'].str.lower().str.contains('corretiva|corretivo', na=False)])
                 preventivas = len(df[df['Tipo Manutencao'].str.lower().str.contains('preventiva|preventivo', na=False)])
             else:
                 corretivas, preventivas = 0, 0
 
-            # --- CONSTRUÇÃO DO CORPO DO RELATÓRIO DINÂMICO ---
             taxa_critica = (os_criticas / total_os * 100) if total_os > 0 else 0
             
-                       texto_custos = f"💰 **Impacto Financeiro:** O empreendimento acumula um gasto total registrado de **R$ {custo_total:,.2f}** em peças e mão de obra." if custo_total > 0 else "💰 **Impacto Financeiro:** Sem custos financeiros atrelados às ordens atuais."
-            texto_gargalo = f"🔍 **Gargalo Físico:** O sistema mais instável atualmente é **{sistema_gargalo}**, concentrando {falhas_sistema} chamados abertos." if falhas_sistema > 0 else "🔍 **Gargalo Físico:** Distribuição de falhas homogênea entre os sistemas prediais."
+            texto_custos = f"💰 **Impacto Financeiro:** Gasto total registrado de **R$ {custo_total:,.2f}** em materiais e MO." if custo_total > 0 else "💰 **Impacto Financeiro:** Sem custos financeiros atrelados."
+            texto_gargalo = f"🔍 **Gargalo Físico:** O sistema mais instável é **{sistema_gargalo}**, concentrando {falhas_sistema} chamados abertos." if falhas_sistema > 0 else "🔍 **Gargalo Físico:** Distribuição homogênea entre sistemas prediais."
             
             if taxa_critica > 30:
                 st.error(f"""
                 ### ❌ ALERTA OPERACIONAL DE IA
-                Identificamos uma severa sobrecarga nas rotinas de engenharia do **{NOME_PROJETO}**.
+                Sobrecarga nas rotinas de engenharia de **{NOME_PROJETO}**.
                 
-                {texto_gargalo}
+                {texto_gargalo}  
                 {texto_custos}
                 
-                🚨 **PREDIÇÃO DE RISCO:** O alto volume de falhas críticas concentradas no sistema de *{sistema_gargalo}* indica iminente perda de eficiência energética e risco de parada forçada de compressores ou fancoils nos próximos 7 dias se nenhuma ação for tomada.
+                🚨 **PREDIÇÃO:** O volume de falhas em *{sistema_gargalo}* indica risco de parada forçada ou perda de eficiência nos próximos 7 dias.
                 
-                *   **Ação Recomendada:** Realizar inspeção térmica nos quadros e substituição imediata das peças pendentes listadas na coluna *'Pecas Substitutivas'*.
+                *   **Ação:** Realizar inspeção térmica e substituir as peças pendentes de imediato.
                 """)
             else:
                 st.success(f"""
                 ### ✅ DIAGNÓSTICO DE SAÚDE OPERACIONAL
-                O ecossistema técnico do **{NOME_PROJETO}** opera dentro das métricas normais de conformidade.
+                O ecossistema técnico de **{NOME_PROJETO}** opera dentro das métricas normais.
                 
-                {texto_gargalo}
+                {texto_gargalo}  
                 {texto_custos}
                 
-                📈 **MÉTRICA PREDITIVA:** Com {preventivas} preventivas rodando contra {corretivas} corretivas, a curva de falhas aponta estabilização para o próximo ciclo mensal. O sistema de *{sistema_gargalo}* exige apenas acompanhamento padrão de rotina.
+                📈 **MÉTRICA PREDITIVA:** Com {preventivas} preventivas contra {corretivas} corretivas, a curva aponta estabilização. O sistema de *{sistema_gargalo}* exige apenas rotina.
                 """)
 
-    # Exibe a tabela bruta logo abaixo para auditoria visual rápida
     st.write("---")
     st.markdown("**Visualização Completa do Banco de Dados Filtrado**")
     st.dataframe(df, use_container_width=True)
-
 else:
     st.info("Nenhum dado cadastrado para exibição analítica de tabelas neste empreendimento.")
