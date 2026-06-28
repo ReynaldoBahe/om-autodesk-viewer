@@ -103,7 +103,8 @@ st.markdown('<div class="card-home"><div class="card-home-title">📊 Centro de 
 
 if not df.empty:
     # Padroniza nomes das colunas
-    df.columns = [c.strip().title() for c in df.columns]
+        df.columns = [c.strip().replace('_', ' ').title() for c in df.columns]
+
     
     total_os = len(df)
     os_criticas = len(df[df['Criticidade'].str.lower() == 'alta']) if 'Criticidade' in df.columns else 0
@@ -136,21 +137,39 @@ if not df.empty:
     with col_dados:
         st.markdown(f"**Relatório Preditivo de Falhas — {NOME_PROJETO}**")
         
-        with st.spinner("🤖 IA processando histórico de manutenção profundo..."):
-            if 'Sistema Defeituoso' in df.columns:
-                sistema_gargalo = df['Sistema Defeituoso'].value_counts().idxmax()
-                falhas_sistema = df['Sistema Defeituoso'].value_counts().max()
+                with st.spinner("🤖 IA processando histórico de manutenção profundo..."):
+            colunas_minusculo = [str(c).lower().strip() for c in df.columns]
+            
+            # 1. Identificação do Sistema Mais Defeituoso
+            col_sistema = [df.columns[i] for i, c in enumerate(colunas_minusculo) if 'sistema' in c]
+            if col_sistema:
+                v_counts = df[col_sistema].value_counts()
+                if not v_counts.empty:
+                    sistema_gargalo = v_counts.idxmax()
+                    falhas_sistema = v_counts.max()
+                    if isinstance(sistema_gargalo, tuple):
+                                  sistema_gargalo = sistema_gargalo
+
+                else:
+                    sistema_gargalo = "Não identificado"
+                    falhas_sistema = 0
             else:
                 sistema_gargalo = "Não identificado"
                 falhas_sistema = 0
 
-            custo_mat = pd.to_numeric(df['Custo Material'], errors='coerce').sum() if 'Custo Material' in df.columns else 0
-            custo_mo = pd.to_numeric(df['Custo Mao Obra'], errors='coerce').sum() if 'Custo Mao Obra' in df.columns else 0
+            # 2. Análise de Custos Operacionais
+            col_custo_mat = [df.columns[i] for i, c in enumerate(colunas_minusculo) if 'custo material' in c or 'custo_material' in c]
+            col_custo_mo = [df.columns[i] for i, c in enumerate(colunas_minusculo) if 'custo mao' in c or 'custo_mao' in c]
+            
+            custo_mat = pd.to_numeric(df[col_custo_mat].iloc[:,0] if isinstance(df[col_custo_mat], pd.DataFrame) else df[col_custo_mat], errors='coerce').sum() if col_custo_mat else 0
+            custo_mo = pd.to_numeric(df[col_custo_mo].iloc[:,0] if isinstance(df[col_custo_mo], pd.DataFrame) else df[col_custo_mo], errors='coerce').sum() if col_custo_mo else 0
             custo_total = custo_mat + custo_mo
 
-            if 'Tipo Manutencao' in df.columns:
-                corretivas = len(df[df['Tipo Manutencao'].str.lower().str.contains('corretiva|corretivo', na=False)])
-                preventivas = len(df[df['Tipo Manutencao'].str.lower().str.contains('preventiva|preventivo', na=False)])
+            # 3. Análise de Eficiência (Preventiva vs Corretiva)
+            col_tipo = [df.columns[i] for i, c in enumerate(colunas_minusculo) if 'tipo' in c]
+            if col_tipo:
+                corretivas = len(df[df[col_tipo].astype(str).str.lower().str.contains('corretiva|corretivo', na=False)])
+                preventivas = len(df[df[col_tipo].astype(str).str.lower().str.contains('preventiva|preventivo', na=False)])
             else:
                 corretivas, preventivas = 0, 0
 
