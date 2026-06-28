@@ -177,34 +177,53 @@ if not df.empty:
     
     col_grafico, col_dados = st.columns([1.2, 1.0])
     
-    with col_grafico:
-        # Mapeamento e Limpeza segura de Custos para Gráficos
-        col_custo_mat = [c for c in df_analise.columns if 'material' in c.lower()]
-        col_custo_mo = [c for c in df_analise.columns if 'obra' in c.lower() or 'mao' in c.lower()]
-        col_descricao_ativo = [c for c in df_analise.columns if 'desc' in c.lower() or 'ativo' in c.lower() or 'equip' in c.lower()]
-
-        df_analise['Custo_Total_Calculado'] = 0.0
+       with col_grafico:
+        # Cria duas abas dinâmicas para agradar a Manutenção e o Financeiro ao mesmo tempo
+        tab_operacional, tab_financeira = st.tabs(["📊 Visão Operacional", "💰 Visão Financeira"])
         
-        def limpar_coluna_moeda(series_ref):
-            s_str = series_ref.astype(str).str.replace('R$', '', regex=False)
-            s_str = s_str.str.replace('.', '', regex=False).str.replace(',', '.', regex=False).str.strip()
-            return pd.to_numeric(s_str, errors='coerce').fillna(0.0)
+        with tab_operacional:
+            st.markdown("**Distribuição de Ordens por Criticidade e Status**")
+            if col_status and col_criticidade:
+                chart = alt.Chart(df_analise).mark_bar().encode(
+                    x=alt.X(f'{col_status[0]}:N', title='Status da OS'),
+                    y=alt.Y('count():Q', title='Quantidade de Ativos'),
+                    color=alt.Color(f'{col_criticidade[0]}:N', scale=alt.Scale(domain=['Alta', 'Média', 'Baixa'], range=['#DC2626', '#F59E0B', '#10B981']))
+                ).properties(height=250)
+                st.altair_chart(chart, use_container_width=True)
+            else:
+                st.info("Colunas de Status ou Criticidade não localizadas.")
+                
+        with tab_financeira:
+            # Mapeamento e Limpeza segura de Custos para Gráficos
+            col_custo_mat = [c for c in df_analise.columns if 'material' in c.lower()]
+            col_custo_mo = [c for c in df_analise.columns if 'obra' in c.lower() or 'mao' in c.lower()]
+            col_descricao_ativo = [c for c in df_analise.columns if 'desc' in c.lower() or 'ativo' in c.lower() or 'equip' in c.lower()]
 
-        if col_custo_mat:
-            df_analise['Custo_Total_Calculado'] += limpar_coluna_moeda(df_analise[col_custo_mat[0]])
-        if col_custo_mo:
-            df_analise['Custo_Total_Calculado'] += limpar_coluna_moeda(df_analise[col_custo_mo[0]])
-
-        if not analise_individual and col_descricao_ativo:
-            st.markdown("**💰 Visão Financeira: Top Ativos que mais Consomem Orçamento**")
-            # Agrupa e pega os ativos mais caros para o financeiro visualizar individualmente
-            df_custo_ativo = df_analise.groupby(col_descricao_ativo[0])['Custo_Total_Calculado'].sum().reset_index()
-            df_custo_ativo = df_custo_ativo.sort_values(by='Custo_Total_Calculado', ascending=False).head(5)
+            df_analise['Custo_Total_Calculado'] = 0.0
             
-            chart_custo = alt.Chart(df_custo_ativo).mark_bar(color='#1E3A8A').encode(
-                x=alt.X('Custo_Total_Calculado:Q', title='Investimento Acumulado (R$)'),
-                y=alt.Y(f'{col_descricao_ativo[0]}:N', title='Ativo/Equipamento', sort='-x')
-            ).properties(height=280)
+            def limpar_coluna_moeda(series_ref):
+                s_str = series_ref.astype(str).str.replace('R$', '', regex=False)
+                s_str = s_str.str.replace('.', '', regex=False).str.replace(',', '.', regex=False).str.strip()
+                return pd.to_numeric(s_str, errors='coerce').fillna(0.0)
+
+            if col_custo_mat:
+                df_analise['Custo_Total_Calculado'] += limpar_coluna_moeda(df_analise[col_custo_mat[0]])
+            if col_custo_mo:
+                df_analise['Custo_Total_Calculado'] += limpar_coluna_moeda(df_analise[col_custo_mo[0]])
+
+            if col_descricao_ativo:
+                st.markdown("**Top Ativos que mais Consomem Orçamento**")
+                df_custo_ativo = df_analise.groupby(col_descricao_ativo[0])['Custo_Total_Calculado'].sum().reset_index()
+                df_custo_ativo = df_custo_ativo.sort_values(by='Custo_Total_Calculado', ascending=False).head(5)
+                
+                chart_custo = alt.Chart(df_custo_ativo).mark_bar(color='#1E3A8A').encode(
+                    x=alt.X('Custo_Total_Calculado:Q', title='Investimento Acumulado (R$)'),
+                    y=alt.Y(f'{col_descricao_ativo[0]}:N', title='Ativo/Equipamento', sort='-x')
+                ).properties(height=250)
+                st.altair_chart(chart_custo, use_container_width=True)
+            else:
+                st.info("Coluna de identificação do Ativo não localizada para o gráfico financeiro.")
+
             st.altair_chart(chart_custo, use_container_width=True)
         else:
             st.markdown("**Distribuição de Ordens por Criticidade e Status**")
@@ -265,7 +284,7 @@ if not df.empty:
                 Sobrecarga identificada nas rotinas de engenharia de **{NOME_PROJETO}**.
                 
                 {texto_gargalo}  
-                {texto_custos}
+                {texto_custos}    
                 
                 🚨 **PREDIÇÃO:** Alto custo cumulativo focado em *{sistema_gargalo}*. Recomenda-se auditoria conjunta (Manutenção + Financeiro) para criar contratos de preventivas e frear despesas com quebras corretivas emergenciais.
                 """)
