@@ -15,7 +15,7 @@ except KeyError:
         "gerente.om@resortboaviagem.com": {"password": "SenhaResort123", "token": "852369", "cliente": "Resort Boa Viagem"}
     }
 
-# --- INJEÇÃO DE CSS DE ALTO IMPACTO (SUPER FONTES E REDE AMPLIADA) ---
+# --- INJEÇÃO DE CSS DE ALTO IMPACTO (FORMULÁRIO ENCORPADO E COMPACTO) ---
 st.markdown("""
 <style>
     .stApp { 
@@ -25,7 +25,7 @@ st.markdown("""
     
     .left-panel { padding: 10px; text-align: center; }
     
-    /* 1. AMPLIAÇÃO DA ÁREA DA REDE DE ATIVOS */
+    /* ÁREA DA REDE DE ATIVOS */
     .network-container {
         position: relative;
         width: 380px;
@@ -33,7 +33,6 @@ st.markdown("""
         margin: 0 auto 30px auto;
     }
     
-    /* Círculo Central com Super Destaque */
     .node-center {
         position: absolute;
         top: 50%; left: 50%;
@@ -49,7 +48,6 @@ st.markdown("""
     }
     .node-center span { font-size: 14px; font-weight: 800; color: #8AB4F8; margin-top: 0px; letter-spacing: 0.5px; }
     
-    /* Círculos Satélites com Diâmetro e Fontes Robustas */
     .node-sat {
         position: absolute;
         background-color: #06182B;
@@ -67,7 +65,6 @@ st.markdown("""
     .node-bot-left  { bottom: 5px; left: 5px; }
     .node-bot-right { bottom: 5px; right: 5px; }
     
-    /* Indicador de SLA Ampliado */
     .pct-badge {
         position: absolute;
         top: 15px; right: -75px;
@@ -76,7 +73,6 @@ st.markdown("""
     }
     .pct-badge span { font-size: 14px; color: #8AB4F8; font-weight: bold; letter-spacing: 1px; }
 
-    /* Linhas Conectoras Reforçadas */
     .network-lines {
         position: absolute;
         top: 0; left: 0;
@@ -84,13 +80,11 @@ st.markdown("""
         z-index: 1;
     }
     
-    /* 2. TEXTOS DO PAINEL ESQUERDO TOTALMENTE AMPLIADOS */
     .dt-title { font-size: 20px; letter-spacing: 3px; color: #8AB4F8; margin-bottom: 10px; font-weight: bold; }
     .main-brand { font-size: 64px; font-weight: 950; color: #FFFFFF; margin-bottom: 15px; line-height: 1; letter-spacing: 1px; }
     .sub-brand { font-size: 16px; letter-spacing: 4px; color: #00D2FF; font-weight: bold; margin-bottom: 30px; }
     .slogan { font-style: italic; color: #D1E2F4; font-size: 19px; margin-bottom: 40px; font-weight: 500; }
     
-    /* Letras de rodapé perfeitamente legíveis */
     .tags-footer {
         font-size: 16px !important;
         color: #8AB4F8 !important;
@@ -99,38 +93,62 @@ st.markdown("""
         margin-top: 25px;
     }
     
+    /* CORREÇÃO DO LADO DIREITO ACANHADO: Limita a largura e encorpa o card */
+    .right-wrapper {
+        max-width: 440px;
+        margin: 0 auto;
+        padding-top: 20px;
+    }
+    
     .login-card { 
         background-color: #06182B !important; 
-        padding: 35px !important; 
+        padding: 40px 35px !important; 
         border-radius: 16px !important; 
         border: 1px solid #103154 !important; 
         box-shadow: 0 12px 40px rgba(0,0,0,0.6) !important; 
     }
     
     .login-title { font-size: 28px; font-weight: bold; color: #FFFFFF; text-align: center; margin-bottom: 5px; }
-    .login-subtitle { font-size: 14px; color: #8AB4F8; text-align: center; margin-bottom: 30px; }
+    .login-subtitle { font-size: 14px; color: #8AB4F8; text-align: center; margin-bottom: 35px; }
     
+    /* Ajusta a altura e preenchimento das caixas de input */
     div[data-baseweb="input"], div[data-baseweb="input"] > div { 
         background-color: #0C233C !important; 
         border: 1px solid #1A446F !important; 
         border-radius: 12px !important; 
+        height: 50px !important;
     }
     
     input[data-testid="stTextInputRootElement"], input { 
         background-color: transparent !important;
         color: #FFFFFF !important; 
         font-weight: 500 !important; 
+        font-size: 16px !important;
     }
     input::placeholder { color: #5F82A8 !important; }
-    label { color: #8AB4F8 !important; font-weight: 600 !important; font-size: 14px !important; }
+    label { color: #8AB4F8 !important; font-weight: 600 !important; font-size: 15px !important; margin-bottom: 6px !important; }
     
+    /* Remove bordas cinzas padrão de formulários do Streamlit */
+    div[data-testid="stForm"] {
+        border: none !important;
+        padding: 0 !important;
+    }
+    
+    /* CORREÇÃO DO BOTÃO GIGANTE: Deixa ele alto, robusto e proporcional */
     button[data-testid="baseButton-secondaryFormSubmit"], button[data-testid="baseButton-secondary"] {
         background-color: #104A7E !important;
         color: white !important;
         border-radius: 12px !important;
         border: 1px solid #1A62A3 !important;
         font-weight: bold !important;
-        padding: 12px 0 !important;
+        font-size: 16px !important;
+        height: 52px !important;
+        margin-top: 15px !important;
+        box-shadow: 0 4px 15px rgba(16,74,126,0.4) !important;
+        transition: background-color 0.2s !important;
+    }
+    button[data-testid="baseButton-secondaryFormSubmit"]:hover {
+        background-color: #165CA1 !important;
     }
     
     div[data-testid="stNotification"] {
@@ -143,7 +161,7 @@ st.markdown("""
     .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
     .resort-badge { background: #0A1E33; padding: 8px 16px; border-radius: 12px; font-weight: bold; font-size: 13px; border: 1px solid #143A63; color: #FFFFFF; }
     .verified-badge { background: rgba(0,210,255,0.08); color: #00D2FF; padding: 8px 16px; border-radius: 12px; font-size: 12px; border: 1px solid rgba(0,210,255,0.2); font-weight: 600; }
-    .ssl-footer { color: #5F82A8; font-size: 12px; margin-top: 20px; display: flex; align-items: center; gap: 6px; justify-content: center; }
+    .ssl-footer { color: #5F82A8; font-size: 12px; margin-top: 25px; display: flex; align-items: center; gap: 6px; justify-content: center; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -153,7 +171,6 @@ col_esquerda, col_direita = st.columns([1.1, 1.0], gap="large")
 with col_esquerda:
     st.markdown('<div class="left-panel">', unsafe_allow_html=True)
     
-    # --- RENDERIZAÇÃO DA REDE TOTALMENTE EXPANDIDA ---
     st.markdown("""
         <div class="network-container">
             <svg class="network-lines">
@@ -179,6 +196,9 @@ with col_esquerda:
     st.markdown('</div>', unsafe_allow_html=True)
 
 with col_direita:
+    # Encapsula o lado direito no contêiner compacto corrigido
+    st.markdown('<div class="right-wrapper">', unsafe_allow_html=True)
+    
     nome_cliente = "Acesso Uniforme"
     if st.session_state.login_step == 2 and st.session_state.usuario_validado in lista_usuarios:
         nome_cliente = lista_usuarios[st.session_state.usuario_validado]["cliente"]
@@ -207,17 +227,3 @@ with col_direita:
                     st.session_state.login_step = 2
                     st.rerun()
                 else:
-                    st.error("Credenciais inválidas para o ecossistema multi-cliente.")
-
-    # --- ETAPA 2: TOKEN DE SEGURANÇA ---
-    elif st.session_state.login_step == 2:
-        st.markdown('<div class="login-title">Verificação</div>', unsafe_allow_html=True)
-        st.markdown('<div class="login-subtitle">Insira o código de segurança</div>', unsafe_allow_html=True)
-        
-        with st.form("form_etapa_2", clear_on_submit=False):
-            codigo = st.text_input("Código de 6 dígitos", max_chars=6, placeholder="000000")
-            
-            col_b1, col_b2 = st.columns(2)
-            with col_b1:
-                if st.form_submit_button("Voltar", use_container_width=True):
-                    st.session_state.login_step = 1
