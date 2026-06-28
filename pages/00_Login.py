@@ -62,15 +62,14 @@ with aba_login:
         conn.close()
 
         if usuario_valido:
-            # 1. Define as variáveis exatas que o seu app.py e seus módulos precisam
+            # Seta exatamente as variáveis que seu app.py precisa para montar o menu
             st.session_state.logged_in = True
             st.session_state["username"] = username
             st.session_state["usuario_logado"] = username
             
-            st.success("Acesso liberado! Clique no botão abaixo para entrar.")
-            
-            # 2. Usa um botão de navegação nativo e seguro para mudar de página sem bugar o app.py
-            st.page_link("pages/01_Home.py", label="Ir para a Página Inicial 🚀", icon="🏠")
+            # Avisa o usuário e força o app.py a reconstruir a navegação com o menu completo
+            st.success("Login realizado com sucesso! Carregando painel...")
+            st.rerun()
         else:
             st.error("Usuário ou senha incorretos.")
 
