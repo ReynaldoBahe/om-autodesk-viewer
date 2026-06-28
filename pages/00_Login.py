@@ -16,26 +16,86 @@ except KeyError:
         "gerente.om@resortboaviagem.com": {"password": "SenhaResort123", "token": "852369", "cliente": "Resort Boa Viagem"}
     }
 
-# --- INJEÇÃO DE CSS (DARK MODE CORPORATIVO) ---
+# --- INJEÇÃO DE CSS REFORMULADO (PREMIUM FLAT GRADIENT) ---
 st.markdown("""
     <style>
-        .stApp { background-color: #031525; color: #FFFFFF; }
+        /* 1. Fundo em degradê moderno que traz iluminação para o centro da tela */
+        .stApp { 
+            background: linear-gradient(135deg, #07162c 0%, #1b355a 50%, #07162c 100%) !important; 
+            color: #FFFFFF; 
+        }
+        
         .left-panel { padding: 40px 20px; text-align: center; }
-        .dt-badge { background-color: #0F3B66; border-radius: 50%; width: 100px; height: 100px; line-height: 100px; margin: 0 auto 20px auto; font-weight: bold; color: #00D2FF; box-shadow: 0 0 15px rgba(0,210,255,0.3); }
-        .dt-title { font-size: 14px; letter-spacing: 2px; color: #8AB4F8; margin-bottom: 5px; }
-        .main-brand { font-size: 42px; font-weight: 900; color: #FFFFFF; margin-bottom: 20px; line-height: 1; }
-        .sub-brand { font-size: 13px; letter-spacing: 3px; color: #8AB4F8; font-weight: bold; margin-bottom: 25px; }
-        .slogan { font-style: italic; color: #9EBBDE; font-size: 15px; margin-bottom: 30px; }
-        .login-card { background-color: #07223D; padding: 35px; border-radius: 16px; border: 1px solid #10385F; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+        
+        /* 2. Emblema da marca com brilho neon suave */
+        .dt-badge { 
+            background: linear-gradient(135deg, #11375c 0%, #1e5286 100%); 
+            border-radius: 50%; 
+            width: 100px; 
+            height: 100px; 
+            line-height: 100px; 
+            margin: 0 auto 20px auto; 
+            font-weight: bold; 
+            color: #00D2FF; 
+            box-shadow: 0 0 25px rgba(0, 210, 255, 0.4); 
+            border: 1px solid rgba(0, 210, 255, 0.3);
+        }
+        
+        .dt-title { font-size: 14px; letter-spacing: 2px; color: #9EBBDE; margin-bottom: 5px; font-weight: 600; }
+        .main-brand { font-size: 46px; font-weight: 900; color: #FFFFFF; margin-bottom: 15px; line-height: 1; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        .sub-brand { font-size: 13px; letter-spacing: 3px; color: #00D2FF; font-weight: bold; margin-bottom: 25px; }
+        .slogan { font-style: italic; color: #D1E2F4; font-size: 15px; margin-bottom: 30px; }
+        
+        /* 3. Card de Login translúcido (Glassmorphism) que clareia a área de foco */
+        .login-card { 
+            background-color: rgba(255, 255, 255, 0.04); 
+            padding: 35px; 
+            border-radius: 16px; 
+            border: 1px solid rgba(255, 255, 255, 0.08); 
+            backdrop-filter: blur(12px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4); 
+        }
+        
         .login-title { font-size: 28px; font-weight: bold; color: #FFFFFF; text-align: center; margin-bottom: 5px; }
-        .login-subtitle { font-size: 14px; color: #9EBBDE; text-align: center; margin-bottom: 30px; }
-        div[data-baseweb="input"] { background-color: #0E355A !important; border: 1px solid #1C4E7D !important; border-radius: 8px !important; }
-        input { color: white !important; }
-        label { color: #9EBBDE !important; font-weight: 500 !important; }
+        .login-subtitle { font-size: 14px; color: #BACCDA; text-align: center; margin-bottom: 30px; }
+        
+        /* 4. Caixas de entrada brancas (padrão de mercado) para contraste impecável e fim da tela escura */
+        div[data-baseweb="input"] { 
+            background-color: #FFFFFF !important; 
+            border: 1px solid #CBD5E1 !important; 
+            border-radius: 8px !important; 
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05) !important;
+        }
+        
+        /* Cor do texto digitado interna mudou para azul escuro corporativo */
+        input { color: #0F172A !important; font-weight: 500 !important; }
+        input::placeholder { color: #94A3B8 !important; }
+        
+        label { color: #E2E8F0 !important; font-weight: 600 !important; font-size: 14px !important; margin-bottom: 4px; }
+        
         .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        .resort-badge { background: #0E355A; padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 13px; border: 1px solid #1A4D7C; }
-        .verified-badge { background: rgba(0,210,255,0.1); color: #00D2FF; padding: 6px 14px; border-radius: 20px; font-size: 12px; border: 1px solid rgba(0,210,255,0.3); }
-        .ssl-footer { color: #8AB4F8; font-size: 12px; margin-top: 20px; display: flex; align-items: center; gap: 6px; justify-content: center; }
+        
+        .resort-badge { 
+            background: rgba(255, 255, 255, 0.06); 
+            padding: 6px 14px; 
+            border-radius: 20px; 
+            font-weight: bold; 
+            font-size: 13px; 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            backdrop-filter: blur(5px);
+        }
+        
+        .verified-badge { 
+            background: rgba(0,210,255,0.12); 
+            color: #00D2FF; 
+            padding: 6px 14px; 
+            border-radius: 20px; 
+            font-size: 12px; 
+            border: 1px solid rgba(0,210,255,0.25); 
+            font-weight: 600;
+        }
+        
+        .ssl-footer { color: #9EBBDE; font-size: 12px; margin-top: 20px; display: flex; align-items: center; gap: 6px; justify-content: center; opacity: 0.8; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -49,7 +109,7 @@ with col_esquerda:
     st.markdown('<div class="main-brand">O&M</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-brand">GESTÃO INTELIGENTE DE ATIVOS</div>', unsafe_allow_html=True)
     st.markdown('<div class="slogan">"Seu patrimônio sob controle, onde você estiver."</div>', unsafe_allow_html=True)
-    st.markdown('<p style="font-size:11px; color:#537BAB; word-spacing: 10px;">Hospital Resort Supermercado Facilities</p>', unsafe_allow_html=True)
+    st.markdown('<p style="font-size:12px; color:#9EBBDE; word-spacing: 10px; font-weight:500;">Hospital • Resort • Supermercado • Facilities</p>', unsafe_allow_html=True)
     st.markdown('<div class="ssl-footer" style="justify-content:flex-start; margin-top:60px;">🔒 Conexão segura SSL</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -79,7 +139,6 @@ with col_direita:
             st.info("🔵 **Verificação em 2 etapas:** Um código será enviado ao seu e-mail.")
             
             if st.form_submit_button("Entrar", use_container_width=True):
-                # Varre a lista dinâmica do cofre procurando o e-mail e conferindo a senha correspondente
                 if email in lista_usuarios and senha == lista_usuarios[email]["password"]:
                     st.session_state.usuario_validado = email
                     st.session_state.login_step = 2
@@ -104,18 +163,17 @@ with col_direita:
                 if st.form_submit_button("Confirmar", use_container_width=True):
                     user_info = lista_usuarios[st.session_state.usuario_validado]
                     if codigo == user_info["token"]:
-                        st.success("Acesso autorizado!")
+                        st.success("Acesso authorized!")
                         time.sleep(0.5)
                         
-                        # Ativa as variáveis globais que o app.py lê
                         st.session_state.logged_in = True
                         st.session_state.cliente_ativo = user_info["cliente"]
                         st.session_state.user_email = st.session_state.usuario_validado
                         
-                        st.session_state.login_step = 1  # Reseta para o próximo ciclo
+                        st.session_state.login_step = 1
                         st.rerun()
                     else:
                         st.error("Código incorreto.")
                         
     st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('<div class="ssl-footer">🔒 Conexão segura SSL <span style="color:#537BAB; margin-left:20px;">© 2026 DT Facilities O&M</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="ssl-footer">🔒 Conexão segura SSL <span style="color:#BACCDA; margin-left:20px;">© 2026 DT Facilities O&M</span></div>', unsafe_allow_html=True)
