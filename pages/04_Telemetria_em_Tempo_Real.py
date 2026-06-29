@@ -71,26 +71,23 @@ else:
     valores_grafico = valores_reativa
     nome_legenda = "Potência Reativa (kVAR)"
 
-# Criando o gráfico de ÁREA de Energia (Substituindo as colunas antigas)
-fig_area_energia = go.Figure()
+# RESTAURADO: Gráfico de colunas (barras) laranjas para Energia
+fig_colunas_energia = go.Figure()
 
-fig_area_energia.add_trace(go.Scatter(
+fig_colunas_energia.add_trace(go.Bar(
     x=datas_simuladas[-pontos:], 
     y=valores_grafico,
     name=nome_legenda,
-    mode='lines',                     # Define que é um gráfico de linha básico
-    fill='tozeroy',                    # Preenche do ponto da linha até o eixo zero (Gráfico de Área)
-    line=dict(color="#FF4B4B", width=2), # Borda superior laranja
-    fillcolor="rgba(255, 75, 75, 0.4)" # Laranja translúcido idêntico ao modelo sugerido
+    marker_color="#FF4B4B"
 ))
 
-fig_area_energia.update_layout(
+fig_colunas_energia.update_layout(
     margin=dict(l=20, r=20, t=10, b=10),
     hovermode="x unified",
     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
     height=320
 )
-st.plotly_chart(fig_area_energia, use_container_width=True)
+st.plotly_chart(fig_colunas_energia, use_container_width=True)
 
 
 # ==============================================================================
@@ -120,21 +117,27 @@ with col_agua_data2:
 
 st.write("**Consumo Integrado (15 min):**")
 
-# Gráfico de Água estritamente crescente mantido em barras azuis
+# Lógica estritamente crescente mantida para o hidrômetro de água
 consumos_pulso_agua = np.random.uniform(0.1, 0.5, pontos)
 valores_crescentes_agua = np.cumsum(consumos_pulso_agua) + 20.0
 
-fig_colunas_agua = go.Figure()
-fig_colunas_agua.add_trace(go.Bar(
+# MODIFICADO: Gráfico de ÁREA preenchida azul e crescente para Água
+fig_area_agua = go.Figure()
+
+fig_area_agua.add_trace(go.Scatter(
     x=datas_simuladas[-pontos:], 
     y=valores_crescentes_agua, 
     name="Volume Acumulado (m³)",
-    marker_color="#00a3e0"
+    mode='lines',                     # Desenha a linha
+    fill='tozeroy',                    # Preenche até o eixo zero
+    line=dict(color="#00a3e0", width=2), # Linha do topo em azul
+    fillcolor="rgba(0, 163, 224, 0.4)" # Área preenchida com azul translúcido
 ))
-fig_colunas_agua.update_layout(
+
+fig_area_agua.update_layout(
     margin=dict(l=20, r=20, t=10, b=10),
     hovermode="x unified",
     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
     height=300
 )
-st.plotly_chart(fig_colunas_agua, use_container_width=True)
+st.plotly_chart(fig_area_agua, use_container_width=True)
