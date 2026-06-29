@@ -2,47 +2,43 @@ import streamlit as st
 
 st.set_page_config(page_title="Acesso ao Sistema", page_icon="🔒", layout="wide")
 
-# 1. Inicializa as variáveis de controle global se elas não existirem
+# 1. Inicializa o estado de login na memória global
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "cliente_ativo" not in st.session_state:
     st.session_state.cliente_ativo = ""
 
-# 2. Renderiza a interface visual limpa (sem cadastro aberto)
-col_central, _ = st.columns([2, 1]) # Mantém alinhado à esquerda como no seu print
+# 2. Renderização da Interface Limpa
+col_central, _ = st.columns([2, 1])
 
 with col_central:
     st.title("Acesso ao Sistema")
     st.write("Insira suas credenciais para acessar o painel de engenharia e O&M.")
     
-    # Caixa visual do formulário
-    with st.container(border=True):
+    # Caixa visual do formulário protegido
+    with st.form("meu_formulario_login"):
         usuario = st.text_input("Usuário", placeholder="Digite seu usuário")
         senha = st.text_input("Senha", type="password", placeholder="Digite sua senha")
         lembrar = st.checkbox("Lembrar de mim")
         
-        botao_entrar = st.button("Entrar", use_container_width=True)
+        # Botão estruturado para submissão de formulários
+        botao_entrar = st.form_submit_button("Entrar", use_container_width=True)
 
-# 3. Lógica de validação temporária (Simulando o Banco de Dados)
+# 3. Processamento do Clique e validação do acesso
 if botao_entrar:
-    # Lista de usuários autorizados (Você pode expandir isso depois)
+    # Usuários autorizados para testes locais e homologação
     usuarios_validos = {
         "admin": "admin",
-        "cliente_fiat": "fiat123",
-        "cliente_ambev": "ambev123"
+        "fiat": "fiat123",
+        "ambev": "ambev123"
     }
     
     if usuario in usuarios_validos and senha == usuarios_validos[usuario]:
-        # Ativa o carimbo digital na memória global do Streamlit
+        # Ativa a ponte de segurança global na sessão do Streamlit
         st.session_state.logged_in = True
+        st.session_state.cliente_ativo = usuario.upper()
         
-        # Define dinamicamente o nome do cliente baseado no login dele
-        if usuario == "admin":
-            st.session_state.cliente_ativo = "Administrador Geral"
-        else:
-            st.session_state.cliente_ativo = usuario.replace("cliente_", "").upper()
-            
-        st.success("✅ Login realizado com sucesso! Navegue pelas páginas no menu lateral.")
+        st.success("Acesso liberado! Use o menu lateral para navegar pelas páginas.")
         st.balloons()
     else:
-        st.error("❌ Usuário ou senha incorretos. Verifique suas credenciais.")
+        st.error("Usuário ou senha incorretos. Verifique suas credenciais.")
