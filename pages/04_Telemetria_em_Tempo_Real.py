@@ -8,6 +8,11 @@ import plotly.graph_objects as go
 # st.set_page_config(layout="wide")
 
 # ==============================================================================
+# 🕒 BASE DE TEMPO SIMULADA (15 MINUTOS)
+# ==============================================================================
+datas_simuladas = pd.date_range(start="2026-06-22", end="2026-06-29", freq="15min")
+
+# ==============================================================================
 # ⚡ SEÇÃO 1: MONITORAMENTO DE ENERGIA (VERTICAL)
 # ==============================================================================
 st.header("⚡ Monitoramento de Energia")
@@ -29,25 +34,19 @@ with col_eng_data2:
     data_fim_eng = st.date_input("Data Final (Energia)", datetime.date(2026, 6, 29), key="fim_eng")
 
 with col_eng_card:
-    # Substitua o valor '1452.8' pelo cálculo da soma do seu dataframe de energia filtrado
     consumo_acumulado_eng = 1452.8 
     st.metric(label="Consumo Acumulado no Período", value=f"{consumo_acumulado_eng:,} kWh".replace(",", "."))
 
 st.write("**Consumo Integrado (15 min):**")
 
-# --- [NOVO] GRÁFICO DE COLUNAS COM AS GRANDEZAS DE ENERGIA ---
-# (Simulação dos dados de 15 em 15 minutos - Substitua pelas suas variáveis reais)
-datas_energia = pd.date_range(start="2026-06-22", end="2026-06-29", freq="15min")
+# Gráfico de Colunas de Energia (Laranja)
 fig_colunas_energia = go.Figure()
-
-# Adiciona as colunas (barras) para as grandezas elétricas
 fig_colunas_energia.add_trace(go.Bar(
-    x=datas_energia[-48:], # Exibe as últimas 12 horas para fins visuais
+    x=datas_simuladas[-48:], 
     y=np.random.uniform(45, 60, 48),
     name="Potência Ativa (kW)",
-    marker_color="#FF4B4B" # Laranja padrão do seu layout de energia
+    marker_color="#FF4B4B"
 ))
-
 fig_colunas_energia.update_layout(
     margin=dict(l=20, r=20, t=10, b=10),
     hovermode="x unified",
@@ -85,6 +84,23 @@ with col_agua_data2:
     data_fim_agua = st.date_input("Data Final (Água)", datetime.date(2026, 6, 29), key="fim_agua")
 
 with col_agua_card:
-    # Substitua o valor '34.5' pelo cálculo da soma do seu dataframe de água filtrado
     consumo_acumulado_agua = 34.5 
     st.metric(label="Consumo Acumulado no Período", value=f"{consumo_acumulado_agua:,} m³".replace(",", "."))
+
+st.write("**Consumo Integrado (15 min):**")
+
+# --- [NOVO] GRÁFICO DE COLUNAS COM AS GRANDEZAS DE ÁGUA (AZUL) ---
+fig_colunas_agua = go.Figure()
+fig_colunas_agua.add_trace(go.Bar(
+    x=datas_simuladas[-48:], 
+    y=np.random.uniform(1.2, 2.8, 48),
+    name="Consumo Volumétrico (m³)",
+    marker_color="#00a3e0" # Azul clássico de água para combinar com o ícone
+))
+fig_colunas_agua.update_layout(
+    margin=dict(l=20, r=20, t=10, b=10),
+    hovermode="x unified",
+    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+    height=300
+)
+st.plotly_chart(fig_colunas_agua, use_container_width=True)
