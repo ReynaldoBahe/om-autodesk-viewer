@@ -62,10 +62,15 @@ dados_sensores = pd.DataFrame({
 # =========================================================================
 # # CONSTRUÇÃO DO GRÁFICO REATIVO EM ALTAIR
 # =========================================================================
+# ==========================================
+# CONSTRUÇÃO DO GRÁFICO COM MARCAÇÃO DE 15 MIN NO EIXO X
+# ==========================================
 grafico = alt.Chart(dados_sensores).mark_line(color='#1f77b4', point=True).encode(
-    x=alt.X('Tempo:T', title='Horário da Leitura'),
+    x=alt.X('Tempo:T', 
+            title='Horário da Leitura',
+            axis=alt.Axis(format='%H:%M', tickCount='minute', values=list(dados_sensores['Tempo']))),
     y=alt.Y('Valor:Q', title=dados_grandeza["titulo_y"], scale=alt.Scale(zero=False)),
-    tooltip=['Tempo:T', alt.Tooltip('Valor:Q', title=grandeza_selecionada)]
+    tooltip=[alt.Tooltip('Tempo:T', format='%H:%M', title='Horário'), alt.Tooltip('Valor:Q', title=grandeza_selecionada)]
 ).properties(height=350)
 
 st.altair_chart(grafico, use_container_width=True)
