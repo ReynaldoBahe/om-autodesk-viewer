@@ -1,9 +1,6 @@
 import streamlit as st
 import datetime
 
-# Garanta que a página esteja configurada como "wide" no início do arquivo
-# st.set_page_config(layout="wide")
-
 # ==============================================================================
 # SEÇÃO DOS BLOCOS LADO A LADO
 # ==============================================================================
@@ -15,8 +12,8 @@ coluna_esquerda_energia, coluna_direita_agua = st.columns(2)
 with coluna_esquerda_energia:
     st.header("⚡ Monitoramento de Energia")
     
-    # Divide o espaço interno: Filtro na esquerda, Gráfico de Barras na direita
-    col_eng_filtro, col_eng_grafico = st.columns()
+    # CORREÇÃO AQUI: Passamos [1, 2.5] para que o gráfico tenha mais espaço que o filtro
+    col_eng_filtro, col_eng_grafico = st.columns([1, 2.5])
     
     with col_eng_filtro:
         st.subheader("Período")
@@ -35,6 +32,6 @@ with coluna_esquerda_energia:
 with coluna_direita_agua:
     st.header("💧 Monitoramento de Água")
     
-    # Aqui entra o seu gráfico ou indicadores originais de água, sem o bloco de 15 min
+    # Aqui entra o seu gráfico ou indicadores originais de água
     st.subheader("Indicadores de Água")
     # Exemplo: st.line_chart(dados_agua_vazao)
