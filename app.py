@@ -17,6 +17,7 @@ home_page = st.Page("pages/01_Home.py", title="Página Inicial", icon="🏠")
 eng_page = st.Page("pages/01_Modulos_de_Engenharia.py", title="Módulos de Engenharia", icon="🏗️")
 manut_page = st.Page("pages/02_Gestao_da_Manutencao.py", title="Gestão da Manutenção", icon="🛠️")
 tempo_page = st.Page("pages/03_Indicadores_de_Tempo.py", title="Indicadores de Tempo", icon="⏱️")
+telemetria_page = st.Page("pages/04_Telemetria_em_Tempo_Real.py", title="Telemetria em Tempo Real", icon="📊")
 
 # =========================================================================
 # 3. LÓGICA DE PROTEÇÃO DE ACESSO
