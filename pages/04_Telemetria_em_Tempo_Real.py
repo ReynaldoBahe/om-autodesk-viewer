@@ -46,7 +46,7 @@ with col_eng_card:
 
 st.write("**Consumo Integrado (15 min):**")
 
-# --- CAIXA SUSPENSA ATUALIZADA COM DEMANDA E POTÊNCIA REATIVA ---
+# Caixa suspensa de grandezas elétricas
 grandeza_selecionada = st.selectbox(
     "Selecione a grandeza elétrica para o gráfico:",
     [
@@ -59,7 +59,6 @@ grandeza_selecionada = st.selectbox(
     key="selectbox_grandeza_energia"
 )
 
-# Lógica que associa a escolha da caixa suspensa aos dados correspondentes
 if grandeza_selecionada == "Potência Ativa (kW)":
     valores_grafico = np.random.uniform(45, 60, pontos)
     nome_legenda = "Potência (kW)"
@@ -79,7 +78,6 @@ else:
 # Criando o gráfico de colunas de Energia
 fig_colunas_energia = go.Figure()
 
-# Adiciona a barra inicial padrão baseada no selectbox
 fig_colunas_energia.add_trace(go.Bar(
     x=datas_simuladas[-pontos:], 
     y=valores_grafico,
@@ -87,7 +85,6 @@ fig_colunas_energia.add_trace(go.Bar(
     marker_color="#FF4B4B"
 ))
 
-# Menu superior direito de botões mantido inline para as opções adicionais de relatório
 fig_colunas_energia.update_layout(
     updatemenus=[
         dict(
@@ -160,12 +157,16 @@ with col_agua_card:
 
 st.write("**Consumo Integrado (15 min):**")
 
-# Gráfico de Colunas de Água (Azul) mantido intacto abaixo
+# --- CORREÇÃO AQUI: GERANDO UM GRÁFICO DE ÁGUA APENAS CRESCENTE ---
+# Geramos pequenos consumos e usamos o cumsum para acumulá-los de forma crescente
+consumos_pulso_agua = np.random.uniform(0.1, 0.5, pontos)
+valores_crescentes_agua = np.cumsum(consumos_pulso_agua) + 20.0 # Começa a partir de uma base arbitrária de 20 m³
+
 fig_colunas_agua = go.Figure()
 fig_colunas_agua.add_trace(go.Bar(
     x=datas_simuladas[-pontos:], 
-    y=np.random.uniform(1.2, 2.8, pontos),
-    name="Consumo Volumétrico (m³)",
+    y=valores_crescentes_agua, # Dados estritamente crescentes
+    name="Volume Acumulado (m³)",
     marker_color="#00a3e0"
 ))
 fig_colunas_agua.update_layout(
