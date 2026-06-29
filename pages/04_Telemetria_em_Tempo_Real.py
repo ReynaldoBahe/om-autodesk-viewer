@@ -17,6 +17,8 @@ pontos = 48  # Exibição das últimas 12 horas para fins de relatório visual
 valores_fp = np.random.uniform(0.92, 0.98, pontos)
 valores_aparente = np.random.uniform(55, 70, pontos)
 valores_corrente = np.random.uniform(200, 225, pontos)
+valores_demanda = np.random.uniform(40, 58, pontos)
+valores_reativa = np.random.uniform(15, 28, pontos)
 
 # ==============================================================================
 # ⚡ SEÇÃO 1: MONITORAMENTO DE ENERGIA (VERTICAL)
@@ -44,22 +46,35 @@ with col_eng_card:
 
 st.write("**Consumo Integrado (15 min):**")
 
-# --- JANELA SUSPENSA INJETADA NO PRODUTO DE ENERGIA ---
+# --- CAIXA SUSPENSA ATUALIZADA COM DEMANDA E POTÊNCIA REATIVA ---
 grandeza_selecionada = st.selectbox(
     "Selecione a grandeza elétrica para o gráfico:",
-    ["Potência Ativa (kW)", "Corrente (A)", "Fator de Potência"],
+    [
+        "Potência Ativa (kW)", 
+        "Corrente (A)", 
+        "Fator de Potência", 
+        "Demanda (kW)", 
+        "Potência Reativa (kVAR)"
+    ],
     key="selectbox_grandeza_energia"
 )
 
+# Lógica que associa a escolha da caixa suspensa aos dados correspondentes
 if grandeza_selecionada == "Potência Ativa (kW)":
     valores_grafico = np.random.uniform(45, 60, pontos)
     nome_legenda = "Potência (kW)"
 elif grandeza_selecionada == "Corrente (A)":
     valores_grafico = valores_corrente
     nome_legenda = "Corrente (A)"
-else:
+elif grandeza_selecionada == "Fator de Potência":
     valores_grafico = valores_fp
     nome_legenda = "Fator de Potência"
+elif grandeza_selecionada == "Demanda (kW)":
+    valores_grafico = valores_demanda
+    nome_legenda = "Demanda (kW)"
+else:
+    valores_grafico = valores_reativa
+    nome_legenda = "Potência Reativa (kVAR)"
 
 # Criando o gráfico de colunas de Energia
 fig_colunas_energia = go.Figure()
@@ -72,7 +87,7 @@ fig_colunas_energia.add_trace(go.Bar(
     marker_color="#FF4B4B"
 ))
 
-# --- [NOVO] MENU SUPERIOR DIREITO DE MUDANÇA DE GRANDEZA DENTRO DO PLOT ---
+# Menu superior direito de botões mantido inline para as opções adicionais de relatório
 fig_colunas_energia.update_layout(
     updatemenus=[
         dict(
@@ -80,7 +95,7 @@ fig_colunas_energia.update_layout(
             direction="left",
             pad={"r": 10, "t": 10},
             showactive=True,
-            x=1.0,  # Canto superior direito
+            x=1.0, 
             xanchor="right",
             y=1.15,
             yanchor="top",
