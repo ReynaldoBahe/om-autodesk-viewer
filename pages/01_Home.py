@@ -1,18 +1,43 @@
 import streamlit as st
 
-# --- ESTILIZAÇÃO CSS CUSTOMIZADA ORIGINAL ---
-st.markdown("""
-    <style>
-        .main-title { font-size: 32px; font-weight: bold; color: #1E3A8A; margin-bottom: 5px; }
-        .sub-title { font-size: 16px; color: #4B5563; margin-bottom: 25px; }
-        .card-home { background-color: #F3F4F6; padding: 25px; border-radius: 8px; border: 1px solid #E5E7EB; min-height: 18px; }
-        .card-home-title { font-size: 20px; font-weight: bold; color: #1E3A8A; margin-bottom: 10px; }
-    </style>
-""", unsafe_allow_html=True)
+# =========================================================================
+# # TRAVA DE SEGURANÇA INTEGRADA
+# =========================================================================
+if "logged_in" not in st.session_state or not st.session_state.logged_in:
+    st.error("🔒 Acesso negado. Por favor, faça o login na página inicial.")
+    st.stop()
 
-# --- CONTEÚDO DA PÁGINA INICIAL ---
-st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de Ativos</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-title">Bem-vindo ao centro operacional de O&M.</div>', unsafe_allow_html=True)
+nome_cliente = st.session_state.get("cliente_ativo", "Cliente")
 
-# Mensagem informativa ou os cartões de navegação que você tinha no app.py
-st.info("👋 Use o menu lateral esquerdo para navegar de forma segura entre os módulos técnicos e gerenciar seus ativos.")
+# Cabeçalho Principal
+st.markdown(f'<h1 style="color: #1E3A8A;">🏗️ Portal de Engenharia & Gestão de Ativos</h1>', unsafe_allow_html=True)
+st.markdown(f"### Bem-vindo ao centro operacional de O&M, **{nome_cliente}**!")
+st.write("Esta plataforma centraliza o controle de manutenção, monitoramento energético e indicadores de performance.")
+
+st.markdown("---")
+
+# Seção de Módulos (Apresentação Prática)
+st.subheader("📁 Conheça os Módulos Operacionais")
+st.write("Utilize o menu lateral esquerdo para navegar pelas ferramentas disponíveis:")
+
+# Organização em 2 Colunas para os principais pilares
+col_esq, col_dir = st.columns(2)
+
+with col_esq:
+    st.markdown("### ⚡ Engenharia & Telemetria")
+    st.info(
+        "**Módulos de Engenharia & Telemetria em Tempo Real**\n\n"
+        "Acompanhe as grandezas elétricas críticas (Potência, Corrente, Fator de Potência) "
+        "e monitore o consumo integrado de energia (kWh) e água (m³) em intervalos de 15 minutos."
+    )
+
+with col_dir:
+    st.markdown("### 🔧 Gestão & Indicadores")
+    st.success(
+        "**Gestão da Manutenção & Indicadores de Tempo**\n\n"
+        "Controle ordens de serviço, cronogramas de manutenção preventiva/corretiva "
+        "e analise os principais KPIs de eficiência e disponibilidade da planta."
+    )
+
+st.markdown("---")
+st.caption("ℹ️ Sistema de Telemetria e Gestão — Versão 1.0 | Acesso Restrito e Seguro.")
