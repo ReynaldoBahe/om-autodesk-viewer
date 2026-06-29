@@ -11,6 +11,12 @@ import plotly.graph_objects as go
 # 🕒 BASE DE TEMPO SIMULADA (15 MINUTOS)
 # ==============================================================================
 datas_simuladas = pd.date_range(start="2026-06-22", end="2026-06-29", freq="15min")
+pontos = 48  # Exibição das últimas 12 horas para fins de relatório visual
+
+# Geração dos relatórios de valores simulados para cada grandeza elétrica
+valores_fp = np.random.uniform(0.92, 0.98, pontos)
+valores_aparente = np.random.uniform(55, 70, pontos)
+valores_corrente = np.random.uniform(200, 225, pontos)
 
 # ==============================================================================
 # ⚡ SEÇÃO 1: MONITORAMENTO DE ENERGIA (VERTICAL)
@@ -19,7 +25,6 @@ st.header("⚡ Monitoramento de Energia")
 
 st.subheader("Parâmetros Elétricos (Potência, Corrente, Fator de Potência)")
 # Seu gráfico de linha de energia original entra aqui (ocupando a largura total)
-# Exemplo: st.line_chart(dados_eletricos_classicos)
 
 st.markdown("---")
 
@@ -46,30 +51,65 @@ grandeza_selecionada = st.selectbox(
     key="selectbox_grandeza_energia"
 )
 
-# Lógica que muda os dados do gráfico baseado na janela suspensa
 if grandeza_selecionada == "Potência Ativa (kW)":
-    valores_grafico = np.random.uniform(45, 60, 48)
+    valores_grafico = np.random.uniform(45, 60, pontos)
     nome_legenda = "Potência (kW)"
 elif grandeza_selecionada == "Corrente (A)":
-    valores_grafico = np.random.uniform(200, 225, 48)
+    valores_grafico = valores_corrente
     nome_legenda = "Corrente (A)"
 else:
-    valores_grafico = np.random.uniform(0.92, 0.98, 48)
+    valores_grafico = valores_fp
     nome_legenda = "Fator de Potência"
 
-# Gráfico de Colunas de Energia (Laranja) original mantido
+# Criando o gráfico de colunas de Energia
 fig_colunas_energia = go.Figure()
+
+# Adiciona a barra inicial padrão baseada no selectbox
 fig_colunas_energia.add_trace(go.Bar(
-    x=datas_simuladas[-48:], 
+    x=datas_simuladas[-pontos:], 
     y=valores_grafico,
     name=nome_legenda,
     marker_color="#FF4B4B"
 ))
+
+# --- [NOVO] MENU SUPERIOR DIREITO DE MUDANÇA DE GRANDEZA DENTRO DO PLOT ---
 fig_colunas_energia.update_layout(
-    margin=dict(l=20, r=20, t=10, b=10),
+    updatemenus=[
+        dict(
+            type="buttons",
+            direction="left",
+            pad={"r": 10, "t": 10},
+            showactive=True,
+            x=1.0,  # Canto superior direito
+            xanchor="right",
+            y=1.15,
+            yanchor="top",
+            buttons=list([
+                dict(
+                    label="Fator de Potência",
+                    method="update",
+                    args=[{"y": [valores_fp], "name": "Fator de Potência"}]
+                ),
+                dict(
+                    label="Potência Aparente (kVA)",
+                    method="update",
+                    args=[{"y": [valores_aparente], "name": "Pot. Aparente (kVA)"}]
+                ),
+                dict(
+                    label="Corrente (A)",
+                    method="update",
+                    args=[{"y": [valores_corrente], "name": "Corrente (A)"}]
+                ),
+            ]),
+        )
+    ]
+)
+
+fig_colunas_energia.update_layout(
+    margin=dict(l=20, r=20, t=40, b=10),
     hovermode="x unified",
-    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-    height=300
+    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+    height=320
 )
 st.plotly_chart(fig_colunas_energia, use_container_width=True)
 
@@ -86,8 +126,6 @@ st.markdown("<br><br><br><br><br><br>", unsafe_allow_html=True)
 st.header("💧 Monitoramento de Água")
 
 st.subheader("Vazão e Parâmetros Hidráulicos")
-# Seu gráfico de linha de água original entra aqui (ocupando a largura total)
-# Exemplo: st.line_chart(dados_agua_classicos)
 
 st.markdown("---")
 
@@ -107,11 +145,11 @@ with col_agua_card:
 
 st.write("**Consumo Integrado (15 min):**")
 
-# Gráfico de Colunas de Água (Azul) original mantido intacto abaixo
+# Gráfico de Colunas de Água (Azul) mantido intacto abaixo
 fig_colunas_agua = go.Figure()
 fig_colunas_agua.add_trace(go.Bar(
-    x=datas_simuladas[-48:], 
-    y=np.random.uniform(1.2, 2.8, 48),
+    x=datas_simuladas[-pontos:], 
+    y=np.random.uniform(1.2, 2.8, pontos),
     name="Consumo Volumétrico (m³)",
     marker_color="#00a3e0"
 ))
