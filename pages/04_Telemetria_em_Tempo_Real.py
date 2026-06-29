@@ -35,7 +35,10 @@ st.write("**Consumo Integrado (15 min):**")
 # Exemplo: st.bar_chart(dados_energia_filtrados, color="#FF4B4B")
 
 
-st.markdown("<br><br><br>", unsafe_allow_html=True) # Espaçamento para separar bem as seções
+# ==============================================================================
+# ↕️ BLOCO DE ESPAÇAMENTO HTML AMPLIAÇÃO (ENTRE AS DUAS SEÇÕES)
+# ==============================================================================
+st.markdown("<br><br><br><br><br><br>", unsafe_allow_html=True) 
 
 
 # ==============================================================================
