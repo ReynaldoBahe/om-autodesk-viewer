@@ -20,7 +20,7 @@ st.write("Monitoramento contínuo e histórico de grandezas elétricas e consumo
 st.markdown("---")
 
 # =========================================================================
-# # METRICS DE TELEMETRIA (IoT) - AGORA COM ÁGUA
+# # METRICS DE TELEMETRIA (IoT) - CARDS DO TOPO
 # =========================================================================
 col1, col2, col3, col4 = st.columns(4)
 
@@ -31,15 +31,14 @@ with col2:
 with col3:
     st.metric(label="Corrente Instantânea", value="68.6 A", delta="Estável")
 with col4:
-    # Card dedicado ao medidor de água em tempo real
-    st.metric(label="Fluxo de Água Atual", value="3.4 m³/h", delta="-0.2 m³/h (Economia)", delta_color="normal")
+    st.metric(label="Fluxo de Água Atual", value="3.4 m³/h", delta="-0.2 m³/h (Economia)")
 
 st.markdown("---")
 
 # =========================================================================
-# # CENTRAL DE SELEÇÃO (JANELA SUSPENSA ATUALIZADA COM ÁGUA)
+# # SEÇÃO 1: ACOMPANHAMENTO DA GRANDEZA ELÉTRICA (CÓDIGO ORIGINAL)
 # =========================================================================
-st.subheader("📈 Análise Histórica das Grandezas")
+st.subheader("⚡ 1. Acompanhamento de Grandezas Elétricas")
 
 config_grandezas = {
     "Potência Ativa (kW)": {
@@ -57,35 +56,51 @@ config_grandezas = {
     "Corrente (A)": {
         "titulo_y": "Corrente Nominal (A)", 
         "valores": [68.5, 69.8, 67.9, 68.9, 71.5, 68.2, 67.0, 69.5, 68.3, 68.6]
-    },
-    # 💧 NOVA GRANDEZA INTEGRADA: MEDIÇÃO HÍDRICA
-    "Consumo de Água (m³)": {
-        "titulo_y": "Consumo Volumétrico (m³)",
-        "valores": [3.1, 3.4, 3.2, 3.5, 3.8, 3.4, 3.3, 3.6, 3.4, 3.4]
     }
 }
 
 grandeza_selecionada = st.selectbox(
-    "Selecione a grandeza de utilidades para acompanhamento no gráfico:",
+    "Selecione a grandeza elétrica para acompanhamento no gráfico:",
     list(config_grandezas.keys())
 )
 
 dados_grandeza = config_grandezas[grandeza_selecionada]
 
-dados_sensores = pd.DataFrame({
-    'Tempo': pd.date_range(start='2026-06-29 08:00', periods=10, freq='15min'),
+horarios_eixo = pd.date_range(start='2026-06-29 08:00', periods=10, freq='15min')
+
+dados_eletricos = pd.DataFrame({
+    'Tempo': horarios_eixo,
     'Valor': dados_grandeza["valores"]
 })
 
-# =========================================================================
-# # GRÁFICO REATIVO COM MARCAÇÃO DE 15 MIN NO EIXO X
-# =========================================================================
-grafico = alt.Chart(dados_sensores).mark_line(color='#1f77b4', point=True).encode(
+grafico_eletrico = alt.Chart(dados_eletricos).mark_line(color='#1f77b4', point=True).encode(
     x=alt.X('Tempo:T', 
             title='Horário da Leitura',
-            axis=alt.Axis(format='%H:%M', tickCount='minute', values=list(dados_sensores['Tempo']))),
+            axis=alt.Axis(format='%H:%M', tickCount='minute', values=list(dados_eletricos['Tempo']))),
     y=alt.Y('Valor:Q', title=dados_grandeza["titulo_y"], scale=alt.Scale(zero=False)),
     tooltip=[alt.Tooltip('Tempo:T', format='%H:%M', title='Horário'), alt.Tooltip('Valor:Q', title=grandeza_selecionada)]
-).properties(height=350)
+).properties(height=300)
 
-st.altair_chart(grafico, use_container_width=True)
+st.altair_chart(grafico_eletrico, use_container_width=True)
+
+st.markdown("---")
+
+# =========================================================================
+# # SEÇÃO 2: NOVO GRÁFICO DE MEDIÇÃO DE ÁGUA ADICIONADO ABAIXO
+# =========================================================================
+st.subheader("💧 2. Histórico de Consumo de Água (m³)")
+
+dados_agua = pd.DataFrame({
+    'Tempo': horarios_eixo,
+    'Consumo': [3.1, 3.4, 3.2, 3.5, 3.8, 3.4, 3.3, 3.6, 3.4, 3.4]
+})
+
+grafico_agua = alt.Chart(dados_agua).mark_line(color='#2563EB', point=True).encode(
+    x=alt.X('Tempo:T', 
+            title='Horário da Leitura',
+            axis=alt.Axis(format='%H:%M', tickCount='minute', values=list(dados_agua['Tempo']))),
+    y=alt.Y('Consumo:Q', title='Volume Consumido (m³)', scale=alt.Scale(zero=False)),
+    tooltip=[alt.Tooltip('Tempo:T', format='%H:%M', title='Horário'), alt.Tooltip('Consumo:Q', title='Consumo (m³)')]
+).properties(height=300)
+
+st.altair_chart(grafico_agua, use_container_width=True)
