@@ -12,6 +12,11 @@ if "logged_in" not in st.session_state or not st.session_state.logged_in:
 
 cliente_logado = st.session_state.get("cliente_ativo", "Nenhum")
 
+# ADICIONE ESTE BLOCO ABAIXO: Se for admin, simula o acesso ao Resort Boa Viagem
+if cliente_logado == "ADMIN":
+    cliente_logado = "Resort Boa Viagem"
+
+
 EMPREENDIMENTOS = {
     "Resort Boa Viagem": {
         "nome_exibicao": "Resort Boa Viagem - Complexo Hoteleiro",
