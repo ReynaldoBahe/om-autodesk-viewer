@@ -1,3 +1,7 @@
+import streamlit as st  # <--- ESSA LINHA É OBRIGATÓRIA AQUI!
+import pandas as pd
+import altair as alt
+import datetime
 # =========================================================================
 # 1. BARREIRA DE SEGURANÇA E MAPEAMENTO MULTI-CLIENTE
 # =========================================================================
