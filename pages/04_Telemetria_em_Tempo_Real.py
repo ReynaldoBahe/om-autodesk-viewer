@@ -14,8 +14,9 @@ if "logged_in" not in st.session_state or not st.session_state.logged_in:
 
 nome_cliente = st.session_state.get("cliente_ativo", "Cliente")
 
-st.markdown(f'<h2 style="color: #1E3A8A;">📊 Telemetria de Ativos & Utilidades — {nome_cliente}</h2>', unsafe_allow_html=True)
-st.write("Monitoramento contínuo, histórico de grandezas elétricas e consumo integrado por período.")
+# Título maior e com espaçamento
+st.markdown(f'<h1 style="color: #1E3A8A; margin-bottom: 5px;">📊 Telemetria de Ativos & Utilidades — {nome_cliente}</h1>', unsafe_allow_html=True)
+st.markdown("<p style='font-size: 18px;'>Monitoramento contínuo, histórico de grandezas elétricas e consumo integrado por período.</p>", unsafe_allow_html=True)
 
 st.markdown("---")
 
@@ -40,8 +41,9 @@ fluxo_agua_instantaneo = 3.4
 st.info(f"⏱️ **Última Atualização dos Sensores:** Medições registradas e consolidadas às **{horario_formatado}**.")
 
 # =========================================================================
-# 📈 CARTÕES DE MÉTRICAS (OS QUATRO ELEMENTOS DO TOPO)
+# 📈 CARTÕES DE MÉTRICAS (AUMENTADOS)
 # =========================================================================
+st.markdown("### ") # Dá um espaço vertical
 col1, col2, col3, col4 = st.columns(4)
 with col1:
     st.metric(label="Potência Ativa Atual", value=f"{potencia_instantanea} kW", delta="+0.2 kW")
@@ -57,7 +59,7 @@ st.markdown("---")
 # =========================================================================
 # ⚡ SEÇÃO 1: ACOMPANHAMENTO DA GRANDEZA SELECIONADA (LINHA)
 # =========================================================================
-st.subheader("⚡ 1. Acompanhamento de Grandezas Elétricas (Instantâneas)")
+st.markdown("### ⚡ 1. Acompanhamento de Grandezas Elétricas (Instantâneas)")
 
 config_grandezas = {
     "Potência Ativa (kW)": {"titulo_y": "Potência Ativa (kW)", "valores": valores_potencia},
@@ -66,20 +68,20 @@ config_grandezas = {
     "Corrente (A)": {"titulo_y": "Corrente Nominal (A)", "valores": valores_corrente}
 }
 
-# A janela suspensa que você validou:
 grandeza_selecionada = st.selectbox(
-    "Selecione a grandeza elétrica instantânea para o gráfico de linhas:",
+    "Selecione a grandeza elétrica para o gráfico:",
     list(config_grandezas.keys())
 )
 
 dados_grandeza = config_grandezas[grandeza_selecionada]
 dados_eletricos = pd.DataFrame({'Tempo': horarios_eixo, 'Valor': dados_grandeza["valores"]})
 
+# Aumentamos a altura (height) de 280 para 380 para dar mais presença na tela
 grafico_eletrico = alt.Chart(dados_eletricos).mark_line(color='#1f77b4', point=True).encode(
     x=alt.X('Tempo:T', title='Horário da Leitura', axis=alt.Axis(format='%H:%M', values=list(dados_eletricos['Tempo']))),
     y=alt.Y('Valor:Q', title=dados_grandeza["titulo_y"], scale=alt.Scale(zero=False)),
     tooltip=[alt.Tooltip('Tempo:T', format='%H:%M', title='Horário'), alt.Tooltip('Valor:Q', title=grandeza_selecionada)]
-).properties(height=280)
+).properties(height=380)
 
 st.altair_chart(grafico_eletrico, use_container_width=True)
 
@@ -88,25 +90,27 @@ st.markdown("---")
 # =========================================================================
 # 📊 SEÇÃO 2: CONSUMO ACUMULADO POR PERÍODO (RODAPÉ)
 # =========================================================================
-st.subheader("📊 2. Consumo Acumulado por Período de Medição (15 Minutos)")
+st.markdown("### 📊 2. Consumo Acumulado por Período de Medição (15 Minutos)")
 col_esq, col_dir = st.columns(2)
 
 with col_esq:
-    st.markdown("🔌 **Consumo de Energia Ativa (kWh)**")
+    st.markdown("#### 🔌 Consumo de Energia Ativa (kWh)")
     dados_energia_periodo = pd.DataFrame({'Tempo': horarios_eixo, 'Consumo': valores_energia_kwh})
+    # Aumentamos a altura de 250 para 320
     grafico_energia_barra = alt.Chart(dados_energia_periodo).mark_bar(color='#F59E0B', cornerRadiusTopLeft=3, cornerRadiusTopRight=3).encode(
         x=alt.X('Tempo:T', title='Período', axis=alt.Axis(format='%H:%M', values=list(dados_energia_periodo['Tempo']))),
         y=alt.Y('Consumo:Q', title='Energia Consumida (kWh)'),
         tooltip=[alt.Tooltip('Tempo:T', format='%H:%M', title='Período'), alt.Tooltip('Consumo:Q', title='Energia (kWh)')]
-    ).properties(height=250)
+    ).properties(height=320)
     st.altair_chart(grafico_energia_barra, use_container_width=True)
 
 with col_dir:
-    st.markdown("💧 **Consumo de Volume Hídrico (m³)**")
+    st.markdown("#### 💧 Consumo de Volume Hídrico (m³)")
     dados_agua_periodo = pd.DataFrame({'Tempo': horarios_eixo, 'Consumo': valores_agua_m3})
+    # Aumentamos a altura de 250 para 320
     grafico_agua_barra = alt.Chart(dados_agua_periodo).mark_bar(color='#2563EB', cornerRadiusTopLeft=3, cornerRadiusTopRight=3).encode(
         x=alt.X('Tempo:T', title='Período', axis=alt.Axis(format='%H:%M', values=list(dados_agua_periodo['Tempo']))),
         y=alt.Y('Consumo:Q', title='Volume Consumido (m³)'),
         tooltip=[alt.Tooltip('Tempo:T', format='%H:%M', title='Período'), alt.Tooltip('Consumo:Q', title='Volume (m³)')]
-    ).properties(height=250)
+    ).properties(height=320)
     st.altair_chart(grafico_agua_barra, use_container_width=True)
