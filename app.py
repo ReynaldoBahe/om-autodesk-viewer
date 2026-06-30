@@ -107,10 +107,10 @@ if not st.session_state.logged_in:
         botao_entrar = st.form_submit_button("Entrar no Sistema", use_container_width=True)
         
     if botao_entrar:
-        usuarios_validos = {
-            "admin": "admin",
-            "fiat": "fiat123",
-            "ambev": "ambev123"
+               usuarios_validos = {
+            "admin": "RB_eng_admin_2026!",
+            "fiat": "Fiat_Ativos_RB99*",
+            "ambev": "Ambev_OM_RB2026#"
         }
         
         if usuario in usuarios_validos and senha == usuarios_validos[usuario]:
