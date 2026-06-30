@@ -1,116 +1,143 @@
 import streamlit as st
+import datetime
 import pandas as pd
 import numpy as np
-import altair as alt
+import plotly.graph_objects as go
 
-st.set_page_config(page_title="Telemetria em Tempo Real", page_icon="📊", layout="wide")
+# Garanta que a página esteja configurada como "wide" no início do arquivo
+# st.set_page_config(layout="wide")
 
-# =========================================================================
-# 🔒 TRAVA DE SEGURANÇA INTEGRADA AO SEU PORTAL
-# =========================================================================
-if "logged_in" not in st.session_state or not st.session_state.logged_in:
-    st.error("🔒 Acesso negado. Por favor, faça o login na página inicial.")
-    st.stop()
+# ==============================================================================
+# 🕒 BASE DE TEMPO SIMULADA (15 MINUTOS)
+# ==============================================================================
+datas_simuladas = pd.date_range(start="2026-06-22", end="2026-06-29", freq="15min")
+pontos = 48  # Exibição das últimas 12 horas para fins de relatório visual
 
-nome_cliente = st.session_state.get("cliente_ativo", "Cliente")
+# Geração dos relatórios de valores simulados para cada grandeza elétrica
+valores_fp = np.random.uniform(0.92, 0.98, pontos)
+valores_corrente = np.random.uniform(200, 225, pontos)
+valores_demanda = np.random.uniform(40, 58, pontos)
+valores_reativa = np.random.uniform(15, 28, pontos)
 
-# Título maior e com espaçamento
-st.markdown(f'<h1 style="color: #1E3A8A; margin-bottom: 5px;">📊 Telemetria de Ativos & Utilidades — {nome_cliente}</h1>', unsafe_allow_html=True)
-st.markdown("<p style='font-size: 18px;'>Monitoramento contínuo, histórico de grandezas elétricas e consumo integrado por período.</p>", unsafe_allow_html=True)
+# ==============================================================================
+# ⚡ SEÇÃO 1: MONITORAMENTO DE ENERGIA (VERTICAL)
+# ==============================================================================
+st.header("⚡ Monitoramento de Energia")
 
-st.markdown("---")
-
-# =========================================================================
-# # DATA E ESTRUTURAÇÃO DOS SENSORES (CCK90)
-# =========================================================================
-horarios_eixo = pd.date_range(start='2026-06-29 08:00', periods=10, freq='15min')
-ultimo_horario_dt = horarios_eixo[-1]
-horario_formatado = ultimo_horario_dt.strftime('%H:%M')
-
-valores_potencia = [45.2, 46.1, 44.8, 45.5, 47.2, 45.0, 44.2, 45.9, 45.1, 45.3]
-valores_fp = [0.92, 0.92, 0.91, 0.91, 0.92, 0.91, 0.92, 0.92, 0.92, 0.92]
-valores_corrente = [68.5, 69.8, 67.9, 68.9, 71.5, 68.2, 67.0, 69.5, 68.3, 68.6]
-valores_energia_kwh = [11.3, 11.5, 11.2, 11.4, 11.8, 11.2, 11.0, 11.5, 11.3, 11.3]
-valores_agua_m3 = [0.3, 0.4, 0.2, 0.5, 0.8, 0.4, 0.3, 0.6, 0.4, 0.4]
-
-potencia_instantanea = valores_potencia[-1]
-fp_instantaneo = valores_fp[-1]
-corrente_instantanea = valores_corrente[-1]
-fluxo_agua_instantaneo = 3.4 
-
-st.info(f"⏱️ **Última Atualização dos Sensores:** Medições registradas e consolidadas às **{horario_formatado}**.")
-
-# =========================================================================
-# 📈 CARTÕES DE MÉTRICAS (AUMENTADOS)
-# =========================================================================
-st.markdown("### ") # Dá um espaço vertical
-col1, col2, col3, col4 = st.columns(4)
-with col1:
-    st.metric(label="Potência Ativa Atual", value=f"{potencia_instantanea} kW", delta="+0.2 kW")
-with col2:
-    st.metric(label="Fator de Potência Médio", value=f"{fp_instantaneo} cos φ", delta="⚡ Dentro do Limite")
-with col3:
-    st.metric(label="Corrente Instantânea", value=f"{corrente_instantanea} A", delta="Estável")
-with col4:
-    st.metric(label="Fluxo de Água Atual", value=f"{fluxo_agua_instantaneo} m³/h", delta="-0.2 m³/h (Economia)")
+st.subheader("Parâmetros Elétricos (Potência, Corrente, Fator de Potência)")
+# Seu gráfico de linha de energia original entra aqui (ocupando a largura total)
 
 st.markdown("---")
 
-# =========================================================================
-# ⚡ SEÇÃO 1: ACOMPANHAMENTO DA GRANDEZA SELECIONADA (LINHA)
-# =========================================================================
-st.markdown("### ⚡ 1. Acompanhamento de Grandezas Elétricas (Instantâneas)")
+# Filtros de Energia
+st.subheader("Consumo de Energia por Período")
+col_eng_data1, col_eng_data2 = st.columns(2)
 
-config_grandezas = {
-    "Potência Ativa (kW)": {"titulo_y": "Potência Ativa (kW)", "valores": valores_potencia},
-    "Potência Aparente (kVA)": {"titulo_y": "Potência Aparente (kVA)", "valores": [49.1, 50.2, 48.9, 49.6, 51.3, 49.0, 48.1, 49.9, 49.0, 49.2]},
-    "Fator de Potência": {"titulo_y": "Fator de Potência (cos φ)", "valores": valores_fp},
-    "Corrente (A)": {"titulo_y": "Corrente Nominal (A)", "valores": valores_corrente}
-}
+with col_eng_data1:
+    data_ini_eng = st.date_input("Data Inicial (Energia)", datetime.date(2026, 6, 22), key="ini_eng")
 
+with col_eng_data2:
+    data_fim_eng = st.date_input("Data Final (Energia)", datetime.date(2026, 6, 29), key="fim_eng")
+
+st.write("**Consumo Integrado (15 min):**")
+
+# Caixa suspensa oficial de grandezas elétricas
 grandeza_selecionada = st.selectbox(
     "Selecione a grandeza elétrica para o gráfico:",
-    list(config_grandezas.keys())
+    [
+        "Potência Ativa (kW)", 
+        "Corrente (A)", 
+        "Fator de Potência", 
+        "Demanda (kW)", 
+        "Potência Reativa (kVAR)"
+    ],
+    key="selectbox_grandeza_energia"
 )
 
-dados_grandeza = config_grandezas[grandeza_selecionada]
-dados_eletricos = pd.DataFrame({'Tempo': horarios_eixo, 'Valor': dados_grandeza["valores"]})
+# Lógica que associa a escolha da caixa suspensa aos dados correspondentes
+if grandeza_selecionada == "Potência Ativa (kW)":
+    valores_grafico = np.random.uniform(45, 60, pontos)
+    nome_legenda = "Potência (kW)"
+elif grandeza_selecionada == "Corrente (A)":
+    valores_grafico = valores_corrente
+    nome_legenda = "Corrente (A)"
+elif grandeza_selecionada == "Fator de Potência":
+    valores_grafico = valores_fp
+    nome_legenda = "Fator de Potência"
+elif grandeza_selecionada == "Demanda (kW)":
+    valores_grafico = valores_demanda
+    nome_legenda = "Demanda (kW)"
+else:
+    valores_grafico = valores_reativa
+    nome_legenda = "Potência Reativa (kVAR)"
 
-# Aumentamos a altura (height) de 280 para 380 para dar mais presença na tela
-grafico_eletrico = alt.Chart(dados_eletricos).mark_line(color='#1f77b4', point=True).encode(
-    x=alt.X('Tempo:T', title='Horário da Leitura', axis=alt.Axis(format='%H:%M', values=list(dados_eletricos['Tempo']))),
-    y=alt.Y('Valor:Q', title=dados_grandeza["titulo_y"], scale=alt.Scale(zero=False)),
-    tooltip=[alt.Tooltip('Tempo:T', format='%H:%M', title='Horário'), alt.Tooltip('Valor:Q', title=grandeza_selecionada)]
-).properties(height=380)
+# RESTAURADO: Gráfico de colunas (barras) laranjas para Energia
+fig_colunas_energia = go.Figure()
 
-st.altair_chart(grafico_eletrico, use_container_width=True)
+fig_colunas_energia.add_trace(go.Bar(
+    x=datas_simuladas[-pontos:], 
+    y=valores_grafico,
+    name=nome_legenda,
+    marker_color="#FF4B4B"
+))
+
+fig_colunas_energia.update_layout(
+    margin=dict(l=20, r=20, t=10, b=10),
+    hovermode="x unified",
+    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+    height=320
+)
+st.plotly_chart(fig_colunas_energia, use_container_width=True)
+
+
+# ==============================================================================
+# ↕️ BLOCO DE ESPAÇAMENTO HTML AMPLIAÇÃO (ENTRE AS DUAS SEÇÕES)
+# ==============================================================================
+st.markdown("<br><br><br><br><br><br>", unsafe_allow_html=True) 
+
+
+# ==============================================================================
+# 💧 SEÇÃO 2: MONITORAMENTO DE ÁGUA (VERTICAL)
+# ==============================================================================
+st.header("💧 Monitoramento de Água")
+
+st.subheader("Vazão e Parâmetros Hidráulicos")
 
 st.markdown("---")
 
-# =========================================================================
-# 📊 SEÇÃO 2: CONSUMO ACUMULADO POR PERÍODO (RODAPÉ)
-# =========================================================================
-st.markdown("### 📊 2. Consumo Acumulado por Período de Medição (15 Minutos)")
-col_esq, col_dir = st.columns(2)
+# Filtros de Água
+st.subheader("Consumo de Água por Período")
+col_agua_data1, col_agua_data2 = st.columns(2)
 
-with col_esq:
-    st.markdown("#### 🔌 Consumo de Energia Ativa (kWh)")
-    dados_energia_periodo = pd.DataFrame({'Tempo': horarios_eixo, 'Consumo': valores_energia_kwh})
-    # Aumentamos a altura de 250 para 320
-    grafico_energia_barra = alt.Chart(dados_energia_periodo).mark_bar(color='#F59E0B', cornerRadiusTopLeft=3, cornerRadiusTopRight=3).encode(
-        x=alt.X('Tempo:T', title='Período', axis=alt.Axis(format='%H:%M', values=list(dados_energia_periodo['Tempo']))),
-        y=alt.Y('Consumo:Q', title='Energia Consumida (kWh)'),
-        tooltip=[alt.Tooltip('Tempo:T', format='%H:%M', title='Período'), alt.Tooltip('Consumo:Q', title='Energia (kWh)')]
-    ).properties(height=320)
-    st.altair_chart(grafico_energia_barra, use_container_width=True)
+with col_agua_data1:
+    data_ini_agua = st.date_input("Data Inicial (Água)", datetime.date(2026, 6, 22), key="ini_agua")
 
-with col_dir:
-    st.markdown("#### 💧 Consumo de Volume Hídrico (m³)")
-    dados_agua_periodo = pd.DataFrame({'Tempo': horarios_eixo, 'Consumo': valores_agua_m3})
-    # Aumentamos a altura de 250 para 320
-    grafico_agua_barra = alt.Chart(dados_agua_periodo).mark_bar(color='#2563EB', cornerRadiusTopLeft=3, cornerRadiusTopRight=3).encode(
-        x=alt.X('Tempo:T', title='Período', axis=alt.Axis(format='%H:%M', values=list(dados_agua_periodo['Tempo']))),
-        y=alt.Y('Consumo:Q', title='Volume Consumido (m³)'),
-        tooltip=[alt.Tooltip('Tempo:T', format='%H:%M', title='Período'), alt.Tooltip('Consumo:Q', title='Volume (m³)')]
-    ).properties(height=320)
-    st.altair_chart(grafico_agua_barra, use_container_width=True)
+with col_agua_data2:
+    data_fim_agua = st.date_input("Data Final (Água)", datetime.date(2026, 6, 29), key="fim_agua")
+
+st.write("**Consumo Integrado (15 min):**")
+
+# Lógica estritamente crescente mantida para o hidrômetro de água
+consumos_pulso_agua = np.random.uniform(0.1, 0.5, pontos)
+valores_crescentes_agua = np.cumsum(consumos_pulso_agua) + 20.0
+
+# MODIFICADO: Gráfico de ÁREA preenchida azul e crescente para Água
+fig_area_agua = go.Figure()
+
+fig_area_agua.add_trace(go.Scatter(
+    x=datas_simuladas[-pontos:], 
+    y=valores_crescentes_agua, 
+    name="Volume Acumulado (m³)",
+    mode='lines',                     # Desenha a linha
+    fill='tozeroy',                    # Preenche até o eixo zero
+    line=dict(color="#00a3e0", width=2), # Linha do topo em azul
+    fillcolor="rgba(0, 163, 224, 0.4)" # Área preenchida com azul translúcido
+))
+
+fig_area_agua.update_layout(
+    margin=dict(l=20, r=20, t=10, b=10),
+    hovermode="x unified",
+    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+    height=300
+)
+st.plotly_chart(fig_area_agua, use_container_width=True)
