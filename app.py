@@ -5,9 +5,14 @@ st.set_page_config(page_title="RB Consultoria", page_icon="🏢", layout="center
 
 # Estilização CSS de Alto Padrão - Cores corporativas, sombras reais e card destacado
 st.markdown("""
-    <style>
-    /* 1. Força a imagem de Gêmeos Digitais no elemento raiz absoluto */
-    .stApp, div[data-testid="stAppViewContainer"], div[data-testid="stApp"] {
+      /* 1. Remove qualquer cor de fundo nativa das estruturas do Streamlit */
+    .stApp, div[data-testid="stAppViewContainer"], div[data-testid="stAppViewBlockContainer"], .main, .stMainBlockContainer {
+        background-color: transparent !important;
+        background: transparent !important;
+    }
+    
+    /* 2. Cria um plano de fundo absoluto e fixo em uma camada inferior */
+    body {
         background-image: linear-gradient(rgba(10, 20, 40, 0.8), rgba(10, 20, 40, 0.9)), 
                           url('https://unsplash.com') !important;
         background-size: cover !important;
@@ -15,11 +20,7 @@ st.markdown("""
         background-repeat: no-repeat !important;
         background-attachment: fixed !important;
     }
-    
-    /* 2. Força os blocos intermediários do Streamlit a ficarem transparentes */
-    div[data-testid="stAppViewBlockContainer"], .main, .stMainBlockContainer {
-        background-color: transparent !important;
-    }
+
     
     /* Esconde elementos nativos do Streamlit */
     [data-testid="stHeader"] { background: transparent !important; }
