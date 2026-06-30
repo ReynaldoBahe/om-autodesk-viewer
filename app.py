@@ -3,17 +3,31 @@ import streamlit as st
 # 1. Configuração da página (Centralizada para o card flutuar perfeitamente)
 st.set_page_config(page_title="RB Consultoria", page_icon="🏢", layout="centered")
 
-# Estilização CSS de Alto Padrão - Cores corporativas, sombras reais e card destacado
+# 🔐 INJEÇÃO ABSOLUTA DA IMAGEM DE FUNDO (Gêmeos Digitais) VIA HTML COMPONENT
+# Cria uma camada de fundo fixa atrás de todo o ecossistema do Streamlit
+st.components.v1.html("""
+    <div style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: -9999;
+        background-image: linear-gradient(rgba(10, 20, 40, 0.75), rgba(10, 20, 40, 0.85)), 
+                          url('https://unsplash.com');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+    "></div>
+""", height=0, width=0)
+
+# Estilização CSS para forçar transparências e formatar o card de login
 st.markdown("""
     <style>
-    /* 1. Força a imagem de Gêmeos Digitais no elemento raiz absoluto */
+    /* Força todas as camadas do Streamlit a ficarem transparentes para revelar o HTML abaixo */
     .stApp, div[data-testid="stAppViewContainer"], div[data-testid="stAppViewBlockContainer"], .main, .stMainBlockContainer {
-        background-image: linear-gradient(rgba(10, 20, 40, 0.8), rgba(10, 20, 40, 0.9)), 
-                          url('https://unsplash.com') !important;
-        background-size: cover !important;
-        background-position: center !important;
-        background-repeat: no-repeat !important;
-        background-attachment: fixed !important;
+        background-color: transparent !important;
+        background: transparent !important;
     }
     
     /* Esconde elementos nativos do Streamlit */
@@ -44,12 +58,8 @@ st.markdown("""
         background-color: #f9fafb !important;
         color: #111827 !important;
     }
-    .stTextInput > div > div > input:focus {
-        border-color: #1e3a8a !important;
-        box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.15) !important;
-    }
     
-    /* Botão de Login Azul Safira com efeito de clique */
+    /* Botão de Login Azul Safira */
     div.stFormSubmitButton > button {
         background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%) !important;
         color: #ffffff !important;
@@ -61,12 +71,6 @@ st.markdown("""
         font-size: 16px !important;
         margin-top: 10px !important;
         box-shadow: 0 4px 10px rgba(30, 58, 138, 0.3) !important;
-        transition: all 0.2s ease-in-out;
-    }
-    div.stFormSubmitButton > button:hover {
-        transform: translateY(-1px) !important;
-        box-shadow: 0 6px 15px rgba(30, 58, 138, 0.4) !important;
-        background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%) !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -101,7 +105,6 @@ if not st.session_state.logged_in:
     # Formulário de Credenciais Premium
     with st.form("menu_login_premium"):
         
-        # Cabeçalho integrado dentro do card branco
         st.markdown("""
             <div style='text-align: center; margin-bottom: 20px;'>
                 <h1 style='color: #1e3a8a; font-size: 32px; font-weight: 800; margin-bottom: 2px; letter-spacing: 0.5px;'>RB CONSULTORIA</h1>
@@ -110,7 +113,6 @@ if not st.session_state.logged_in:
             </div>
         """, unsafe_allow_html=True)
         
-        # Inputs de dados
         usuario = st.text_input("👤 Usuário Corporativo", placeholder="Ex: admin")
         senha = st.text_input("🔑 Senha de Acesso", type="password", placeholder="Digite sua senha")
         lembrar = st.checkbox("Manter conectado neste dispositivo")
@@ -132,10 +134,8 @@ if not st.session_state.logged_in:
             st.error("❌ Credenciais inválidas. Tente novamente.")
 
 else:
-    # Se já estiver logado, executa a aplicação padrão
     pg.run()
     
-    # Adiciona botão de Logout na barra lateral pós-login
     with st.sidebar:
         st.markdown("---")
         if st.button("Sair da Conta", use_container_width=True):
