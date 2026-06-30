@@ -1,4 +1,7 @@
 import streamlit as st
+
+st.set_page_config(page_title="Telemetria - RB Consultoria", page_icon="⚡", layout="wide")
+
 import datetime
 import pandas as pd
 import numpy as np
