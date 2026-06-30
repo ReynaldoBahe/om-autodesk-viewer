@@ -57,7 +57,7 @@ if not st.session_state.logged_in:
             background: transparent !important;
         }
         [data-testid="stHeader"] { background: transparent !important; }
-        .block-container { padding-top: 4rem !important; max-width: 480px !important; }
+             .block-container { padding-top: 4rem !important; max-width: 620px !important; }
         
         /* Formatação do Card Branco */
         div[data-testid="stForm"] {
