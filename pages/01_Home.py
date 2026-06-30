@@ -1,5 +1,8 @@
 import streamlit as st
 
+st.set_page_config(page_title="Home - RB Consultoria", page_icon="🏠", layout="wide")
+
+
 # =========================================================================
 # 🔒 TRAVA DE SEGURANÇA (Primeira linha obrigatória do arquivo)
 # =========================================================================
