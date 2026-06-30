@@ -8,12 +8,14 @@ EMPREENDIMENTOS = {
     "Resort Boa Viagem": {
         "speckle_url": r"https://speckle.systems",
         "nome_exibicao": "Resort Boa Viagem - Complexo Hoteleiro",
-        "arquivo_cmms": "CMMS_Export_RB - CMMS_RB.csv"
+        "arquivo_cmms": "CMMS_Export_RB - CMMS_RB.csv",
+        "stream_id": "fe9477b83d"  # <--- ID do modelo 3D do Resort
     },
     "Hospital Central": {
         "speckle_url": r"https://speckle.systems",
         "nome_exibicao": "Hospital Central - Centro Médico Operacional",
-        "arquivo_cmms": "CMMS_Export_Hospital.csv - CMMS_RB.csv"
+        "arquivo_cmms": "CMMS_Export_Hospital.csv - CMMS_RB.csv",
+        "stream_id": "a3b2c1d4e5"  # <--- ID do modelo 3D do Hospital (coloque o ID real aqui)
     }
 }
 
@@ -109,8 +111,12 @@ if not df.empty:
 # =========================================================================
 st.markdown('<div class="card-home"><div class="card-home-title">Visualizador Operacional de Ativos 3D</div></div>', unsafe_allow_html=True)
 
-speckle_base_url = SPECKLE_STREAM_ID
-st.components.v1.html(f'<iframe src="{speckle_base_url}" width="100%" height="600" frameborder="0"></iframe>', height=602)
+    # Ajuste dinâmico da URL com o ID do modelo guardado no dicionário config
+    speckle_id = config.get("stream_id", "fe9477b83d") # Se não achar, usa o ID padrão do Resort
+    speckle_base_url = f"https://speckle.systems{speckle_id}"
+    
+    # Renderização segura do iframe 3D na tela
+    st.components.v1.html(f'<iframe src="{speckle_base_url}" width="100%" height="600" frameborder="0"></iframe>', height=602)
 
 # =========================================================================
 # 6. CENTRO DE DIAGNÓSTICO E ANALYTICS (IA MULTI-CLIENTE & FINANCEIRO)
