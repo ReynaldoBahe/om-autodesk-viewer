@@ -1,7 +1,7 @@
 import streamlit as st
 
-# 1. Configuração da página (DEVE SER A PRIMEIRA LINHA EXECUTÁVEL)
-st.set_page_config(page_title="Acesso ao Sistema", page_icon="🔒", layout="centered")
+# 1. Configuração da página (Deve ser a primeira linha)
+st.set_page_config(page_title="RB Consultoria", page_icon="🏢", layout="centered")
 
 # 2. Inicializa as variáveis de controle de login globais
 if "logged_in" not in st.session_state:
@@ -9,8 +9,31 @@ if "logged_in" not in st.session_state:
 if "cliente_ativo" not in st.session_state:
     st.session_state.cliente_ativo = ""
 
+# 3. Definição das Páginas do Sistema utilizando st.Page
+# O primeiro parâmetro é o caminho real do arquivo dentro da pasta 'pages/'
+pagina_login = st.Page("app.py", title="Acesso ao Sistema", icon="🔒", default=True)
+pagina_home = st.Page("pages/01_Home.py", title="Home", icon="🏠")
+pagina_engenharia = st.Page("pages/01_Modulos_de_Engenharia.py", title="Módulos de Engenharia", icon="⚙️")
+pagina_manutencao = st.Page("pages/02_Gestao_da_Manutencao.py", title="Gestão da Manutenção", icon="🛠️")
+pagina_indicadores = st.Page("pages/03_Indicadores_de_Tempo.py", title="Indicadores de Tempo", icon="📊")
+pagina_telemetria = st.Page("pages/04_Telemetria_em_Tempo_Real.py", title="Telemetria em Tempo Real", icon="⚡")
+
 # =========================================================================
-# TELA DE LOGIN (Caso o usuário NÃO esteja autenticado)
+# 🧭 GERENCIADOR DE NAVEGAÇÃO DINÂMICA
+# =========================================================================
+if st.session_state.logged_in:
+    # Se o usuário ESTIVER LOGADO, ele enxerga o menu completo
+    paginas_disponiveis = [pagina_home, pagina_engenharia, pagina_manutencao, pagina_indicadores, pagina_telemetria]
+else:
+    # Se o usuário NÃO ESTIVER LOGADO, a barra lateral mostra apenas a tela de Login
+    paginas_disponiveis = [pagina_login]
+
+# Inicializa a navegação oficial controlada pelo script
+pg = st.navigation(paginas_disponiveis)
+
+
+# =========================================================================
+# LÓGICA DE RENDERIZAÇÃO DAS TELAS
 # =========================================================================
 if not st.session_state.logged_in:
     
@@ -44,15 +67,6 @@ if not st.session_state.logged_in:
         else:
             st.error("❌ Usuário ou senha incorretos. Verifique suas credenciais.")
 
-# =========================================================================
-# TELA DE SUCESSO (Caso o usuário JÁ ESTEJA autenticado)
-# =========================================================================
 else:
-    st.success(f"✅ Login realizado com sucesso como {st.session_state.cliente_ativo}!")
-    st.markdown("### 🚀 O portal está liberado!")
-    st.write("Utilize o menu lateral esquerdo para navegar pelas páginas **Home** ou **Telemetria em Tempo Real**.")
-    st.balloons()
-    
-    if st.button("Sair da Conta"):
-        st.session_state.logged_in = False
-        st.rerun()
+    # Caso o usuário já esteja autenticado, executa a página selecionada no menu lateral
+    pg.run()
