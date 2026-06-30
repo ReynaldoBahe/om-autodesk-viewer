@@ -1,57 +1,46 @@
 import streamlit as st
 
-# 1. Configuração da página em modo AMPLO (Wide)
-st.set_page_config(page_title="RB Consultoria", page_icon="🏢", layout="wide")
+# 1. Configuração da página (Centralizada para o card flutuar no meio)
+st.set_page_config(page_title="RB Consultoria", page_icon="🏢", layout="centered")
 
-# Estilização CSS Avançada para Centralização e Alinhamento Perfeito
+# Estilização CSS Avançada: Imagem de Fundo Completa e Card Flutuante
 st.markdown("""
     <style>
-    /* Ajustes globais de espaçamento */
-    .block-container { padding-top: 5rem !important; padding-bottom: 2rem !important; max-width: 1200px !important; }
+    /* Injeta a imagem industrial no fundo da tela inteira */
+    .stApp {
+        background-image: linear-gradient(rgba(14, 30, 56, 0.45), rgba(14, 30, 56, 0.45)), 
+                          url('https://unsplash.com');
+        background-size: cover !important;
+        background-position: center !important;
+        background-repeat: no-repeat !important;
+        background-attachment: fixed !important;
+    }
+    
+    /* Remove cabeçalhos e paddings do Streamlit para focar no login */
     [data-testid="stHeader"] { background: transparent !important; }
+    .block-container { padding-top: 6rem !important; max-width: 460px !important; }
     
-    /* Container Flex para igualar as alturas das colunas */
-    [data-testid="stHorizontalBlock"] {
-        display: flex;
-        align-items: stretch;
+    /* Customização interna dos inputs do formulário */
+    .stTextInput > div > div > input {
+        border-radius: 8px !important;
+        padding: 10px !important;
     }
     
-    /* Banner da Esquerda Premium */
-    .banner-esquerda {
-        background: linear-gradient(135deg, #0e1e38 0%, #1a365d 100%);
-        color: #ffffff;
-        padding: 45px;
-        border-radius: 16px;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-    }
-    
-    /* Card de Login Integrado (Ajustado) */
-    .card-login-container {
-        background-color: #ffffff;
-        padding: 40px;
-        border-radius: 16px;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.04);
-        height: 100%;
-    }
-    
-    /* Customização do Botão de Login Nativo para cor Azul Corporativo */
+    /* Customização Premium do Botão de Login */
     div.stFormSubmitButton > button {
-        background-color: #1a365d !important;
+        background: linear-gradient(135deg, #1a365d 0%, #2a4365 100%) !important;
         color: white !important;
         font-weight: 600 !important;
         border-radius: 8px !important;
         border: none !important;
-        padding: 10px 0px !important;
+        padding: 12px 0px !important;
+        font-size: 16px !important;
+        box-shadow: 0 4px 12px rgba(26, 54, 93, 0.3);
         transition: all 0.3s ease;
     }
     div.stFormSubmitButton > button:hover {
-        background-color: #2b5284 !important;
-        box-shadow: 0 4px 12px rgba(26, 54, 93, 0.2);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 15px rgba(26, 54, 93, 0.4);
     }
     </style>
 """, unsafe_allow_html=True)
@@ -83,44 +72,27 @@ pg = st.navigation(paginas_disponiveis)
 # =========================================================================
 if not st.session_state.logged_in:
     
-    # Divisão balanceada lado a lado (Proporção equilibrada 50/50)
-    col_logo, col_login = st.columns([1, 1], gap="large")
-    
-    # -----------------------------------------------------------------
-    # COLUNA DA ESQUERDA: Banner Corporativo Premium
-    # -----------------------------------------------------------------
-    with col_logo:
+    # Card Flutuante Centralizado contendo a marca e o formulário
+    # Ele usa a estrutura nativa de container em caixa do Streamlit para manter os inputs 100% integrados
+    with st.container(border=True):
+        
+        # Cabeçalho Interno do Card
         st.markdown("""
-            <div class="banner-esquerda">
-                <h1 style='font-size: 38px; font-weight: 800; margin-bottom: 10px; color: #fff; letter-spacing: 1px;'>RB CONSULTORIA</h1>
-                <h3 style='color: #63b3ed; font-weight: 400; margin-bottom: 25px; font-size: 22px;'>Gestão Estratégica de Ativos</h3>
-                <p style='font-size: 15px; line-height: 1.6; color: #e2e8f0; margin-bottom: 40px;'>
-                    Bem-vindo ao portal integrado de Engenharia e O&M. 
-                    Acesse para monitorar métricas operacionais, telemetria em tempo real 
-                    e diagnósticos prescritivos por Inteligência Preditiva.
-                </p>
-                <small style='color: #a0aec0; margin-top: auto;'>© 2026 RB Consultoria Engenharia.</small>
+            <div style='text-align: center; padding-bottom: 10px;'>
+                <h2 style='color: #1a365d; font-weight: 800; margin-bottom: 0px; letter-spacing: 1px;'>RB CONSULTORIA</h2>
+                <p style='color: #4a5568; font-size: 14px; font-weight: 500; margin-top: 5px;'>Gestão Estratégica de Ativos</p>
+                <hr style='margin-top: 15px; margin-bottom: 15px; border-color: #e2e8f0;'>
             </div>
         """, unsafe_allow_html=True)
         
-    # -----------------------------------------------------------------
-    # COLUNA DA DIREITA: Formulário Totalmente Integrado dentro do Card
-    # -----------------------------------------------------------------
-    with col_login:
-        # Abrimos a estrutura do card branco com HTML estilizado
-        st.markdown("""
-            <div class="card-login-container">
-                <h2 style='text-align: center; color: #1a202c; font-weight: 700; margin-bottom: 5px; font-size: 28px;'>Acesso ao Sistema</h2>
-                <p style='text-align: center; color: #718096; margin-bottom: 25px; font-size: 15px;'>Insira suas credenciais corporativas.</p>
-            </div>
-        """, unsafe_allow_html=True)
-        
-        # O formulário agora é renderizado logo após, mantendo os inputs integrados ao visual
-        with st.form("menu_login_unico"):
-            usuario = st.text_input("Usuário", placeholder="Digite seu usuário")
+        # Formulário de Credenciais perfeitamente envelopado
+        with st.form("menu_login_final"):
+            usuario = st.text_input("Usuário", placeholder="Digite seu usuário corporativo")
             senha = st.text_input("Senha", type="password", placeholder="Digite sua senha")
             lembrar = st.checkbox("Lembrar de mim")
-            botao_entrar = st.form_submit_button("Entrar no Portal", use_container_width=True)
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            botao_entrar = st.form_submit_button("Acessar Painel", use_container_width=True)
             
         if botao_entrar:
             usuarios_validos = {
@@ -140,7 +112,7 @@ else:
     # Se já estiver logado, renderiza a página ativa do menu lateral
     pg.run()
     
-    # Inclui o botão de Logout na barra lateral logada de forma fixa
+    # Inclui o botão de Logout na barra lateral logada
     with st.sidebar:
         st.markdown("---")
         if st.button("Sair da Conta", use_container_width=True):
