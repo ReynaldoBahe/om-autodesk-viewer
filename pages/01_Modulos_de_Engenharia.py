@@ -10,8 +10,8 @@ st.set_page_config(
 )
 
 # 🔐 TRAVA DE SEGURANÇA
-if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
-    st.error("Acesso negado. Por favor, faca o login na pagina inicial.")
+if "logged_in" not in st.session_state or not st.session_state["logged_in"]:
+    st.error("Acesso negado. Por favor, faça o login na página inicial.")
     st.stop()
 
 # Estilização CSS para garantir a harmonia visual, tamanho do visualizador e design dos cards de IA
