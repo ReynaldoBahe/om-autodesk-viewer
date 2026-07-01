@@ -31,6 +31,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # 2. Layout de Tela: Barra Lateral (Métricas Operacionais)
+# 2. Layout de Tela: Barra Lateral (Métricas Operacionais)
 with st.sidebar:
     st.title("Painel de Controle")
     st.markdown("---")
@@ -40,10 +41,10 @@ with st.sidebar:
     
     st.markdown("---")
     
-    # Placeholders para evitar erros de inicialização
+    # Inicialização global das variáveis para evitar escopo local isolado
     df_exibicao = pd.DataFrame()
-    contagem_status = {"Aberta": 0, "Fechado": 0, "Em Atendimento": 0, "Pausada": 0}
     lista_os_selecao = ["Nenhuma OS selecionada"]
+    contagem_status = {"Aberta": 0, "Em Atendimento": 0, "Pausada": 0, "Fechado": 0}
     
     if arquivo_upload is not None:
         try:
@@ -60,6 +61,12 @@ with st.sidebar:
             # Base de cálculo estrita: Mês de Junho/2026
             df_mes = df_os[df_os['Data_Abertura'].dt.strftime('%Y-%m') == '2026-06']
             
+            # --- ATUALIZAÇÃO DIRETA NO ESCOPO GLOBAL DO DICIONÁRIO ---
+            contagem_status["Aberta"] = len(df_mes[df_mes['Status'].str.lower() == 'aberta'])
+            contagem_status["Em Atendimento"] = len(df_mes[df_mes['Status'].str.lower() == 'em atendimento'])
+            contagem_status["Pausada"] = len(df_mes[df_mes['Status'].str.lower() == 'pausado'])
+            contagem_status["Fechado"] = len(df_mes[df_mes['Status'].str.lower() == 'fechado'])
+            
             st.subheader("Filtros de Visão")
             lista_setores = ["Todos"] + sorted(list(df_mes['Setor'].unique()))
             setor_selecionado = st.selectbox("Filtrar por Setor:", lista_setores)
@@ -74,19 +81,15 @@ with st.sidebar:
             if status_selecionado != "Todos":
                 df_exibicao = df_exibicao[df_exibicao['Status'] == status_selecionado]
             
-            # Lista de OS para o seletor da IA
+            # Lista de OS para o seletor da IA baseada no filtro ativo
             lista_os_selecao = sorted(list(df_exibicao['OS'].unique()))
-            
-            # Mapeamento e contagem estrita dos status
-            for status_chave in contagem_status.keys():
-                contagem_status[status_chave] = len(df_exibicao[df_exibicao['Status'] == status_chave])
             
             st.markdown("---")
             st.subheader("Métricas de Manutenção")
             
             total_abertas_mes = len(df_mes)
             if total_abertas_mes > 0:
-                total_fechadas_filtradas = len(df_exibicao[df_exibicao['Status'] == 'Fechado'])
+                total_fechadas_filtradas = len(df_mes[df_mes['Status'].str.lower() == 'fechado'])
                 sla_calculado = round((total_fechadas_filtradas / total_abertas_mes) * 100, 1)
                 
                 st.metric(
@@ -95,9 +98,11 @@ with st.sidebar:
                     delta=f"{round(sla_calculado - 95.0, 1)}% em relação à meta",
                     delta_color="normal" if sla_calculado >= 95 else "inverse"
                 )
-            
         except Exception as e:
             st.error(f"Erro ao processar as colunas: {e}")
+    else:
+        st.warning("Aguardando upload da planilha...")
+        st.metric(label="SLA de Atendimento (Meta: 95%)", value="-- %", delta="Sem dados")
     else:
         st.warning("Aguardando upload da planilha...")
         st.metric(label="SLA de Atendimento (Meta: 95%)", value="-- %", delta="Sem dados")
