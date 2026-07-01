@@ -97,7 +97,7 @@ if arquivo_upload is not None:
     except Exception as e:
         st.error(f"Erro ao processar as colunas: {e}")
 else:
-    # Caso não tenha arquivo na sidebar, exibe um container gigante de atenção no centro da tela
+    # Caso não tenha arquivo na sidebar, exibe um container de atenção no centro da tela
     st.info("👋 Bem-vindo! Para iniciar a auditoria de confiabilidade, carregue sua planilha CMMS utilizando o botão na barra lateral ou o campo abaixo.")
     arquivo_upload = st.file_uploader("📥 Carregar Planilha CMMS (.csv)", type=["csv"], key="uploader_central_reserva")
     if arquivo_upload is not None:
@@ -167,7 +167,7 @@ if arquivo_upload is not None and not df_exibicao.empty:
         st.markdown("**🔎 Seleção de Ativo para Auditoria**")
         os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os_selecao, key="seletor_ia_final_limpo")
         
-        # Linha extraída do dataframe filtrado
+        # Correção aqui: adicionado o colchete definitivo [0] ao final do .iloc
         linha_os = df_exibicao[df_exibicao['OS'] == os_selecionada].iloc[0]
         
         id_coluna_b = str(linha_os.get('ID', '')).strip().lower()
@@ -207,5 +207,3 @@ if arquivo_upload is not None and not df_exibicao.empty:
         * 🆔 **ID do Objeto 3D:** `{id_coluna_b}`
         """)
         
-    with col_diag:
-
