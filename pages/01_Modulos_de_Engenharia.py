@@ -45,7 +45,7 @@ with st.sidebar:
     lista_os_selecao = ["Nenhuma OS selecionada"]
     contagem_status = {"Aberta": 0, "Em Atendimento": 0, "Pausada": 0, "Fechado": 0}
     
-    if arquivo_upload is not None:
+       if arquivo_upload is not None:
         try:
             # Lendo a planilha carregada pelo usuário
             df_os = pd.read_csv(arquivo_upload)
@@ -66,14 +66,14 @@ with st.sidebar:
             contagem_status["Pausada"] = len(df_mes[df_mes['Status'].str.lower() == 'pausado'])
             contagem_status["Fechado"] = len(df_mes[df_mes['Status'].str.lower() == 'fechado'])
             
-                       setores_validos = df_mes['Setor'].dropna().astype(str).unique()
+            st.subheader("Filtros de Visão")
+            setores_validos = df_mes['Setor'].dropna().astype(str).unique()
             lista_setores = ["Todos"] + sorted(list(setores_validos))
             setor_selecionado = st.selectbox("Filtrar por Setor:", lista_setores)
             
             status_validos = df_mes['Status'].dropna().astype(str).unique()
             lista_status = ["Todos"] + sorted(list(status_validos))
             status_selecionado = st.selectbox("Filtrar por Status:", lista_status)
-
             
             # Aplicando os filtros na tabela de exibição
             df_exibicao = df_mes.copy()
@@ -101,6 +101,9 @@ with st.sidebar:
                 )
         except Exception as e:
             st.error(f"Erro ao processar as colunas: {e}")
+    else:
+        st.warning("Aguardando upload da planilha...")
+        st.metric(label="SLA de Atendimento (Meta: 95%)", value="-- %", delta="Sem dados")
     else:
         st.warning("Aguardando upload da planilha...")
         st.metric(label="SLA de Atendimento (Meta: 95%)", value="-- %", delta="Sem dados")
