@@ -178,14 +178,14 @@ if arquivo_upload is not None and not df_exibicao.empty:
         df_filtrado_os = df_exibicao[df_exibicao['OS'] == os_selecionada]
         
         if not df_filtrado_os.empty:
+            # Extração segura e limpa usando .values[0] para evitar colchetes de lista
             id_bim = str(df_filtrado_os['ID'].values[0])
             responsavel_tecnico = str(df_filtrado_os['Responsavel'].values[0])
             setor_ativo = str(df_filtrado_os['Setor'].values[0])
             status_ativo = str(df_filtrado_os['Status'].values[0])
+            
             descricao_falha = str(df_filtrado_os['Sintoma_detalhado'].values[0]) if 'Sintoma_detalhado' in df_filtrado_os.columns else str(df_filtrado_os['Descrição'].values[0])
             link_manual = str(df_filtrado_os['link_manual_tecnico'].values[0]) if 'link_manual_tecnico' in df_filtrado_os.columns else "https://github.com"
             pecas_subst = str(df_filtrado_os['Pecas_substituidas'].values[0]) if 'Pecas_substituidas' in df_filtrado_os.columns else "Não especificado"
             custo_mat = str(df_filtrado_os['Custo_Material'].values[0]) if 'Custo_Material' in df_filtrado_os.columns else "0.00"
             causa_raiz_txt = str(df_filtrado_os['Causa_Raiz'].values[0]) if 'Causa_Raiz' in df_filtrado_os.columns else "Não catalogada"
-            data_fechamento_txt = str(df_filtrado_os['Data_Fechamento'].values[0]) if 'Data_Fechamento' in df_filtrado_os.columns else ""
-            
