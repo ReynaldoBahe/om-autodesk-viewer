@@ -67,7 +67,7 @@ with st.sidebar:
             df_mes = df_os[df_os['Data_Abertura'].dt.strftime('%Y-%m') == '2026-06']
             
             # =========================================================================
-            # 🔄 CONVERSOR DE DADOS DA PLANILHA (Mapeamento para Visitas)
+            # 🔄 PADRONIZAÇÃO DE TERMOS DA PLANILHA (Mapeamento limpo para os KPIs)
             # =========================================================================
             df_mes['Status'] = df_mes['Status'].replace({
                 'Pausado': 'Pausada',
@@ -178,7 +178,7 @@ if arquivo_upload is not None and not df_exibicao.empty:
         df_filtrado_os = df_exibicao[df_exibicao['OS'] == os_selecionada]
         
         if not df_filtrado_os.empty:
-            # Extração segura e limpa usando .values[0] para evitar colchetes de lista
+            # 🌟 EXTRAÇÃO COM: Remove definitivamente os colchetes de lista e limpa o texto!
             id_bim = str(df_filtrado_os['ID'].values[0])
             responsavel_tecnico = str(df_filtrado_os['Responsavel'].values[0])
             setor_ativo = str(df_filtrado_os['Setor'].values[0])
@@ -189,3 +189,4 @@ if arquivo_upload is not None and not df_exibicao.empty:
             pecas_subst = str(df_filtrado_os['Pecas_substituidas'].values[0]) if 'Pecas_substituidas' in df_filtrado_os.columns else "Não especificado"
             custo_mat = str(df_filtrado_os['Custo_Material'].values[0]) if 'Custo_Material' in df_filtrado_os.columns else "0.00"
             causa_raiz_txt = str(df_filtrado_os['Causa_Raiz'].values[0]) if 'Causa_Raiz' in df_filtrado_os.columns else "Não catalogada"
+            
