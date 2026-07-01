@@ -16,10 +16,13 @@ pagina_engenharia = st.Page("pages/01_Modulos_de_Engenharia.py", title="Módulos
 pagina_manutencao = st.Page("pages/02_Gestao_da_Manutencao.py", title="Gestão da Manutenção", icon="🛠️")
 pagina_indicadores = st.Page("pages/03_Indicadores_de_Tempo.py", title="Indicadores de Tempo", icon="📊")
 pagina_telemetria = st.Page("pages/04_Telemetria_em_Tempo_Real.py", title="Telemetria em Tempo Real", icon="⚡")
+pagina_tour = st.Page("pages/05_Tour_Virtual.py", title="Tour Virtual", icon="📸")
+pagina_cmms = st.Page("pages/06_Portal_CMMS.py", title="Portal CMMS", icon="🛠️")
 
-# Gerenciador de Navegação Dinâmica (Esconde o menu lateral antes do login)
+    # Gerenciador de Navegação Dinâmica (Esconde o menu lateral antes do login)
 if st.session_state.logged_in:
-    paginas_disponiveis = [pagina_home, pagina_engenharia, pagina_manutencao, pagina_indicadores, pagina_telemetria]
+            paginas_disponiveis = [pagina_home, pagina_engenharia, pagina_manutencao, pagina_indicadores, pagina_telemetria, pagina_tour, pagina_cmms]
+
 else:
     paginas_disponiveis = [pagina_login]
 
