@@ -162,7 +162,7 @@ if arquivo_upload is not None and not df_exibicao.empty:
     
     with col_sel:
         st.markdown("**🔎 Seleção de Ativo para Auditoria**")
-        os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os_selecao, key="seletor_ia_unico")
+        os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os_selecao, key="seletor_ia_final_limpo")
         
         linha_os = df_exibicao[df_exibicao['OS'] == os_selecionada].iloc[0]
         
@@ -189,18 +189,18 @@ if arquivo_upload is not None and not df_exibicao.empty:
         st.markdown("**⚡ Análise de Engenharia Operacional da IA**")
         status_normalizado = str(linha_os['Status']).strip().lower()
         
-        # CASO 1: ORDEM ABERTA (CONEXÃO REAL E DINÂMICA COM O GEMINI)
         if status_normalizado == 'aberta':
             with st.spinner("IA analisando parâmetros do modelo Speckle..."):
                 try:
                     import google.generativeai as generativeai
                     
+                    # Captura a chave de API independente de maiúsculas/minúsculas nos Secrets
                     api_key_real = st.secrets.get("GEMINI_API_KEY", st.secrets.get("gemini_api_key", None))
                     
-                    if not api_key_real:
-                        st.error("Configuração ausente: Chave GEMINI_API_KEY não localizada nos Secrets.")
+                    if not api_key_real or "AQ" not in str(api_key_real):
+                        st.warning("Aguardando sincronização final da chave de segurança nos Secrets.")
                     else:
-                        generativeai.configure(api_key=api_key_real)
+                        generativeai.configure(api_key=str(api_key_real).strip())
                         model = generativeai.GenerativeModel('gemini-1.5-flash')
                         
                         prompt_dinamico = f"""
@@ -213,7 +213,7 @@ if arquivo_upload is not None and not df_exibicao.empty:
                         
                         Escreva uma análise de causa raiz curta para esse componente ({modelo}) e um plano de ação passo a passo de campo.
                         Retorne o texto formatado estritamente dentro desta estrutura de tags HTML:
-                        <h4>⚠️ DIAGNÓSTICO PRESCRITIVO: [Título do Diagnóstico]</h4>
+                        <h4>⚠️ DIAGNÓSTICO PRESCRITIVO: [Título]</h4>
                         <p><b>Análise Causa Raiz:</b> [Explicação técnica curta]</p>
                         <hr>
                         <p><b>🔧 Direcionamento e Plano de Ação Real ({fabricante}):</b></p>
@@ -228,7 +228,7 @@ if arquivo_upload is not None and not df_exibicao.empty:
                         resposta = model.generate_content(prompt_dinamico)
                         st.markdown(f'<div class="card-ia">{resposta.text}</div>', unsafe_allow_html=True)
                 except Exception as erro_ia:
-                    st.error(f"Falha operacional ao processar inteligência artificial: {erro_ia}")
+                    st.error(f"Erro ao processar chamada com o modelo Gemini: {erro_ia}")
             
         elif status_normalizado == 'em atendimento':
             st.markdown(f"""
