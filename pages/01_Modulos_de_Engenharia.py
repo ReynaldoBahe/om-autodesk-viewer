@@ -153,9 +153,13 @@ def extrair_dados_reais_speckle(object_id):
             fabricante = propriedades.get("family", "Fabricante Padrão")
             modelo = propriedades.get("type", "Modelo Geral")
             
-            except:
+        return equipamento, fabricante, modelo
+    except:
         return "Ativo em Auditoria", "Fabricante Padrão", "Modelo de Engenharia"
 
+# =========================================================================
+# 6. RENDERIZAÇÃO DAS COLUNAS DE SELEÇÃO E DIAGNÓSTICO DA IA
+# =========================================================================
 if arquivo_upload is not None and not df_exibicao.empty:
     col_sel, col_diag = st.columns(2)
     
@@ -163,6 +167,7 @@ if arquivo_upload is not None and not df_exibicao.empty:
         st.markdown("**🔎 Seleção de Ativo para Auditoria**")
         os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os_selecao, key="seletor_ia_final_limpo")
         
+        # Captura a linha da OS selecionada adicionando o índice correto
         linha_os = df_exibicao[df_exibicao['OS'] == os_selecionada].iloc[0]
         
         id_coluna_b = str(linha_os.get('ID', '')).strip().lower()
@@ -173,14 +178,13 @@ if arquivo_upload is not None and not df_exibicao.empty:
         if modelo in ['nan', '']: modelo = "Modelo Geral"
 
         # --- CÁLCULO ESTATÍSTICO DE HISTÓRICO REAL EM TEMPO REAL ---
-        # Filtra o df_os completo (banco total) para capturar as recorrências passadas
         historico_ativo = df_os[df_os['ID'].astype(str).str.strip().str.lower() == id_coluna_b]
         total_recorrencias = len(historico_ativo)
         
         if total_recorrencias > 1:
             datas_quebras = sorted(pd.to_datetime(historico_ativo['Data_Abertura'], errors='coerce').dropna())
             if len(datas_quebras) > 1:
-                dias_totais = (datas_quebras[-1] - datas_quebras[0]).days
+                dias_totais = (datas_quebras[-1] - datas_quebras).days
                 mtbf_calculado = round(dias_totais / (total_recorrencias - 1), 1)
                 texto_mtbf = f"{mtbf_calculado} dias"
             else:
@@ -188,10 +192,13 @@ if arquivo_upload is not None and not df_exibicao.empty:
         else:
             texto_mtbf = "Sem falhas repetidas (Ativo estável)"
             
-        data_abertura_formatada = "N/A" if pd.isna(linha_os['Data_Abertura']) else linha_os['Data_Abertura'].strftime('%d/%m/%Y')
+        try:
+            data_abertura_formatada = "N/A" if pd.isna(linha_os['Data_Abertura']) else pd.to_datetime(linha_os['Data_Abertura']).strftime('%d/%m/%Y %H:%M')
+        except:
+            data_abertura_formatada = "N/A"
         
         st.info(f"""
-        **📋 Ficha Técnica do Ativo (Parâmetros Speckle/BIM)**
+        **📋 Ficha Técnica do Ativo (Engenharia de Confiabilidade)**
         * **Equipamento:** {equipamento}
         * **Fabricante:** {fabricante} | **Modelo:** {modelo}
         * **Status Atual:** {linha_os['Status']} | **Abertura:** {data_abertura_formatada}
@@ -204,103 +211,3 @@ if arquivo_upload is not None and not df_exibicao.empty:
         st.markdown("**⚡ Análise de Engenharia Operacional da IA**")
         status_normalizado = str(linha_os['Status']).strip().lower()
         
-        # CASO 1: ORDEM ABERTA (DIAGNÓSTICOS PRESCRITIVOS OPERACIONAIS RECONFIGURADOS)
-        if status_normalizado == 'aberta':
-            
-            # Se for a Tubulação de Incêndio do Speckle
-            if id_coluna_b == "4dc3484a7e8cefdfcd6108f0b06cb715":
-                st.markdown(f"""
-                <div class="card-ia" style="background-color: #fff0f0; border-left: 5px solid #d9534f;">
-                    <h4>⚠️ DIAGNÓSTICO PRESCRITIVO: Perda de Pressão na Rede de Incêndio (PPCI)</h4>
-                    <p><b>Análise Causa Raiz:</b> Com base na descrição <i>"{linha_os['Descrição']}"</i> e no cruzamento com os parâmetros do material <b>{modelo}</b>, o sistema aponta fadiga em juntas roscadas e acoplamentos no Bloco 1, gerando queda de pressão estática.</p>
-                    <hr>
-                    <p><b>🔧 Direcionamento e Plano de Ação Real (Segurança contra Incêndio):</b></p>
-                    <ol>
-                        <li>Isolar o trecho da prumada afetada fechando a válvula de gaveta supervisionada mais próxima.</li>
-                        <li>Realizar teste de estanqueidade localizada e inspection visual ao longo da linha de {modelo}.</li>
-                        <li>Substituir a seção danificada antes de pressurizar a linha com a bomba Jockey.</li>
-                    </ol>
-                    <small>🚒 <i>Nível de Criticidade: <span class="badge-alta" style="background-color: #ffb3b3; color: #b30000;">CRÍTICA</span> | MTTR estimado: 120 min.</i></small>
-                </div>
-                """, unsafe_allow_html=True)
-            
-            # Se for o Ar Condicionado Fujitsu do Speckle (Mecanismo Adaptativo de Histórico)
-            elif id_coluna_b == "540a5723a18454b4145959ce501469bc":
-                if total_recorrencias <= 1:
-                    # Cenário A: Falha isolada comum
-                    st.markdown(f"""
-                    <div class="card-ia">
-                        <h4>⚠️ DIAGNÓSTICO PRESCRITIVO: Falha no Sistema de Climatização</h4>
-                        <p><b>Análise Causa Raiz:</b> Com base na descrição <i>"{linha_os['Descrição']}"</i> e no cruzamento com os parâmetros do fabricante <b>{fabricante} ({modelo})</b>, o sintoma aponta para obstrução padrão no sistema de drenagem da evaporadora ou saturação dos filtros de ar.</p>
-                        <hr>
-                        <p><b>🔧 Direcionamento e Plano de Ação Padrão ({fabricante}):</b></p>
-                        <ol>
-                            <li>Desligar o disjuntor do circuito de climatização para garantir a segurança elétrica.</li>
-                            <li>Remover a carenagem frontal do modelo {modelo} conforme o manual técnico do fabricante.</li>
-                            <li>Desobstruir a bandeja de condensado e testar o fluxo da tubulação flexível.</li>
-                        </ol>
-                        <small>⚡ <i>Nível de Criticidade: <span class="badge-alta">ALTA</span> | MTTR estimado: 35 min.</i></small>
-                    </div>
-                    """, unsafe_allow_html=True)
-                else:
-                    # Cenário B: Falha recorrente baseada nas linhas simuladas (Bad Actor)
-                    st.markdown(f"""
-                    <div class="card-ia" style="background-color: #fff9e6; border-left: 5px solid #ffaa00;">
-                        <h4>🚨 ALERTA DE CONFIABILIDADE: Falha Recorrente Mapeada ({total_recorrencias}ª ocorrência)</h4>
-                        <p><b>Análise Avançada da IA:</b> Foram detectadas <b>{total_recorrencias} quebras repetidas</b> para este ativo no histórico. O MTBF atual está degradado em <b>{texto_mtbf}</b>. Esta recorrência anula a hipótese de filtro sujo e aponta para defeito crônico na bomba de dreno interna ou contaminação na linha de sucção.</p>
-                        <hr>
-                        <p><b>🔧 Plano de Ação Estratégico (Engenharia de Confiabilidade):</b></p>
-                        <ol>
-                            <li>Realizar a substituição preventiva do conjunto da bomba de dreno.</li>
-                            <li>Executar limpeza química completa na serpentina para eliminar biofilme acumulado.</li>
-                            <li>Abrir uma investigação de Causa Raiz (RCFA) para revisar a frequência do plano PM do TAG.</li>
-                        </ol>
-                        <small>⏳ <i>Condição do Ativo: <span class="badge-alta" style="background-color: #ffe6cc; color: #cc6600;">CRÍTICO / BAD ACTOR</span> | MTBF: {texto_mtbf}</i></small>
-                    </div>
-                    """, unsafe_allow_html=True)
-                
-            else:
-                # Fallback geral para qualquer outra OS aberta na planilha
-                st.markdown(f"""
-                <div class="card-ia" style="background-color: #f7f9fa; border-left: 5px solid #00c0ef;">
-                    <h4>⚠️ DIAGNÓSTICO OPERACIONAL: Ordem de Serviço em Triagem</h4>
-                    <p><b>Análise Causa Raiz:</b> Ativo técnico <b>{equipamento}</b> aguardando conclusão do cruzamento de metadados BIM.</p>
-                    <hr>
-                    <p><b>🔧 Recomendações Preliminares:</b></p>
-                    <ul>
-                        <li>Verificar a descrição da falha: <i>"{linha_os['Descrição']}"</i>.</li>
-                        <li>Realizar a inspeção visual preliminar em campo para coletar o TAG do componente.</li>
-                    </ul>
-                </div>
-                """, unsafe_allow_html=True)
-
-        elif status_normalizado == 'em atendimento':
-            st.markdown(f"""
-            <div class="card-ia" style="background-color: #fff9e6; border-left: 5px solid #ffaa00;">
-                <h4>⏳ ANÁLISE EM TEMPO REAL: Manutenção em Andamento</h4>
-                <p><b>Acompanhamento operacional:</b> O ativo <b>{equipamento} {fabricante}</b> encontra-se sob intervenção das equipes técnicas de campo.</p>
-                <small>🔧 <i>Status do Sistema: Operação Assistida | Execução Iniciada</i></small>
-            </div>
-            """, unsafe_allow_html=True)
-            
-        elif status_normalizado in ['pausado', 'pausada']:
-            st.markdown(f"""
-            <div class="card-ia" style="background-color: #f7f7f7; border-left: 5px solid #6c757d;">
-                <h4>⏸️ ANÁLISE COMPLEMENTAR: Ordem Suspensa / Pausada</h4>
-                <p><b>Análise de Parada:</b> A atividade no ativo {modelo} está congelada temporariamente aguardando insumos.</p>
-                <small>⚠️ <i>Status do Sistema: Aguardando Liberação</i></small>
-            </div>
-            """, unsafe_allow_html=True)
-            
-        elif status_normalizado in ['fechado', 'fechada']:
-            st.markdown(f"""
-            <div class="card-ia" style="background-color: #f6fff6; border-left: 5px solid #28a745;">
-                <h4>✅ ANÁLISE COMPLEMENTAR: Ordem Encerrada</h4>
-                <p><b>Análise de Fechamento:</b> A OS referente a <i>"{linha_os['Descrição']}"</i> foi devidamente finalizada seguindo as diretrizes da {fabricante}.</p>
-                <small>🍃 <i>Status do Sistema: Estável | Eficiência: 100%</i></small>
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.warning(f"Status '{linha_os['Status']}' mapeado.")
-else:
-    st.info("Aguardando carregamento de dados para diagnóstico da IA.")
