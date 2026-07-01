@@ -48,7 +48,7 @@ with st.sidebar:
     if arquivo_upload is not None and not df_exibicao.empty:
     col_sel, col_diag = st.columns(2)
     
-    with col_sel:
+        with col_sel:
         st.markdown("**🔎 Seleção de Ativo para Auditoria**")
         os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os_selecao, key="seletor_ia_final_limpo")
         
@@ -90,6 +90,7 @@ with st.sidebar:
         * ⏱️ **MTBF Estatístico Real:** {texto_mtbf}
         * 🆔 **ID do Objeto 3D:** `{id_coluna_b}`
         """)
+
         
     with col_diag:
         st.markdown("**⚡ Análise de Engenharia Operacional da IA**")
