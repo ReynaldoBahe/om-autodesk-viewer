@@ -19,10 +19,9 @@ pagina_telemetria = st.Page("pages/04_Telemetria_em_Tempo_Real.py", title="Telem
 pagina_tour = st.Page("pages/05_Tour_Virtual.py", title="Tour Virtual", icon="📸")
 pagina_cmms = st.Page("pages/06_Portal_CMMS.py", title="Portal CMMS", icon="🛠️")
 
-    # Gerenciador de Navegação Dinâmica (Esconde o menu lateral antes do login)
+# --- CORREÇÃO DA INDENTAÇÃO CRÍTICA DO NAVEGADOR ---
 if st.session_state.logged_in:
-            paginas_disponiveis = [pagina_home, pagina_engenharia, pagina_manutencao, pagina_indicadores, pagina_telemetria, pagina_tour, pagina_cmms]
-
+    paginas_disponiveis = [pagina_home, pagina_engenharia, pagina_manutencao, pagina_indicadores, pagina_telemetria, pagina_tour, pagina_cmms]
 else:
     paginas_disponiveis = [pagina_login]
 
