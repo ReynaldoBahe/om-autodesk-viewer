@@ -19,16 +19,10 @@ pagina_telemetria = st.Page("pages/04_Telemetria_em_Tempo_Real.py", title="Telem
 pagina_tour = st.Page("pages/05_Tour_Virtual.py", title="Tour Virtual", icon="📸")
 pagina_cmms = st.Page("pages/06_Portal_CMMS.py", title="Portal CMMS", icon="🛠️")
 
-# 4. Controle do botão de Logout Global na Sidebar antes de rodar a navegação
+    # Gerenciador de Navegação Dinâmica (Esconde o menu lateral antes do login)
 if st.session_state.logged_in:
-    with st.sidebar:
-        if st.button("Sair da Conta", use_container_width=True):
-            st.session_state.logged_in = False
-            st.rerun()
+            paginas_disponiveis = [pagina_home, pagina_engenharia, pagina_manutencao, pagina_indicadores, pagina_telemetria, pagina_tour, pagina_cmms]
 
-# 5. Gerenciador de Navegação Dinâmica
-if st.session_state.logged_in:
-    paginas_disponiveis = [pagina_home, pagina_engenharia, pagina_manutencao, pagina_indicadores, pagina_telemetria, pagina_tour, pagina_cmms]
 else:
     paginas_disponiveis = [pagina_login]
 
@@ -38,19 +32,25 @@ pg = st.navigation(paginas_disponiveis)
 # LÓGICA DE RENDERIZAÇÃO DAS TELAS
 # =========================================================================
 if not st.session_state.logged_in:
-    # 🔐 CSS ISOLADO COMPORTAMENTAL: Tela de Login
+    
+    # 🔐 CSS ISOLADO COMPORTAMENTAL: Só funciona enquanto o formulário de login existir na tela
     st.markdown("""
         <style>
+        /* Aplica o fundo escuro azulado premium apenas se a página contiver o formulário de login */
         .stApp:has(div[data-testid="stForm"]) {
             background-color: #111827 !important;
             background-image: radial-gradient(at 0% 0%, hsla(217,100%,16%,1) 0, transparent 50%), 
                               radial-gradient(at 50% 0%, hsla(220,95%,10%,1) 0, transparent 50%) !important;
         }
+        
+        /* Centraliza e restringe a largura máxima da tela a 620px apenas na tela de login */
         .stApp:has(div[data-testid="stForm"]) .block-container {
             max-width: 620px !important;
             padding-top: 5rem !important;
             margin: 0 auto !important;
         }
+        
+        /* Transforma a caixa padrão em um Card Blanco Flutuante com Sombra Real */
         div[data-testid="stForm"] {
             background-color: #ffffff !important;
             padding: 35px 30px !important;
@@ -58,7 +58,11 @@ if not st.session_state.logged_in:
             border: 1px solid #e5e7eb !important;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.3) !important;
         }
+        
+        /* Estilização das fontes e rótulos dos campos */
         label { color: #374151 !important; font-weight: 600 !important; font-size: 14px !important; }
+        
+        /* Inputs arredondados, limpos e com texto escuro visível */
         .stTextInput > div > div > input {
             border-radius: 8px !important;
             border: 1px solid #d1d5db !important;
@@ -66,6 +70,8 @@ if not st.session_state.logged_in:
             background-color: #f9fafb !important;
             color: #111827 !important;
         }
+        
+        /* Botão de Login Azul Safira customizado com gradiente corporativo */
         div.stFormSubmitButton > button {
             background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%) !important;
             color: #ffffff !important;
@@ -81,7 +87,10 @@ if not st.session_state.logged_in:
         </style>
     """, unsafe_allow_html=True)
 
+    # Formulário de Credenciais Premium
     with st.form("menu_login_premium"):
+        
+        # Logotipo em código HTML puro (Imune a erros de CORS ou quedas de links de imagem)
         st.markdown("""
             <div style='text-align: center; margin-bottom: 25px;'>
                 <div style='display: inline-block; background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); padding: 10px 20px; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(30, 58, 138, 0.2);'>
@@ -93,9 +102,11 @@ if not st.session_state.logged_in:
             </div>
         """, unsafe_allow_html=True)
         
+        # Inputs de dados estruturados
         usuario = st.text_input("👤 Usuário Corporativo", placeholder="Ex: admin")
         senha = st.text_input("🔑 Senha de Acesso", type="password", placeholder="Digite sua senha")
         lembrar = st.checkbox("Manter conectado neste dispositivo")
+        
         botao_entrar = st.form_submit_button("Entrar no Sistema", use_container_width=True)
         
     if botao_entrar:
@@ -104,6 +115,7 @@ if not st.session_state.logged_in:
             "fiat": "Fiat_Ativos_RB99*",
             "ambev": "Ambev_OM_RB2026#"
         }
+        
         if usuario in usuarios_validos and senha == usuarios_validos[usuario]:
             st.session_state.logged_in = True
             st.session_state.cliente_ativo = usuario.upper()
@@ -111,5 +123,13 @@ if not st.session_state.logged_in:
         else:
             st.error("❌ Credenciais inválidas. Tente novamente.")
 
-# 6. Execução final da navegação na raiz do arquivo (Totalmente protegida contra IndentationError)
-pg.run()
+else:
+    # 🔓 ÁREA INTERNA TOTALMENTE CONFIGURADA: Executa sem nenhuma interferência de estilo
+    pg.run()
+    
+    # Adiciona botão de Logout limpo e original na barra lateral pós-login
+    with st.sidebar:
+        st.markdown("---")
+        if st.button("Sair da Conta", use_container_width=True):
+            st.session_state.logged_in = False
+            st.rerun()
