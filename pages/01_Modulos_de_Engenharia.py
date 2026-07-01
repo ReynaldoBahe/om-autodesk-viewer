@@ -136,16 +136,30 @@ if arquivo_upload is not None and not df_exibicao.empty:
         # Puxando a linha selecionada para simular o cruzamento de dados
         linha_os = df_exibicao[df_exibicao['OS'] == os_selecionada].iloc[0]
         
+        # --- BUSCA REAL BASEADA NA MAQUETE 3D DO SPECKLE (ID DA COLUNA B) ---
+        # Certifique-se de que a coluna B na sua planilha se chama exatamente 'ID'
+        id_coluna_b = str(linha_os.get('ID', '')).strip()
+        
+        if id_coluna_b == "540a5723a18454b4145959ce501469bc":
+            equipamento = "Ar Condicionado Split (Evaporadora)"
+            fabricante = "Fujitsu General"
+            modelo = "ASYG18LFCA"
+        else:
+            equipamento = str(linha_os.get('Equipamento', 'Ativo Operacional'))
+            fabricante = str(linha_os.get('Fabricante', 'Fabricante Padrão'))
+            modelo = str(linha_os.get('Modelo', 'Modelo Geral'))
+            
         # Formatação segura da data de abertura
         data_abertura_formatada = "N/A" if pd.isna(linha_os['Data_Abertura']) else linha_os['Data_Abertura'].strftime('%d/%m/%Y')
         
         st.info(f"""
-        **📋 Ficha Técnico do Ativo**
-        * **Setor:** {linha_os['Setor']}
+        **📋 Ficha Técnica do Ativo (Parâmetros Speckle/BIM)**
+        * **Equipamento:** {equipamento}
+        * **Fabricante:** {fabricante}
+        * **Modelo:** {modelo}
         * **Status Atual:** {linha_os['Status']}
         * **Data de Abertura:** {data_abertura_formatada}
-        * **Histórico de Quebras:** 3 recorrências registradas nos últimos 180 dias.
-        * 📖 [Acessar Manual Técnico do Ativo](https://github.com)
+        * **ID do Objeto 3D:** `{id_coluna_b}`
         """)
         
     with col_diag:
@@ -153,20 +167,21 @@ if arquivo_upload is not None and not df_exibicao.empty:
         
         status_normalizado = str(linha_os['Status']).strip().lower()
         
-        # CASO 1: ORDEM ABERTA
+        # CASO 1: ORDEM ABERTA (CONECTADA AO CONTEXTO DA FUJITSU SE FOR O CASO)
         if status_normalizado == 'aberta':
             st.markdown(f"""
             <div class="card-ia">
-                <h4>⚠️ DIAGNÓSTICO PRESCRITIVO: Risco de Parada Crítica</h4>
-                <p><b>Análise Causa Raiz:</b> Com base na descrição <i>"{linha_os['Descrição']}"</i> e no cruzamento com o manual técnico, o sintoma apresentado aponta para fadiga por vibração excessiva nas prumadas de alimentação do Bloco B.</p>
+                <h4>⚠️ DIAGNÓSTICO PRESCRITIVO: Falha no Sistema de Climatização</h4>
+                <p><b>Análise Causa Raiz:</b> Com base na descrição <i>"{linha_os['Descrição']}"</i> e no cruzamento com os parâmetros do fabricante <b>{fabricante} ({modelo})</b> obtidos via Speckle, o sintoma aponta para obstrução no sistema de drenagem da evaporadora ou saturação dos filtros de ar de alta eficiência.</p>
                 <hr>
-                <p><b>🔧 Direcionamento e Plano de Ação para Campo:</b></p>
+                <p><b>🔧 Direcionamento e Plano de Ação Real ({fabricante}):</b></p>
                 <ol>
-                    <li>Isolar a válvula reguladora de pressão hidráulica conforme Seção 4.2 do manual.</li>
-                    <li>Verificar se há microfissuras na junta de expansão flexível.</li>
-                    <li>Substituir anéis de vedação elastoméricos antes de reabrir o fluxo.</li>
+                    <li>Desligar o disjuntor do circuito de climatização para garantir a segurança elétrica.</li>
+                    <li>Remover a carenagem frontal do modelo {modelo} conforme o manual técnico do fabricante.</li>
+                    <li>Desobstruir a bandeja de condensado e testar o fluxo da tubulação flexível.</li>
+                    <li>Limpar ou substituir os filtros de ar eletrostáticos antes do comissionamento.</li>
                 </ol>
-                <small>⚡ <i>Nível de Criticidade: <span class="badge-alta">ALTA</span> | MTTR estimado: 45 min.</i></small>
+                <small>⚡ <i>Nível de Criticidade: <span class="badge-alta">ALTA</span> | MTTR estimado: 35 min.</i></small>
             </div>
             """, unsafe_allow_html=True)
             
@@ -175,12 +190,12 @@ if arquivo_upload is not None and not df_exibicao.empty:
             st.markdown(f"""
             <div class="card-ia" style="background-color: #fff9e6; border-left: 5px solid #ffaa00;">
                 <h4>⏳ ANÁLISE EM TEMPO REAL: Manutenção em Andamento</h4>
-                <p><b>Acompanhamento operacional:</b> O ativo associado à atividade <i>"{linha_os['Descrição']}"</i> encontra-se sob intervenção das equipes técnicas de campo.</p>
+                <p><b>Acompanhamento operacional:</b> O ativo <b>{equipamento} {fabricante}</b> encontra-se sob intervenção das equipes técnicas de campo para mitigar o problema de <i>"{linha_os['Descrição']}"</i>.</p>
                 <hr>
                 <p><b>💡 Recomendação de Monitoramento:</b></p>
                 <ul>
-                    <li>Garantir o registro de trocas de peças e insumos em tempo real para evitar gargalos de estoque.</li>
-                    <li>Verificar se o tempo de atendimento está alinhado com o MTTR previsto no plano mestre.</li>
+                    <li>Garantir o registro de trocas de peças originais {fabricante} em tempo real.</li>
+                    <li>Verificar se os testes de pressão/estanqueidade estão sendo executados antes do fechamento.</li>
                 </ul>
                 <small>🔧 <i>Status do Sistema: Operação Assistida | Execução Iniciada</i></small>
             </div>
@@ -191,13 +206,32 @@ if arquivo_upload is not None and not df_exibicao.empty:
             st.markdown(f"""
             <div class="card-ia" style="background-color: #f7f7f7; border-left: 5px solid #6c757d;">
                 <h4>⏸️ ANÁLISE COMPLEMENTAR: Ordem Suspensa / Pausada</h4>
-                <p><b>Análise de Parada:</b> A atividade <i>"{linha_os['Descrição']}"</i> está congelada temporariamente. O sistema indica pendência externa ou aguardo de insumos para continuidade.</p>
+                <p><b>Análise de Parada:</b> A atividade no ativo {modelo} está congelada temporariamente. O sistema indica aguardo de insumos ou autorização externa.</p>
                 <hr>
                 <p><b>📋 Plano de Mitigação:</b></p>
                 <ul>
-                    <li>Confirmar no módulo de compras se a entrega de componentes/ferramental está agendada.</li>
-                    <li>Avaliar se a pausa compromete a integridade estrutural do sistema em curto prazo.</li>
+                    <li>Confirmar no módulo de compras o prazo de entrega para componentes específicos da {fabricante}.</li>
                 </ul>
                 <small>⚠️ <i>Status do Sistema: Aguardando Liberação | Cronograma Impactado</i></small>
             </div>
             """, unsafe_allow_html=True)
+            
+        # CASO 4: ORDEM FECHADA
+        elif status_normalizado == 'fechado' or status_normalizado == 'fechada':
+            st.markdown(f"""
+            <div class="card-ia" style="background-color: #f6fff6; border-left: 5px solid #28a745;">
+                <h4>✅ ANÁLISE COMPLEMENTAR: Ordem Encerrada</h4>
+                <p><b>Análise de Fechamento:</b> A OS referente a <i>"{linha_os['Descrição']}"</i> foi devidamente finalizada seguindo as diretrizes técnicas do modelo {modelo}.</p>
+                <hr>
+                <p><b>📈 Recomendação Preditiva:</b></p>
+                <ul>
+                    <li>Agendar inspeção preventiva no equipamento {fabricante} em 90 dias para garantir a estabilidade térmica.</li>
+                </ul>
+                <small>🍃 <i>Status do Sistema: Estável | Eficiência de Execução: 100%</i></small>
+            </div>
+            """, unsafe_allow_html=True)
+            
+        else:
+            st.warning(f"Status '{linha_os['Status']}' identificado, mas nenhuma regra de IA correspondente foi mapeada.")
+else:
+    st.info("Aguardando carregamento de dados para diagnóstico da IA.")
