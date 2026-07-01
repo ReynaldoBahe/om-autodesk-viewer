@@ -164,7 +164,7 @@ if arquivo_upload is not None and not df_exibicao.empty:
     
     os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os_selecao, key="seletor_ia_final_limpo")
     
-    # Extração de dados segura indexada por colchetes
+    # 🎯 RETORNO DO [0] EXATO NO .iloc: Garante a extração limpa dos dados da linha
     linha_os = df_exibicao[df_exibicao['OS'] == os_selecionada].iloc[0]
     
     id_coluna_b = str(linha_os.get('ID', '')).strip().lower()
