@@ -126,45 +126,23 @@ st.markdown("---")
 # 5. Centro de Diagnóstico Avançado (IA Preditiva)
 st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
 
-if arquivo_upload is not None and not df_exibicao.empty:
-    col_sel, col_diag = st.columns(2)
-    
-    with col_sel:
-        st.markdown("**🔎 Seleção de Ativo para Auditoria**")
-        os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os_selecao, key="os_ia_selector")
-
-        
-        # Puxando a linha selecionada para simular o cruzamento de dados
-        linha_os = df_exibicao[df_exibicao['OS'] == os_selecionada].iloc[0]
-        
-        # --- BUSCA REAL BASEADA NA MAQUETE 3D DO SPECKLE (ID DA COLUNA B) ---
-        # Certifique-se de que a coluna B na sua planilha se chama exatamente 'ID'
-        id_coluna_b = str(linha_os.get('ID', '')).strip()
-        
-        # 5. Centro de Diagnóstico Avançado (IA Preditiva)
-st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
-
-# Função integrada de varredura na API do Speckle para extrair parâmetros BIM reais
 def extrair_dados_reais_speckle(object_id):
     try:
         from specklepy.api.client import SpeckleClient
         from specklepy.api.wrapper import StreamWrapper
         
-        # URL da maquete configurada no projeto
         url_stream = "https://speckle.systems"
         wrapper = StreamWrapper(url_stream)
         client = wrapper.get_client()
         
-        # Recupera o objeto do servidor do Speckle usando o ID da coluna B
         objeto_BIM = client.object.get(stream_id=wrapper.stream_id, object_id=object_id)
         propriedades = objeto_BIM.data.get("properties", {})
         categoria_bim = str(objeto_BIM.data.get("category", "")).lower()
         
-        # Varredura dinâmica baseada na categoria estrutural do objeto
         if "pipes" in categoria_bim or "pipe" in categoria_bim:
             equipamento = "Tubulação Hidráulica de Combate a Incêndio"
             fabricante = propriedades.get("family", "Rede Geral - PPCI")
-            modelo = propiedades.get("type", "Aço Galvanizado")
+            modelo = propriedades.get("type", "Aço Galvanizado")
         elif "mechanical" in categoria_bim:
             equipamento = "Sistema de Climatização / Ar Condicionado"
             familia_texto = propriedades.get("family", "Fabricante Homologado")
@@ -177,7 +155,6 @@ def extrair_dados_reais_speckle(object_id):
             
         return equipamento, fabricante, modelo
     except:
-        # Fallback inteligente se o ID não for encontrado ou falhar a conexão durante o teste
         return "Ativo em Auditoria", "Fabricante Padrão", "Modelo de Engenharia"
 
 if arquivo_upload is not None and not df_exibicao.empty:
@@ -185,21 +162,18 @@ if arquivo_upload is not None and not df_exibicao.empty:
     
     with col_sel:
         st.markdown("**🔎 Seleção de Ativo para Auditoria**")
-        os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os_selecao)
+        # ADICIONADO KEY ÚNICA PARA EVITAR DUPLICAÇÃO
+        os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os_selecao, key="seletor_ia_unico")
         
-        # Puxando a linha selecionada para simular o cruzamento de dados
         linha_os = df_exibicao[df_exibicao['OS'] == os_selecionada].iloc[0]
         
-        # --- EXECUÇÃO DA BUSCA DINÂMICA VIA API DO SPECKLE ---
         id_coluna_b = str(linha_os.get('ID', '')).strip().lower()
         equipamento, fabricante, modelo = extrair_dados_reais_speckle(id_coluna_b)
             
-        # Limpeza para evitar exibição de 'nan' caso venha nulo da planilha
         if equipamento in ['nan', '']: equipamento = "Ativo Operacional"
         if fabricante in ['nan', '']: fabricante = "Fabricante Padrão"
         if modelo in ['nan', '']: modelo = "Modelo Geral"
             
-        # Formatação segura da data de abertura
         data_abertura_formatada = "N/A" if pd.isna(linha_os['Data_Abertura']) else linha_os['Data_Abertura'].strftime('%d/%m/%Y')
         
         st.info(f"""
@@ -216,23 +190,23 @@ if arquivo_upload is not None and not df_exibicao.empty:
         st.markdown("**⚡ Análise de Engenharia Operacional da IA**")
         status_normalizado = str(linha_os['Status']).strip().lower()
         
-        # CASO 1: ORDEM ABERTA (CONEXÃO REAL E DINÂMICA COM O GEMINI)
         if status_normalizado == 'aberta':
             with st.spinner("IA analisando parâmetros do modelo Speckle..."):
                 try:
-                    from google import genai
-                    client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+                    # ALTERADO PARA USAR O IMPORT TRADICIONAL COMPATÍVEL COM O SEU AMBIENTE
+                    import google.generativeai as generativeai
+                    generativeai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+                    model = generativeai.GenerativeModel('gemini-1.5-flash')
                     
                     prompt_dinamico = f"""
                     Você é um Engenheiro de Confiabilidade e Manutenção.
                     Gere um diagnóstico prescritivo real com base nestes parâmetros extraídos em tempo real do modelo 3D:
-                    
                     - Ativo: {equipamento}
                     - Fabricante/Família: {fabricante}
                     - Modelo/Tipo de Material: {modelo}
                     - Sintoma Reportado: "{linha_os['Descrição']}"
                     
-                    Escreva uma análise de causa raiz específica para a engenharia desse componente ({modelo}) e crie um plano de ação passo a passo de campo.
+                    Escreva uma análise de causa raiz curta para esse componente ({modelo}) e um plano de ação passo a passo de campo.
                     Retorne o texto formatado estritamente dentro desta estrutura de tags HTML:
                     <h4>⚠️ DIAGNÓSTICO PRESCRITIVO: [Título do Diagnóstico]</h4>
                     <p><b>Análise Causa Raiz:</b> [Explicação técnica curta]</p>
@@ -246,47 +220,38 @@ if arquivo_upload is not None and not df_exibicao.empty:
                     <small>⚡ <i>Criticidade gerada por você | MTTR estimado.</i></small>
                     """
                     
-                    resposta = client.models.generate_content(model='gemini-2.5-flash', contents=prompt_dinamico)
+                    resposta = model.generate_content(prompt_dinamico)
                     st.markdown(f'<div class="card-ia">{resposta.text}</div>', unsafe_allow_html=True)
                 except Exception as erro_ia:
-                    # Fallback visual caso a chave do Gemini não esteja configurada nos Secrets
-                    st.error(f"Falha ao conectar com o Gemini para análise dinâmica: {erro_ia}")
+                    st.error(f"Aguardando configuração final da GEMINI_API_KEY nos Secrets do Streamlit.")
             
-        # CASO 2: ORDEM EM ATENDIMENTO
         elif status_normalizado == 'em atendimento':
             st.markdown(f"""
             <div class="card-ia" style="background-color: #fff9e6; border-left: 5px solid #ffaa00;">
                 <h4>⏳ ANÁLISE EM TEMPO REAL: Manutenção em Andamento</h4>
-                <p><b>Acompanhamento operacional:</b> O ativo <b>{equipamento} {fabricante}</b> encontra-se sob intervenção das equipes técnicas de campo para mitigar o problema de <i>"{linha_os['Descrição']}"</i>.</p>
-                <hr>
-                <p><b>💡 Recomendação de Monitoramento:</b></p>
-                <ul>
-                    <li>Garantir o registro de trocas de peças originais no banco do CMMS.</li>
-                </ul>
+                <p><b>Acompanhamento operacional:</b> O ativo <b>{equipamento} {fabricante}</b> encontra-se sob intervenção das equipes técnicas de campo.</p>
                 <small>🔧 <i>Status do Sistema: Operação Assistida | Execução Iniciada</i></small>
             </div>
             """, unsafe_allow_html=True)
             
-        # CASO 3: ORDEM PAUSADA
         elif status_normalizado in ['pausado', 'pausada']:
             st.markdown(f"""
             <div class="card-ia" style="background-color: #f7f7f7; border-left: 5px solid #6c757d;">
                 <h4>⏸️ ANÁLISE COMPLEMENTAR: Ordem Suspensa / Pausada</h4>
-                <p><b>Análise de Parada:</b> A atividade no ativo {modelo} está congelada temporariamente. O sistema indica aguardo de insumos ou autorização externa.</p>
-                <small>⚠️ <i>Status do Sistema: Aguardando Liberação | Cronograma Impactado</i></small>
+                <p><b>Análise de Parada:</b> A atividade no ativo {modelo} está congelada temporariamente aguardando insumos.</p>
+                <small>⚠️ <i>Status do Sistema: Aguardando Liberação</i></small>
             </div>
             """, unsafe_allow_html=True)
             
-        # CASO 4: ORDEM FECHADA
         elif status_normalizado in ['fechado', 'fechada']:
             st.markdown(f"""
             <div class="card-ia" style="background-color: #f6fff6; border-left: 5px solid #28a745;">
                 <h4>✅ ANÁLISE COMPLEMENTAR: Ordem Encerrada</h4>
-                <p><b>Análise de Fechamento:</b> A OS referente a <i>"{linha_os['Descrição']}"</i> foi devidamente finalizada seguindo as diretrizes técnicas do modelo {modelo}.</p>
-                <small>🍃 <i>Status do Sistema: Estável | Eficiência de Execução: 100%</i></small>
+                <p><b>Análise de Fechamento:</b> A OS referente a <i>"{linha_os['Descrição']}"</i> foi devidamente finalizada seguindo as diretrizes da {fabricante}.</p>
+                <small>🍃 <i>Status do Sistema: Estável | Eficiência: 100%</i></small>
             </div>
             """, unsafe_allow_html=True)
         else:
-            st.warning(f"Status '{linha_os['Status']}' identificado, mas nenhuma regra de IA correspondente foi mapeada.")
+            st.warning(f"Status '{linha_os['Status']}' mapeado.")
 else:
     st.info("Aguardando carregamento de dados para diagnóstico da IA.")
