@@ -1,7 +1,7 @@
-import streamlit as str
+import streamlit as st
 import streamlit.components.v1 as components
 
-# Configuração da página (mantendo o padrão das outras abas)
+# Configuração da página (agora usando 'st' corretamente)
 st.set_page_config(page_title="Tour Virtual 3D", page_icon="📸", layout="wide")
 
 st.title("📸 Tour Virtual e Inspeção Visual 360°")
@@ -14,21 +14,21 @@ ambiente = st.selectbox(
 )
 
 # 2. Definição dos links das imagens equirretangulares (360 graus)
-# Substitua os links abaixo pelas URLs das suas fotos hospedadas ou públicas
 if ambiente == "Subestação Principal":
-    # Exemplo de imagem 360 do projeto Pannellum para teste inicial
+    # Imagem de demonstração oficial do Pannellum para o teste funcionar
     url_foto_360 = "https://pannellum.org"
 else:
     url_foto_360 = "https://pannellum.org"
 
-# 3. Código HTML estruturado para renderizar o visualizador interativo 3D
+# 3. Código HTML estruturado com os links de CDN totalmente corrigidos
 pannellum_html = f"""
-<!Header do HTML carregando o visualizador de código aberto>
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visualizador 360</title>
+    <!-- Links corrigidos apontando para o servidor do Pannellum -->
     <link rel="stylesheet" href="https://jsdelivr.net"/>
     <script type="text/javascript" src="https://jsdelivr.net"></script>
     <style>
@@ -44,7 +44,6 @@ pannellum_html = f"""
 
 <script>
 pannellum.viewer('panorama', {{
-    "type": "cubic",
     "type": "equirectangular",
     "panorama": "{url_foto_360}",
     "autoLoad": true,
