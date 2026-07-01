@@ -23,9 +23,9 @@ st.write("Esta plataforma centraliza o controle de manutenção, monitoramento e
 st.markdown("---")
 
 st.subheader("📁 Conheça os Módulos Operacionais")
-st.write("Utilize o menu lateral esquerdo para navegar pelas ferramentas disponíveis:")
+st.write("Utilize os blocos abaixo ou o menu lateral esquerdo para navegar pelas ferramentas disponíveis:")
 
-# Divisão em duas colunas organizadas
+# Linha 1 de Módulos (Existentes)
 col_esq, col_dir = st.columns(2)
 
 with col_esq:
@@ -43,6 +43,29 @@ with col_dir:
         "Controle ordens de serviço, cronogramas de manutenção preventiva/corretiva "
         "e analise os principais KPIs de eficiência e disponibilidade da planta."
     )
+
+# Linha 2 de Módulos (Novas Implementações)
+col_novas1, col_novas2 = st.columns(2)
+
+with col_novas1:
+    st.markdown("### 📸 Inspeção Visual")
+    st.info(
+        "**Tour Virtual e Modelagem 360°**\n\n"
+        "Navegue interativamente pelas plantas e subestações do ativo "
+        "através de registros fotográficos equirretangulares imersivos."
+    )
+    if st.button("Abrir Tour Virtual 📸", use_container_width=True):
+        st.switch_page("pages/05_Tour_Virtual.py")
+
+with col_novas2:
+    st.markdown("### 🛠️ Operação Ativa")
+    st.success(
+        "**Portal CMMS Operacional**\n\n"
+        "Abra chamados emergenciais, emita Ordens de Serviço (OS) e "
+        "acompanhe em tempo real o status das manutenções planejadas."
+    )
+    if st.button("Abrir Portal CMMS 🛠️", use_container_width=True):
+        st.switch_page("pages/06_Portal_CMMS.py")
 
 st.markdown("---")
 st.caption("ℹ️ Sistema de Telemetria e Gestão — Versão 1.0 | Acesso Restrito e Seguro.")
