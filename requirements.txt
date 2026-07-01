@@ -3,5 +3,5 @@ pandas
 plotly
 requests
 altair
-google-generativeai
+google-genai
 specklepy
