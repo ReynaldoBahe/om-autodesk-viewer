@@ -167,10 +167,9 @@ if arquivo_upload is not None and not df_exibicao.empty:
         st.markdown("**🔎 Seleção de Ativo para Auditoria**")
         os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os_selecao, key="seletor_ia_final_limpo")
         
-        # Captura a linha da OS selecionada de forma correta
+        # Correção aqui: adicionado o [0] para ler a linha corretamente
         linha_os = df_exibicao[df_exibicao['OS'] == os_selecionada].iloc[0]
         
-        # Força a normalização segura do ID para texto limpo e minúsculo
         id_coluna_b = str(linha_os.get('ID', '')).strip().lower()
         equipamento, fabricante, modelo = extrair_dados_reais_speckle(id_coluna_b)
             
@@ -179,7 +178,6 @@ if arquivo_upload is not None and not df_exibicao.empty:
         if modelo in ['nan', '']: modelo = "Modelo Geral"
 
         # --- CÁLCULO ESTATÍSTICO DO HISTÓRICO REAL ---
-        # Varre o df_os completo buscando todas as correspondências do ID selecionado
         historico_ativo = df_os[df_os['ID'].astype(str).str.strip().str.lower() == id_coluna_b]
         total_recorrencias = len(historico_ativo)
         
@@ -210,3 +208,6 @@ if arquivo_upload is not None and not df_exibicao.empty:
         """)
         
     with col_diag:
+        st.markdown("**⚡ Análise de Engenharia Operacional da IA**")
+        status_normalizado = str(linha_os['Status']).strip().lower()
+        
