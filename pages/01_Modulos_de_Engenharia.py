@@ -158,45 +158,51 @@ def extrair_dados_reais_speckle(object_id):
         return "Ativo em Auditoria", "Fabricante Padrão", "Modelo de Engenharia"
 
 # =========================================================================
-# 6. RENDERIZAÇÃO DAS COLUNAS DE SELEÇÃO E DIAGNÓSTICO DA IA
+# 6. ENGENHARIA DE DADOS: PROCESSAMENTO DOS EVENTOS EM BACKEND
 # =========================================================================
 if arquivo_upload is not None and not df_exibicao.empty:
+    
+    os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os_selecao, key="seletor_ia_final_limpo")
+    
+    # Extração de dados segura indexada por colchetes
+    linha_os = df_exibicao[df_exibicao['OS'] == os_selecionada].iloc[0]
+    
+    id_coluna_b = str(linha_os.get('ID', '')).strip().lower()
+    equipamento, fabricante, modelo = extrair_dados_reais_speckle(id_coluna_b)
+        
+    if equipamento in ['nan', '']: equipamento = "Ativo Operacional"
+    if fabricante in ['nan', '']: fabricante = "Fabricante Padrão"
+    if modelo in ['nan', '']: modelo = "Modelo Geral"
+
+    # --- CÁLCULO ESTATÍSTICO DE RECORRÊNCIAS ---
+    historico_ativo = df_os[df_os['ID'].astype(str).str.strip().str.lower() == id_coluna_b]
+    total_recorrencias = len(historico_ativo)
+    
+    if total_recorrencias > 1:
+        datas_quebras = sorted(pd.to_datetime(historico_ativo['Data_Abertura'], errors='coerce').dropna())
+        if len(datas_quebras) > 1:
+            dias_totais = (datas_quebras[-1] - datas_quebras).days
+            mtbf_calculado = round(dias_totais / (total_recorrencias - 1), 1)
+            texto_mtbf = f"{mtbf_calculado} dias"
+        else:
+            texto_mtbf = "Dados insuficientes"
+    else:
+        texto_mtbf = "Sem falhas repetidas (Ativo estável)"
+        
+    try:
+        data_abertura_formatada = "N/A" if pd.isna(linha_os['Data_Abertura']) else pd.to_datetime(linha_os['Data_Abertura']).strftime('%d/%m/%Y %H:%M')
+    except:
+        data_abertura_formatada = "N/A"
+        
+    status_normalizado = str(linha_os['Status']).strip().lower()
+
+    # =========================================================================
+    # 7. APRESENTAÇÃO VISUAL: DISTRIBUIÇÃO EM DUAS COLUNAS LADO A LADO
+    # =========================================================================
     col_sel, col_diag = st.columns(2)
     
     with col_sel:
-        st.markdown("**🔎 Seleção de Ativo para Auditoria**")
-        os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os_selecao, key="seletor_ia_final_limpo")
-        
-        # 🎯 CORREÇÃO CRUCIAL AQUI: .iloc[0] completo com os colchetes restabelecidos
-        linha_os = df_exibicao[df_exibicao['OS'] == os_selecionada].iloc[0]
-        
-        id_coluna_b = str(linha_os.get('ID', '')).strip().lower()
-        equipamento, fabricante, modelo = extrair_dados_reais_speckle(id_coluna_b)
-            
-        if equipamento in ['nan', '']: equipamento = "Ativo Operacional"
-        if fabricante in ['nan', '']: fabricante = "Fabricante Padrão"
-        if modelo in ['nan', '']: modelo = "Modelo Geral"
-
-        # --- CÁLCULO ESTATÍSTICO DO HISTÓRICO REAL EM TEMPO REAL ---
-        historico_ativo = df_os[df_os['ID'].astype(str).str.strip().str.lower() == id_coluna_b]
-        total_recorrencias = len(historico_ativo)
-        
-        if total_recorrencias > 1:
-            datas_quebras = sorted(pd.to_datetime(historico_ativo['Data_Abertura'], errors='coerce').dropna())
-            if len(datas_quebras) > 1:
-                dias_totais = (datas_quebras[-1] - datas_quebras).days
-                mtbf_calculado = round(dias_totais / (total_recorrencias - 1), 1)
-                texto_mtbf = f"{mtbf_calculado} dias"
-            else:
-                texto_mtbf = "Dados de data insuficientes"
-        else:
-            texto_mtbf = "Sem falhas repetidas (Ativo estável)"
-            
-        try:
-            data_abertura_formatada = "N/A" if pd.isna(linha_os['Data_Abertura']) else pd.to_datetime(linha_os['Data_Abertura']).strftime('%d/%m/%Y %H:%M')
-        except:
-            data_abertura_formatada = "N/A"
-        
+        st.markdown("**📋 Parâmetros Técnicos Estruturados**")
         st.info(f"""
         **📋 Ficha Técnica do Ativo (Engenharia de Confiabilidade)**
         * **Equipamento:** {equipamento}
@@ -204,8 +210,3 @@ if arquivo_upload is not None and not df_exibicao.empty:
         * **Status Atual:** {linha_os['Status']} | **Abertura:** {data_abertura_formatada}
         * 📊 **Histórico de Quebras:** {total_recorrencias} ocorrências no banco CMMS.
         * ⏱️ **MTBF Estatístico Real:** {texto_mtbf}
-        * 🆔 **ID do Objeto 3D:** `{id_coluna_b}`
-        """)
-        
-    with col_diag:
-        st.markdown("**⚡ Análise de Engenharia Operacional da IA**")
