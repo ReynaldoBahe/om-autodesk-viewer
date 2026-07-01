@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import json
-#from hud_visualizer import injetar_sinalizacao_tela
 import urllib.parse
 import datetime
 import altair as alt
@@ -188,7 +187,6 @@ if arquivo_upload is not None and not df_exibicao.empty:
             
             data_abertura = pd.to_datetime(linha_os['Data_Abertura']).strftime('%d/%m/%Y')
             
-            #injetar_sinalizacao_tela(df_filtrado_os)
             st.info(f"""
             **📋 Ficha Técnica do Ativo**
             * **ID BIM:** `{id_bim}`
@@ -202,3 +200,6 @@ if arquivo_upload is not None and not df_exibicao.empty:
         
     with col_diag:
         st.markdown("**⚡ Análise de Engenharia Operacional da IA**")
+        if not df_filtrado_os.empty:
+            status_limpo = str(linha_os['Status']).strip()
+            
