@@ -134,11 +134,14 @@ if arquivo_upload is not None and not df_exibicao.empty:
         # Puxando a linha selecionada para simular o cruzamento de dados
         linha_os = df_exibicao[df_exibicao['OS'] == os_selecionada].iloc[0]
         
+        # Formatação segura da data de abertura
+        data_abertura_formatada = "N/A" if pd.isna(linha_os['Data_Abertura']) else linha_os['Data_Abertura'].strftime('%d/%m/%Y')
+        
         st.info(f"""
         **📋 Ficha Técnico do Ativo**
         * **Setor:** {linha_os['Setor']}
         * **Status Atual:** {linha_os['Status']}
-        * **Data de Abertura:** {linha_os['Data_Abertura'].strftime('%d/%m/%Y')}
+        * **Data de Abertura:** {data_abertura_formatada}
         * **Histórico de Quebras:** 3 recorrências registradas nos últimos 180 dias.
         * 📖 [Acessar Manual Técnico do Ativo](https://github.com)
         """)
@@ -146,7 +149,10 @@ if arquivo_upload is not None and not df_exibicao.empty:
     with col_diag:
         st.markdown("**⚡ Análise de Engenharia Operacional da IA**")
         
-        if linha_os['Status'] == 'Aberta':
+        status_normalizado = str(linha_os['Status']).strip().lower()
+        
+        # CASO 1: ORDEM ABERTA
+        if status_normalizado == 'aberta':
             st.markdown(f"""
             <div class="card-ia">
                 <h4>⚠️ DIAGNÓSTICO PRESCRITIVO: Risco de Parada Crítica</h4>
@@ -161,7 +167,41 @@ if arquivo_upload is not None and not df_exibicao.empty:
                 <small>⚡ <i>Nível de Criticidade: <span class="badge-alta">ALTA</span> | MTTR estimado: 45 min.</i></small>
             </div>
             """, unsafe_allow_html=True)
-        else:
+            
+        # CASO 2: ORDEM EM ATENDIMENTO
+        elif status_normalizado == 'em atendimento':
+            st.markdown(f"""
+            <div class="card-ia" style="background-color: #fff9e6; border-left: 5px solid #ffaa00;">
+                <h4>⏳ ANÁLISE EM TEMPO REAL: Manutenção em Andamento</h4>
+                <p><b>Acompanhamento operacional:</b> O ativo associado à atividade <i>"{linha_os['Descrição']}"</i> encontra-se sob intervenção das equipes técnicas de campo.</p>
+                <hr>
+                <p><b>💡 Recomendação de Monitoramento:</b></p>
+                <ul>
+                    <li>Garantir o registro de trocas de peças e insumos em tempo real para evitar gargalos de estoque.</li>
+                    <li>Verificar se o tempo de atendimento está alinhado com o MTTR previsto no plano mestre.</li>
+                </ul>
+                <small>🔧 <i>Status do Sistema: Operação Assistida | Execução Iniciada</i></small>
+            </div>
+            """, unsafe_allow_html=True)
+            
+        # CASO 3: ORDEM PAUSADA
+        elif status_normalizado == 'pausado' or status_normalizado == 'pausada':
+            st.markdown(f"""
+            <div class="card-ia" style="background-color: #f7f7f7; border-left: 5px solid #6c757d;">
+                <h4>⏸️ ANÁLISE COMPLEMENTAR: Ordem Suspensa / Pausada</h4>
+                <p><b>Análise de Parada:</b> A atividade <i>"{linha_os['Descrição']}"</i> está congelada temporariamente. O sistema indica pendência externa ou aguardo de insumos para continuidade.</p>
+                <hr>
+                <p><b>📋 Plano de Mitigação:</b></p>
+                <ul>
+                    <li>Confirmar no módulo de compras se a entrega de componentes/ferramental está agendada.</li>
+                    <li>Avaliar se a pausa compromete a integridade estrutural do sistema em curto prazo.</li>
+                </ul>
+                <small>⚠️ <i>Status do Sistema: Aguardando Liberação | Cronograma Impactado</i></small>
+            </div>
+            """, unsafe_allow_html=True)
+            
+        # CASO 4: ORDEM FECHADA
+        elif status_normalizado == 'fechado' or status_normalizado == 'fechada':
             st.markdown(f"""
             <div class="card-ia" style="background-color: #f6fff6; border-left: 5px solid #28a745;">
                 <h4>✅ ANÁLISE COMPLEMENTAR: Ordem Encerrada</h4>
@@ -175,5 +215,9 @@ if arquivo_upload is not None and not df_exibicao.empty:
                 <small>🍃 <i>Status do Sistema: Estável | Eficiência de Execução: 100%</i></small>
             </div>
             """, unsafe_allow_html=True)
+            
+        # CASO DE SEGURANÇA (STATUS DESCONHECIDO)
+        else:
+            st.warning(f"Status '{linha_os['Status']}' identificado, mas nenhuma regra de IA correspondente foi mapeada.")
 else:
     st.info("Aguardando carregamento de dados para diagnóstico da IA.")
