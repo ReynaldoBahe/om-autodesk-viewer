@@ -146,7 +146,7 @@ def extrair_dados_reais_speckle(object_id):
         elif "mechanical" in categoria_bim:
             equipamento = "Sistema de Climatização / Ar Condicionado"
             familia_texto = propriedades.get("family", "Fabricante Homologado")
-            fabricante = familia_texto.split('_')[0] if '_' in familia_texto else familia_texto
+            fabricante = familia_texto.split('_') if '_' in familia_texto else familia_texto
             modelo = propriedades.get("type", "Modelo de Campo")
         else:
             equipamento = propriedades.get("category", "Ativo Operacional")
@@ -162,7 +162,6 @@ if arquivo_upload is not None and not df_exibicao.empty:
     
     with col_sel:
         st.markdown("**🔎 Seleção de Ativo para Auditoria**")
-        # ADICIONADO KEY ÚNICA PARA EVITAR DUPLICAÇÃO
         os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os_selecao, key="seletor_ia_unico")
         
         linha_os = df_exibicao[df_exibicao['OS'] == os_selecionada].iloc[0]
@@ -190,42 +189,46 @@ if arquivo_upload is not None and not df_exibicao.empty:
         st.markdown("**⚡ Análise de Engenharia Operacional da IA**")
         status_normalizado = str(linha_os['Status']).strip().lower()
         
+        # CASO 1: ORDEM ABERTA (CONEXÃO REAL E DINÂMICA COM O GEMINI)
         if status_normalizado == 'aberta':
             with st.spinner("IA analisando parâmetros do modelo Speckle..."):
                 try:
-                    # ALTERADO PARA USAR O IMPORT TRADICIONAL COMPATÍVEL COM O SEU AMBIENTE
                     import google.generativeai as generativeai
-api_key_real = st.secrets.get("GEMINI_API_KEY", st.secrets.get("gemini_api_key", None))
-generativeai.configure(api_key=api_key_real)
-model = generativeai.GenerativeModel('gemini-1.5-flash')
-
                     
-                    prompt_dinamico = f"""
-                    Você é um Engenheiro de Confiabilidade e Manutenção.
-                    Gere um diagnóstico prescritivo real com base nestes parâmetros extraídos em tempo real do modelo 3D:
-                    - Ativo: {equipamento}
-                    - Fabricante/Família: {fabricante}
-                    - Modelo/Tipo de Material: {modelo}
-                    - Sintoma Reportado: "{linha_os['Descrição']}"
+                    api_key_real = st.secrets.get("GEMINI_API_KEY", st.secrets.get("gemini_api_key", None))
                     
-                    Escreva uma análise de causa raiz curta para esse componente ({modelo}) e um plano de ação passo a passo de campo.
-                    Retorne o texto formatado estritamente dentro desta estrutura de tags HTML:
-                    <h4>⚠️ DIAGNÓSTICO PRESCRITIVO: [Título do Diagnóstico]</h4>
-                    <p><b>Análise Causa Raiz:</b> [Explicação técnica curta]</p>
-                    <hr>
-                    <p><b>🔧 Direcionamento e Plano de Ação Real ({fabricante}):</b></p>
-                    <ol>
-                        <li>[Passo 1]</li>
-                        <li>[Passo 2]</li>
-                        <li>[Passo 3]</li>
-                    </ol>
-                    <small>⚡ <i>Criticidade gerada por você | MTTR estimado.</i></small>
-                    """
-                    
-                    resposta = model.generate_content(prompt_dinamico)
-                    st.markdown(f'<div class="card-ia">{resposta.text}</div>', unsafe_allow_html=True)
+                    if not api_key_real:
+                        st.error("Configuração ausente: Chave GEMINI_API_KEY não localizada nos Secrets.")
+                    else:
+                        generativeai.configure(api_key=api_key_real)
+                        model = generativeai.GenerativeModel('gemini-1.5-flash')
+                        
+                        prompt_dinamico = f"""
+                        Você é um Engenheiro de Confiabilidade e Manutenção.
+                        Gere um diagnóstico prescritivo real com base nestes parâmetros extraídos em tempo real do modelo 3D:
+                        - Ativo: {equipamento}
+                        - Fabricante/Família: {fabricante}
+                        - Modelo/Tipo de Material: {modelo}
+                        - Sintoma Reportado: "{linha_os['Descrição']}"
+                        
+                        Escreva uma análise de causa raiz curta para esse componente ({modelo}) e um plano de ação passo a passo de campo.
+                        Retorne o texto formatado estritamente dentro desta estrutura de tags HTML:
+                        <h4>⚠️ DIAGNÓSTICO PRESCRITIVO: [Título do Diagnóstico]</h4>
+                        <p><b>Análise Causa Raiz:</b> [Explicação técnica curta]</p>
+                        <hr>
+                        <p><b>🔧 Direcionamento e Plano de Ação Real ({fabricante}):</b></p>
+                        <ol>
+                            <li>[Passo 1]</li>
+                            <li>[Passo 2]</li>
+                            <li>[Passo 3]</li>
+                        </ol>
+                        <small>⚡ <i>Criticidade gerada por você | MTTR estimado.</i></small>
+                        """
+                        
+                        resposta = model.generate_content(prompt_dinamico)
+                        st.markdown(f'<div class="card-ia">{resposta.text}</div>', unsafe_allow_html=True)
                 except Exception as erro_ia:
-                    st.error(f"Aguardando configuração final da GEMINI_API_KEY nos Secrets do Streamlit.")
+                    st.error(f"Falha operacional ao processar inteligência artificial: {erro_ia}")
             
         elif status_normalizado == 'em atendimento':
             st.markdown(f"""
