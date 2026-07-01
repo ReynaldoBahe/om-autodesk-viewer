@@ -178,7 +178,7 @@ if arquivo_upload is not None and not df_exibicao.empty:
         df_filtrado_os = df_exibicao[df_exibicao['OS'] == os_selecionada]
         
         if not df_filtrado_os.empty:
-            # 🌟 EXTRAÇÃO COM: Remove definitivamente os colchetes de lista e limpa o texto!
+            # 🌟 CORREÇÃO COM .values[0]: Força o Pandas a extrair o texto puro sem colchetes de lista!
             id_bim = str(df_filtrado_os['ID'].values[0])
             responsavel_tecnico = str(df_filtrado_os['Responsavel'].values[0])
             setor_ativo = str(df_filtrado_os['Setor'].values[0])
