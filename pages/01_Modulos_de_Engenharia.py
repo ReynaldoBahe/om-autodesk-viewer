@@ -175,8 +175,7 @@ if arquivo_upload is not None and not df_exibicao.empty:
         data_abertura_formatada = "N/A" if pd.isna(linha_os['Data_Abertura']) else linha_os['Data_Abertura'].strftime('%d/%m/%Y')
         
         # --- BUSCA DO HISTÓRICO DO ATIVO VIA PANDAS ---
-                df_historico_ativo = df_os[(df_os['ID'].astype(str).str.strip().str.lower() == id_coluna_b) & (df_os['OS'] != os_selecionada)]
-
+        df_historico_ativo = df_os[(df_os['ID'].astype(str).str.strip().str.lower() == id_coluna_b) & (df_os['OS'] != os_selecionada)]
         
         texto_historico_ia = ""
         if not df_historico_ativo.empty:
