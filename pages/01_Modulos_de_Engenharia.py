@@ -45,7 +45,7 @@ with st.sidebar:
     lista_os_selecao = ["Nenhuma OS selecionada"]
     contagem_status = {"Aberta": 0, "Em Atendimento": 0, "Pausada": 0, "Fechado": 0}
     
-       if arquivo_upload is not None:
+    if arquivo_upload is not None:
         try:
             # Lendo a planilha carregada pelo usuário
             df_os = pd.read_csv(arquivo_upload)
@@ -104,14 +104,10 @@ with st.sidebar:
     else:
         st.warning("Aguardando upload da planilha...")
         st.metric(label="SLA de Atendimento (Meta: 95%)", value="-- %", delta="Sem dados")
-    else:
-        st.warning("Aguardando upload da planilha...")
-        st.metric(label="SLA de Atendimento (Meta: 95%)", value="-- %", delta="Sem dados")
 
-# 3. Layout de Tela: Área Central (Maquete 3D Panorâmica do Speckle Atualizada)
+# 3. Layout de Tela: Área Central (Maquete 3D Panorâmica do Speckle)
 st.title("Visualizador Operacional de Ativos 3D")
 
-# URL atualizada com o novo embedToken enviado pelo usuário
 url_maquete_3d = "https://speckle.systems"
 st.components.v1.iframe(url_maquete_3d, height=1000)
 
@@ -205,25 +201,3 @@ if arquivo_upload is not None and not df_exibicao.empty:
                 <small>⚠️ <i>Status do Sistema: Aguardando Liberação | Cronograma Impactado</i></small>
             </div>
             """, unsafe_allow_html=True)
-            
-        # CASO 4: ORDEM FECHADA
-        elif status_normalizado == 'fechado' or status_normalizado == 'fechada':
-            st.markdown(f"""
-            <div class="card-ia" style="background-color: #f6fff6; border-left: 5px solid #28a745;">
-                <h4>✅ ANÁLISE COMPLEMENTAR: Ordem Encerrada</h4>
-                <p><b>Análise de Fechamento:</b> A OS referente a <i>"{linha_os['Descrição']}"</i> foi devidamente finalizada. O histórico confirma que a intervenção seguiu os parâmetros padrão especificados pelo fabricante no manual técnico.</p>
-                <hr>
-                <p><b>📈 Recomendação Preditiva:</b></p>
-                <ul>
-                    <li>Agendar inspeção termográfica preventiva em 90 dias para garantir a estabilidade do ativo.</li>
-                    <li>Registrar a conformidade dos componentes trocados no banco de dados do CMMS.</li>
-                </ul>
-                <small>🍃 <i>Status do Sistema: Estável | Eficiência de Execução: 100%</i></small>
-            </div>
-            """, unsafe_allow_html=True)
-            
-        # CASO DE SEGURANÇA (STATUS DESCONHECIDO)
-        else:
-            st.warning(f"Status '{linha_os['Status']}' identificado, mas nenhuma regra de IA correspondente foi mapeada.")
-else:
-    st.info("Aguardando carregamento de dados para diagnóstico da IA.")
