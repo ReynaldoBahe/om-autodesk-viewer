@@ -176,7 +176,6 @@ if arquivo_upload is not None and not df_exibicao.empty:
         
         # --- BUSCA DO HISTÓRICO DO ATIVO VIA PANDAS ---
         df_historico_ativo = df_os[(df_os['ID'].astype(str).str.strip().str.lower() == id_coluna_b) & (df_os['OS'] != os_selecionada)]
-
         
         texto_historico_ia = ""
         if not df_historico_ativo.empty:
@@ -209,49 +208,6 @@ if arquivo_upload is not None and not df_exibicao.empty:
         st.markdown("**⚡ Análise de Engenharia Operacional da IA**")
         status_normalizado = str(linha_os['Status']).strip().lower()
         
-               if status_normalizado == 'aberta':
+        if status_normalizado == 'aberta':
             import google.generativeai as genai
             genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-            
-            prompt_sistema = "Você é um Engenheiro de Manutenção especialista em análise de falhas. Emita um laudo prescritivo estruturado em HTML simples."
-            
-            prompt_usuario = f"""
-            Analise a OS atual cruzando com o histórico anterior do ativo para identificar padrões de falhas.
-            
-            DADOS DA OS ATUAL:
-            - Ordem de Serviço: {linha_os['OS']}
-            - Descrição da Falha Atual: {linha_os['Descrição']}
-            - Setor Responsável: {linha_os['Setor']}
-            
-            PARÂMETROS TÉCNICOS:
-            - Tipo de Equipamento: {equipamento}
-            - Fabricante: {fabricante}
-            - Modelo: {modelo}
-            - ID: {id_coluna_b}
-            
-            HISTÓRICO COMPLETO:
-            {texto_historico_ia}
-            
-            INSTRUÇÕES:
-            Retorne a resposta envolvida em uma única tag <div class="card-ia">.
-            Inclua: h4 com o Diagnóstico, parágrafo com Causa Raiz, uma linha <hr>, uma lista <ol> com 3 passos de Plano de Ação e uma tag <small> com a criticidade.
-            """
-            
-            with st.spinner("Gemini analisando histórico e gerando diagnóstico preditivo..."):
-                try:
-                    model = genai.GenerativeModel('gemini-1.5-flash')
-                    
-                    # Chamada direta e simplificada para evitar rejeição do plano gratuito
-                    resposta_ia = model.generate_content(
-                        f"Instruções do Sistema: {prompt_sistema}\n\nPedido do Usuário: {prompt_usuario}"
-                    )
-                    
-                    if resposta_ia and hasattr(resposta_ia, 'text'):
-                        conteudo_html = resposta_ia.text
-                        # Limpa qualquer tag de bloco de código markdown que o Gemini gratuito costuma colocar por padrão
-                        conteudo_html = conteudo_html.replace("```html", "").replace("```", "").strip()
-                        st.markdown(conteudo_html, unsafe_allow_html=True)
-                    else:
-                        st.error("A IA processou o pedido, mas o retorno veio vazio.")
-                except Exception as erro:
-                    st.error(f"Erro na comunicação com a API do Gemini: {erro}")
