@@ -204,10 +204,62 @@ if arquivo_upload is not None and not df_exibicao.empty:
             else:
                 st.caption("Este ativo não possui ordens de serviço anteriores.")
         
-    with col_diag:
-        st.markdown("**⚡ Análise de Engenharia Operacional da IA**")
-        status_normalizado = str(linha_os['Status']).strip().lower()
+   with col_diag:
+    st.markdown("**⚡ Análise de Engenharia Operacional da IA**")
+    status_normalizado = str(linha_os['Status']).strip().lower()
+    
+    if status_normalizado == 'aberta':
+        import google.generativeai as genai
+        genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
         
-        if status_normalizado == 'aberta':
-            import google.generativeai as genai
-            genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+        prompt_sistema = """Você é um Engenheiro de Manutenção especialista em análise de falhas e diagnósticos preditivos industriais/prediais. 
+        Sua missão é emitir um diagnóstico prescritivo estruturado em HTML estrito baseado nos dados fornecidos."""
+        
+        prompt_usuario = f"""
+        Analise a Ordem de Serviço atual cruzando-a estritamente com o histórico de manutenção anterior do ativo para identificar padrões de falhas repetitivas.
+        
+        DADOS DA OS ATUAL:
+        - Ordem de Serviço: {linha_os['OS']}
+        - Descrição da Falha Atual: {linha_os['Descrição']}
+        - Setor Responsável: {linha_os['Setor']}
+        
+        PARÂMETROS TÉCNICOS DO ATIVO (SPECKLE/BIM):
+        - Tipo de Equipamento: {equipamento}
+        - Fabricante: {fabricante}
+        - Modelo/Especificação: {modelo}
+        - ID Único do Objeto: {id_coluna_b}
+        
+        HISTÓRICO COMPLETO DE OCORRÊNCIAS ANTERIORES DO ATIVO (COLUNA B):
+        {texto_historico_ia}
+        
+        INSTRUÇÕES DE FORMATAÇÃO:
+        Retorne a resposta envolvida em uma única tag <div class="card-ia"> (não use blocos de código markdown ```html).
+        A estrutura interna deve conter:
+        1. Um título h4 com o "DIAGNÓSTICO PRESCRITIVO: [Nome da Falha Encontrada]".
+        2. Um parágrafo contendo a "Análise Causa Raiz" fundamentada na reincidência do histórico (se houver).
+        3. Uma linha horizontal <hr>.
+        4. Um bloco ordenado <ol> contendo um "Direcionamento e Plano de Ação Real" de até 3 passos práticos para a equipe técnica de campo.
+        5. Uma tag <small> indicando o Nível de Criticidade e o MTTR estimado em minutos.
+        """
+        
+        with st.spinner("Gemini analisando histórico e gerando diagnóstico preditivo..."):
+            try:
+                model = genai.GenerativeModel(
+                    model_name='gemini-1.5-flash',
+                    system_instruction=prompt_sistema
+                )
+                resposta_ia = model.generate_content(
+                    prompt_usuario,
+                    generation_config={"temperature": 0.3}
+                )
+                
+                if resposta_ia and hasattr(resposta_ia, 'text'):
+                    conteudo_html = resposta_ia.text
+                    conteudo_html = conteudo_html.replace("```html", "").replace("```", "").strip()
+                    st.markdown(conteudo_html, unsafe_allow_html=True)
+                else:
+                    st.error("O Gemini retornou uma resposta vazia ou inválida.")
+                    
+            except Exception as erro:
+                st.error(f"Falha ao conectar com o motor do Gemini: {erro}")
+
