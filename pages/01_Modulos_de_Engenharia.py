@@ -169,7 +169,7 @@ if arquivo_upload is not None and not df_exibicao.empty:
         st.markdown("**🔎 Seleção de Ativo para Auditoria**")
         os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os_selecao, key="seletor_ia_final_limpo")
         
-        # Correção aqui: adicionado o colchete com índice zero [0] para carregar a linha perfeitamente
+        # 🔴 CORREÇÃO DO INDICE: Inserido o [0] final para ler a linha como série estruturada
         linha_os = df_exibicao[df_exibicao['OS'] == os_selecionada].iloc[0]
         
         id_coluna_b = str(linha_os.get('ID', '')).strip().lower()
@@ -208,3 +208,4 @@ if arquivo_upload is not None and not df_exibicao.empty:
         * ⏱️ **MTBF Estatístico Real:** {texto_mtbf}
         * 🆔 **ID do Objeto 3D:** `{id_coluna_b}`
         """)
+        
