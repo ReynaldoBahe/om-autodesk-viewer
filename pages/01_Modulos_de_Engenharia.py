@@ -31,7 +31,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # 2. Layout de Tela: Barra Lateral (Métricas Operacionais)
-# 2. Layout de Tela: Barra Lateral (Métricas Operacionais)
 with st.sidebar:
     st.title("Painel de Controle")
     st.markdown("---")
@@ -100,9 +99,6 @@ with st.sidebar:
                 )
         except Exception as e:
             st.error(f"Erro ao processar as colunas: {e}")
-    else:
-        st.warning("Aguardando upload da planilha...")
-        st.metric(label="SLA de Atendimento (Meta: 95%)", value="-- %", delta="Sem dados")
     else:
         st.warning("Aguardando upload da planilha...")
         st.metric(label="SLA de Atendimento (Meta: 95%)", value="-- %", delta="Sem dados")
