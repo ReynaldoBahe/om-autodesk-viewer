@@ -1,216 +1,192 @@
 import streamlit as st
-
-st.set_page_config(page_title="Gestão da Manutenção - RB Consultoria", page_icon="🛠️", layout="wide")
-
 import pandas as pd
-import altair as alt
-import datetime
 
-# =========================================================================
-# 1. BARREIRA DE SEGURANÇA E MAPEAMENTO MULTI-CLIENTE
-# =========================================================================
-if "logged_in" not in st.session_state or not st.session_state.logged_in:
-    st.error("🔒 Acesso negado. Por favor, realize o login primeiro.")
+# 1. Configuração da Página
+st.set_page_config(
+    page_title="RB Consultoria - Gestão de Ativos",
+    page_icon="🏢",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# 🔐 TRAVA DE SEGURANÇA
+if "logged_in" not in st.session_state or not st.session_state["logged_in"]:
+    st.error("Acesso negado. Por favor, faça o login na página inicial.")
     st.stop()
 
-cliente_logado = st.session_state.get("cliente_ativo", "Nenhum")
-
-# ADICIONE ESTE BLOCO ABAIXO: Se for admin, simula o acesso ao Resort Boa Viagem
-if cliente_logado == "ADMIN":
-    cliente_logado = "Resort Boa Viagem"
-
-
-EMPREENDIMENTOS = {
-    "Resort Boa Viagem": {
-        "nome_exibicao": "Resort Boa Viagem - Complexo Hoteleiro",
-        "arquivo_cmms": "CMMS_Export_RB - CMMS_RB.csv"
-    },
-    "Hospital Central": {
-        "nome_exibicao": "Hospital Central - Centro Médico Operacional",
-        "arquivo_cmms": "CMMS_Export_Hospital.csv - CMMS_RB.csv"
+# Estilização CSS para o design do card de IA
+st.markdown("""
+    <style>
+    .block-container { padding-top: 1.5rem; padding-bottom: 1rem; }
+    .card-ia {
+        background-color: #f0f7ff;
+        border-left: 5px solid #0066cc;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 15px;
     }
-}
+    </style>
+""", unsafe_allow_html=True)
 
-if cliente_logado not in EMPREENDIMENTOS:
-    st.warning(f"⚠️ {cliente_logado}, os dados estão em processamento.")
-    st.stop()
-
-config = EMPREENDIMENTOS[cliente_logado]
-NOME_PROJETO = config["nome_exibicao"]
-CAMINHO_CSV = config["arquivo_cmms"]
-
-# =========================================================================
-# 2. DESIGN E TITULOS
-# =========================================================================
-st.markdown(f"## 🛠️ Gestão da Manutenção (PCM) — {NOME_PROJETO}")
-st.markdown(f"**Sessão segura:** {st.session_state.get('user_email')}")
-
-# =========================================================================
-# 3. PAINEL DE CONTROLE LATERAL
-# =========================================================================
-st.sidebar.header("Painel de Controle de PCM")
-filtro_tipo_manut = st.sidebar.selectbox("Filtrar por Tipo:", ["Todos", "Preventiva", "Corretiva"])
-
-opcoes_aging = ["Todas as Faixas", "01. 0 a 7 dias", "02. 7 a 15 dias", "03. 15 a 30 dias", "04. Mais de 30 dias (Crônico)"]
-filtro_aging = st.sidebar.selectbox("Filtrar por Faixa de Aging:", opcoes_aging)
-
-st.sidebar.write("---")
-arquivo_upload = st.sidebar.file_uploader("📂 Importar dados/OM operacionais", type=["csv", "xlsx"])
-
-# =========================================================================
-# 4. CARREGAMENTO DOS DADOS
-# =========================================================================
-if arquivo_upload is not None:
-    try:
-        df = pd.read_csv(arquivo_upload) if arquivo_upload.name.endswith('.csv') else pd.read_excel(arquivo_upload)
-    except Exception as e:
-        st.error(f"Erro ao ler arquivo enviado: {e}")
-        df = pd.read_csv(CAMINHO_CSV)
-else:
-    try:
-        df = pd.read_csv(CAMINHO_CSV)
-    except Exception:
-        df = pd.DataFrame()
-
-if df.empty:
-    st.info("Nenhum dado cadastrado para exibição.")
-    st.stop()
-
-# =========================================================================
-# 5. PROCESSAMENTO DE COLUNAS E AGING (LINHAS ALINHADAS DE FORMA CRUA)
-# =========================================================================
-df.columns = [str(c).strip().replace('_', ' ').title() for c in df.columns]
-
-col_status = [c for c in df.columns if 'status' in c.lower()]
-col_tipo = [c for c in df.columns if 'tipo' in c.lower()]
-col_setor = [c for c in df.columns if 'setor' in c.lower() or 'sistema' in c.lower()]
-col_abertura = [c for c in df.columns if 'abertura' in c.lower() or 'inicio' in c.lower()]
-col_fechamento = [c for c in df.columns if 'fechamento' in c.lower() or 'fim' in c.lower() or 'conclusao' in c.lower()]
-
-c_status = col_status[0] if col_status else ""
-c_tipo = col_tipo[0] if col_tipo else ""
-c_setor = col_setor[0] if col_setor else ""
-c_abertura = col_abertura[0] if col_abertura else ""
-c_fechamento = col_fechamento[0] if col_fechamento else ""
-
-df_pcm = df.copy()
-
-if c_abertura:
-    df_pcm['Data_Abertura_Conv'] = pd.to_datetime(df_pcm[c_abertura], errors='coerce')
-    if c_fechamento:
-        df_pcm['Data_Fechamento_Conv'] = pd.to_datetime(df_pcm[c_fechamento], errors='coerce')
-        df_pcm['Data_Final_Calculo'] = df_pcm['Data_Fechamento_Conv'].fillna(pd.Timestamp(datetime.date.today()))
-    else:
-        df_pcm['Data_Final_Calculo'] = pd.Timestamp(datetime.date.today())
-    df_pcm['Dias_No_Backlog'] = (df_pcm['Data_Final_Calculo'] - df_pcm['Data_Abertura_Conv']).dt.total_seconds() / 86400.0
-    df_pcm['Dias_No_Backlog'] = df_pcm['Dias_No_Backlog'].fillna(0.0).clip(lower=0.0)
+# 2. Layout de Tela: Barra Lateral (Métricas Operacionais)
+with st.sidebar:
+    st.title("Painel de Controle")
+    st.markdown("---")
     
-    df_pcm['Faixa_Aging'] = "01. 0 a 7 dias"
-    df_pcm.loc[df_pcm['Dias_No_Backlog'] > 7, 'Faixa_Aging'] = "02. 7 a 15 dias"
-    df_pcm.loc[df_pcm['Dias_No_Backlog'] > 15, 'Faixa_Aging'] = "03. 15 a 30 dias"
-    df_pcm.loc[df_pcm['Dias_No_Backlog'] > 30, 'Faixa_Aging'] = "04. Mais de 30 dias (Crônico)"
-    df_pcm['Mes_Ano'] = df_pcm['Data_Abertura_Conv'].dt.to_period('M').astype(str)
-
-# Aplicação dos filtros da barra lateral de forma sequencial limpa
-if c_tipo and filtro_tipo_manut != "Todos":
-    df_pcm = df_pcm[df_pcm[c_tipo].astype(str).str.lower().str.contains(filtro_tipo_manut.lower()[:4], na=False)]
-
-if 'Faixa_Aging' in df_pcm.columns and filtro_aging != "Todas as Faixas":
-    df_pcm = df_pcm[df_pcm['Faixa_Aging'] == filtro_aging]
-
-# Consolidação dos Indicadores Finais
-total_om = len(df_pcm)
-om_abertas = 0
-taxa_prev = 100.0
-tempo_medio_backlog_dias = 0.0
-
-if not df_pcm.empty and 'Dias_No_Backlog' in df_pcm.columns:
-    tempo_medio_backlog_dias = float(df_pcm['Dias_No_Backlog'].mean())
-
-if c_status:
-    om_abertas = len(df_pcm[df_pcm[c_status].astype(str).str.lower().str.contains('aberta|em andamento|andamento', na=False)])
-
-if c_tipo and c_status:
-    tot_p = len(df_pcm[df_pcm[c_tipo].astype(str).str.lower().str.contains('prev', na=False)])
-    concl_p = len(df_pcm[(df_pcm[c_tipo].astype(str).str.lower().str.contains('prev', na=False)) & (df_pcm[c_status].astype(str).str.lower().str.contains('fechado|concluido|encerrado', na=False))])
-    taxa_prev = (concl_p / tot_p * 100) if tot_p > 0 else 100.0
-
-# Layout de Cartões de Métricas
-m1, m2, m3, m4 = st.columns(4)
-with m1:
-    st.metric(label="📋 Volume de Ordens", value=total_om)
-with m2:
-    st.metric(label="⏳ Backlog Ativo (Abertas)", value=om_abertas)
-with m3:
-    st.metric(label="🎯 Cumprimento Preventivas", value=f"{taxa_prev:.1f} %")
-with m4:
-    st.metric(label="⏱️ Tempo Médio Backlog", value=f"{tempo_medio_backlog_dias:.1f} dias")
-
-st.write("---")
-col_grafico, col_dados = st.columns([1.2, 1.0])
-
-with col_grafico:
-    tab_setor, tab_tendencia, tab_aging = st.tabs(["📊 Carga por Setor", "📈 Linha de Tendência", "⏳ Tempo de Residência (Aging)"])
+    arquivo_upload = st.file_uploader("Carregar Planilha CMMS (.csv)", type=["csv"])
+    st.markdown("---")
     
-    with tab_setor:
-        if c_setor and c_status and not df_pcm.empty:
-            chart = alt.Chart(df_pcm).mark_bar().encode(
-                x=alt.X('count():Q', title='Quantidade de Ordens'),
-                y=alt.Y(f'{c_setor}:N', title='Setor / Sistema', sort='-x'),
-                color=alt.Color(f'{c_status}:N', title='Status')
-            ).properties(height=250)
-            st.altair_chart(chart, use_container_width=True)
+    df_exibicao = pd.DataFrame()
+    lista_os_selecao = ["Nenhuma OS selecionada"]
+    contagem_status = {"Aberta": 0, "Em Atendimento": 0, "Pausada": 0, "Fechado": 0}
+    
+    if arquivo_upload is not None:
+        try:
+            df_os = pd.read_csv(arquivo_upload)
+            df_os.columns = df_os.columns.str.strip()
             
-    with tab_tendencia:
-        if c_abertura and 'Mes_Ano' in df_pcm.columns and not df_pcm.empty:
-            df_trend = df_pcm.groupby('Mes_Ano').size().reset_index(name='Volume')
-            chart_line = alt.Chart(df_trend).mark_line(color='#1E3A8A', point=True).encode(
-                x=alt.X('Mes_Ano:N', title='Mês/Ano', sort='x'),
-                y=alt.Y('Volume:Q', title='Novas Ordens'),
-                tooltip=['Mes_Ano', 'Volume']
-            ).properties(height=250)
-            st.altair_chart(chart_line, use_container_width=True)
-
-    with tab_aging:
-        st.markdown("**Distribuição de Ordens por Tempo de Espera (Aging)**")
-        if 'Faixa_Aging' in df_pcm.columns and not df_pcm.empty:
-            chart_aging = alt.Chart(df_pcm).mark_bar(color='#EAB308').encode(
-                x=alt.X('Faixa_Aging:N', title='Tempo de Permanência no Backlog'),
-                y=alt.Y('count():Q', title='Quantidade de OS'),
-                tooltip=['Faixa_Aging', 'count()']
-            ).properties(height=250)
-            st.altair_chart(chart_aging, use_container_width=True)
-
-with col_dados:
-    st.markdown(f"**Parecer do Gemini sobre o Plano de PCM — {NOME_PROJETO}**")
-    
-    sistema_gargalo = "Não identificado"
-    if c_setor and not df_pcm[c_setor].empty:
-        v_counts = df_pcm[c_setor].value_counts()
-        if not v_counts.empty:
-            sistema_gargalo = str(v_counts.idxmax())
-
-    if filtro_aging != "Todas as Faixas":
-        st.info(f"""
-        ### 🎯 AUDITORIA DETALHADA DE AGING
-        Foco na janela operacional: **{filtro_aging}**.
-        
-        * **Escopo:** Exibindo apenas as **{total_om} ordens** da faixa de envelhecimento selecionada.
-        * **Concentração:** O maior volume deste grupo está em **{sistema_gargalo}**.
-        """)
+            df_os['Data_Abertura'] = pd.to_datetime(df_os['Data_Abertura'], errors='coerce')
+            df_os['Status'] = df_os['Status'].astype(str).str.strip()
+            df_os['Setor'] = df_os['Setor'].astype(str).str.strip()
+            df_os['OS'] = df_os['OS'].astype(str).str.strip()
+            
+            df_mes = df_os[df_os['Data_Abertura'].dt.strftime('%Y-%m') == '2026-06']
+            
+            contagem_status["Aberta"] = len(df_mes[df_mes['Status'].str.lower() == 'aberta'])
+            contagem_status["Em Atendimento"] = len(df_mes[df_mes['Status'].str.lower() == 'em atendimento'])
+            contagem_status["Pausada"] = len(df_mes[df_mes['Status'].str.lower() == 'pausado'])
+            contagem_status["Fechado"] = len(df_mes[df_mes['Status'].str.lower() == 'fechado'])
+            
+            st.subheader("Filtros de Visão")
+            setores_validos = df_mes['Setor'].dropna().astype(str).unique()
+            lista_setores = ["Todos"] + sorted(list(setores_validos))
+            setor_selecionado = st.selectbox("Filtrar por Setor:", lista_setores)
+            
+            status_validos = df_mes['Status'].dropna().astype(str).unique()
+            lista_status = ["Todos"] + sorted(list(status_validos))
+            status_selecionado = st.selectbox("Filtrar por Status:", lista_status)
+            
+            df_exibicao = df_mes.copy()
+            if setor_selecionado != "Todos":
+                df_exibicao = df_exibicao[df_exibicao['Setor'] == setor_selecionado]
+            if status_selecionado != "Todos":
+                df_exibicao = df_exibicao[df_exibicao['Status'] == status_selecionado]
+            
+            lista_os_selecao = sorted(list(df_exibicao['OS'].unique()))
+            
+            st.markdown("---")
+            st.subheader("Métricas de Manutenção")
+            total_abertas_mes = len(df_mes)
+            if total_abertas_mes > 0:
+                total_fechadas_filtradas = len(df_mes[df_mes['Status'].str.lower() == 'fechado'])
+                sla_calculado = round((total_fechadas_filtradas / total_abertas_mes) * 100, 1)
+                st.metric(label="SLA de Atendimento", value=f"{sla_calculado}%")
+        except Exception as e:
+            st.error(f"Erro ao processar as colunas: {e}")
     else:
-        if tempo_medio_backlog_dias > 15.0:
-            st.error(f"""
-            ### ❌ ALERTA DE ENVELHECIMENTO CRÔNICO
-            * **Diagnóstico:** O tempo de backlog médio de **{tempo_medio_backlog_dias:.1f} dias** indica lentidão.
-            * **Gargalo:** O setor de **{sistema_gargalo}** concentra o represamento.
-            """)
-        else:
-            st.success(f"""
-            ### ✅ FLUXO DE LIQUIDAÇÃO VELOZ
-            * **Diagnóstico:** Tempo médio de residência controlado em **{tempo_medio_backlog_dias:.1f} dias**. Ordens rodando limpas e sem retenção crônica.
-            """)
+        st.warning("Aguardando upload da planilha...")
 
-st.write("---")
-st.markdown("### Quadro de Ordens Filtrado por Escopo de PCM")
-st.dataframe(df_pcm, use_container_width=True)
+# 3. Layout Principal da Tela
+st.title("Visualizador Operacional de Ativos")
+st.markdown("---")
+
+# 4. Volumetria das Ordens de Serviço (KPIs)
+st.subheader("📊 Volumetria das Ordens de Serviço")
+col1, col2, col3, col4 = st.columns(4)
+with col1: st.metric(label="🟢 Aberta", value=contagem_status["Aberta"])
+with col2: st.metric(label="🔵 Em Atendimento", value=contagem_status["Em Atendimento"])
+with col3: st.metric(label="🟡 Pausada", value=contagem_status["Pausada"])
+with col4: st.metric(label="🔴 Fechado", value=contagem_status["Fechado"])
+
+st.markdown("---")
+
+# 5. Centro de Diagnóstico Avançado (IA Preditiva)
+st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
+
+if arquivo_upload is not None and not df_exibicao.empty:
+    col_sel, col_diag = st.columns(2)
+    
+    with col_sel:
+        st.markdown("**🔎 Seleção de Ativo para Auditoria**")
+        os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os_selecao, key="seletor_ia_final_limpo")
+        
+        filtro_os = df_exibicao[df_exibicao['OS'] == os_selecionada]
+        linha_os = filtro_os.iloc[0]
+        
+        id_coluna_b = str(linha_os.get('ID', '')).strip().lower()
+        equipamento, fabricante, modelo = "Sistema de Climatização", "Fujitsu General", "ASYG18LFCA"
+            
+        data_abertura_formatada = "N/A" if pd.isna(linha_os.get('Data_Abertura')) else linha_os['Data_Abertura'].strftime('%d/%m/%Y')
+        df_historico_ativo = df_os[(df_os['ID'].astype(str).str.strip().str.lower() == id_coluna_b) & (df_os['OS'] != os_selecionada)]
+        
+        texto_historico_ia = ""
+        if not df_historico_ativo.empty:
+            for _, row_hist in df_historico_ativo.iterrows():
+                try:
+                    data_hist = row_hist['Data_Abertura'].strftime('%d/%m/%Y') if not pd.isna(row_hist['Data_Abertura']) else "N/A"
+                except:
+                    data_hist = str(row_hist['Data_Abertura'])
+                texto_historico_ia += f"- OS {row_hist['OS']} ({data_hist}): {row_hist['Descrição']} | Status: {row_hist['Status']}\n"
+        else:
+            texto_historico_ia = "Nenhuma ocorrência anterior registrada para este ativo nos últimos meses."
+
+        st.info(f"""
+        **📋 Ficha Técnica do Ativo (Parâmetros Speckle/BIM)**
+        * **Equipamento:** {equipamento}
+        * **Fabricante:** {fabricante}
+        * **Modelo:** {modelo}
+        * **Status Atual:** {linha_os.get('Status', 'Aberto')}
+        * **Data de Abertura:** {data_abertura_formatada}
+        * **ID do Objeto 3D:** `{id_coluna_b}`
+        """)
+        
+        with st.expander("📊 Ver Histórico Completo do Ativo (Coluna B)"):
+            if not df_historico_ativo.empty:
+                st.dataframe(df_historico_ativo[['OS', 'Data_Abertura', 'Descrição', 'Status']], use_container_width=True)
+            else:
+                st.caption("Este ativo não possui ordens de serviço anteriores.")
+        
+    with col_diag:
+        st.markdown("**⚡ Análise de Engenharia Operacional da IA**")
+        status_normalizado = str(linha_os.get('Status', '')).strip().lower()
+        
+        if status_normalizado == 'aberta':
+            import google.generativeai as genai
+            genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+            
+            prompt_sistema = "Você é um Engenheiro de Manutenção especialista em análise de falhas. Emita um laudo prescritivo estruturado em HTML simples."
+            prompt_usuario = f"""
+            Analise a OS atual cruzando com o histórico anterior do ativo para identificar padrões de falhas.
+            DADOS DA OS ATUAL:
+            - Ordem de Serviço: {linha_os.get('OS')}
+            - Descrição da Falha Atual: {linha_os.get('Descrição')}
+            - Setor Responsável: {linha_os.get('Setor')}
+            HISTÓRICO COMPLETO REINCIDÊNCIAS:
+            {texto_historico_ia}
+            INSTRUÇÕES: Envolva a resposta em uma tag <div class='card-ia'> contendo título h4, Causa Raiz, e uma lista ordenada <ol> de até 3 passos práticos de plano de ação técnico.
+            """
+            
+            with st.spinner("Gemini analisando histórico e gerando diagnóstico preditivo..."):
+                try:
+                    model = genai.GenerativeModel(model_name='gemini-1.5-flash', system_instruction=prompt_sistema)
+                    resposta_ia = model.generate_content(prompt_usuario)
+                    
+                    if resposta_ia and resposta_ia.text:
+                        conteudo_html = str(resposta_ia.text).strip()
+                        conteudo_html = conteudo_html.replace("```html", "").replace("```", "").strip()
+                        st.markdown(conteudo_html, unsafe_allow_html=True)
+                    else:
+                        st.error("A IA processou o pedido, mas o retorno veio em formato inválido.")
+                except Exception as erro:
+                    st.error(f"Erro na comunicação com a API do Gemini: {erro}")
+            
+        elif status_normalizado == 'em atendimento':
+            st.markdown('<div class="card-ia"><h4>⏳ Manutenção em Andamento</h4><p>O ativo encontra-se sob intervenção técnica.</p></div>', unsafe_allow_html=True)
+        elif status_normalizado in ['pausado', 'pausada']:
+            st.markdown('<div class="card-ia"><h4>⏸️ Ordem Suspensa</h4><p>A atividade está congelada aguardando insumos.</p></div>', unsafe_allow_html=True)
+        elif status_normalizado in ['fechado', 'fechada']:
+            st.markdown('<div class="card-ia"><h4>✅ Ordem Encerrada</h4><p>A OS foi finalizada com sucesso.</p></div>', unsafe_allow_html=True)
+        else:
+            st.warning(f"Status '{linha_os.get('Status')}' mapeado.")
+else:
+    st.info("Aguardando carregamento de dados para diagnóstico da IA.")
