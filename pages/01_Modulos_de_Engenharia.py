@@ -209,8 +209,8 @@ if arquivo_upload is not None and not df_exibicao.empty:
         st.markdown("**⚡ Análise de Engenharia Operacional da IA**")
         status_normalizado = str(linha_os.get('Status', '')).strip().lower()
         
-    if status_normalizado == 'aberta':
-            from google import genai
+                if status_normalizado == 'aberta':
+                from google import genai
                         from google.genai import types
             
                 client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
